@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ProLight OnPC v11.0 - Guaranteed 3D Beam Fix</title>
+<title>ProLight OnPC v12.0 - Full Console & v9 Visual Engine</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
     :root { 
@@ -14,29 +14,42 @@
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
     body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', Tahoma, sans-serif; overflow: hidden; width: 100vw; height: 100vh; }
     
+    /* Layout */
     #app { display: grid; grid-template-rows: 35px 1fr 220px 40px; grid-template-columns: 280px 1fr 450px; width: 100%; height: 100%; }
     .header { grid-column: 1 / -1; background: #000; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 15px; font-size: 11px; font-weight: bold; }
     .panel { border: 1px solid var(--border); background: var(--panel); display: flex; flex-direction: column; overflow: hidden; position: relative; }
     .p-title { background: var(--header); color: var(--accent); padding: 5px 10px; font-size: 10px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
     
+    /* UI Elements */
     .btn { background: #222; color: #fff; border: 1px solid #444; padding: 4px 8px; font-size: 9px; cursor: pointer; border-radius: 3px; font-weight: bold; text-transform: uppercase; }
     .btn:hover { background: var(--accent); color: #000; border-color: var(--accent); }
     .btn.active { background: var(--accent); color: #000; }
-    input, select { background: #000; color: #fff; border: 1px solid #333; padding: 3px 5px; font-size: 10px; border-radius: 2px; outline: none; }
+    input[type="number"], select, input[type="text"] { background: #000; color: #fff; border: 1px solid #333; padding: 3px 5px; font-size: 10px; border-radius: 2px; outline: none; }
     
+    /* Nav Pad Popup */
     #nav-popup { display: none; position: absolute; bottom: 20px; left: 20px; background: rgba(10,10,10,0.85); border: 1px solid var(--accent); padding: 10px; border-radius: 8px; z-index: 100; backdrop-filter: blur(4px); box-shadow: 0 5px 15px rgba(0,0,0,0.8); }
     .nav-grid { display: grid; grid-template-columns: repeat(3, 40px); gap: 5px; }
     .nav-btn { background: #222; border: 1px solid #444; color: var(--accent); height: 40px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; font-size: 16px; touch-action: none; }
     .nav-btn:active { background: var(--accent); color: #000; }
-    
+    .nav-head { grid-column: 1 / -1; text-align: center; font-size: 9px; color: var(--text); margin-bottom: 5px; font-weight: bold; }
+
+    /* Help & Command Dictionary Modal */
     #help-modal { display: none; position: fixed; inset: 10%; background: #111; border: 1px solid var(--accent); z-index: 2000; border-radius: 8px; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.9); }
-    .help-header { display: flex; justify-content: space-between; padding: 10px 15px; background: #000; border-bottom: 1px solid #333; }
-    .help-search { padding: 10px; background: #1a1a1a; border-bottom: 1px solid #333; }
+    .help-header { display: flex; justify-content: space-between; padding: 10px 15px; background: #000; border-bottom: 1px solid #333; align-items: center; }
+    .help-search { width: 100%; padding: 10px; background: #1a1a1a; border-bottom: 1px solid #333; }
     .help-search input { width: 100%; font-size: 14px; padding: 8px; }
     .help-list { flex: 1; overflow-y: auto; padding: 10px; font-family: monospace; font-size: 12px; }
     .help-item { display: flex; padding: 6px; border-bottom: 1px solid #222; }
+    .help-item:hover { background: #1a1a1a; }
     .h-cmd { width: 180px; color: var(--accent); font-weight: bold; }
+    .h-desc { flex: 1; color: #ccc; }
+
+    /* Command Line Panel */
+    #cmd-panel { grid-column: 1 / -1; background: #000; border-top: 1px solid var(--border); display: flex; align-items: center; padding: 0; }
+    .cmd-badge { background: var(--accent); color: #000; font-weight: bold; padding: 0 15px; height: 100%; display: flex; align-items: center; font-size: 12px; cursor: pointer; }
+    #cmd-input { flex: 1; height: 100%; background: transparent; border: none; color: var(--accent); font-size: 16px; font-family: monospace; padding: 0 15px; outline: none; }
     
+    /* Fixture Sheet & Visualizer */
     #fixture-sheet { overflow-y: auto; flex: 1; padding: 5px; font-size: 10px; }
     .fix-row { display: grid; grid-template-columns: 20px 1fr 35px 35px 35px; gap: 4px; padding: 4px; border-bottom: 1px solid #222; cursor: pointer; align-items: center; }
     .fix-row.selected { background: var(--sel); color: #fff; }
@@ -44,6 +57,7 @@
     #three-canvas { width: 100%; height: 100%; }
     .cam-hud { position: absolute; top: 10px; left: 10px; display: flex; gap: 4px; z-index: 10; flex-wrap: wrap; }
     
+    /* Faders & Programmer */
     #programmer-panel { grid-column: 3 / 4; grid-row: 2 / 4; display: flex; flex-direction: column; }
     .tabs { display: flex; background: #0a0a0a; border-bottom: 1px solid var(--border); }
     .tab { flex: 1; padding: 8px; text-align: center; font-size: 9px; cursor: pointer; color: var(--dim); font-weight: bold; text-transform: uppercase; }
@@ -55,9 +69,10 @@
     .fader-box { background: #0a0a0a; border: 1px solid #222; border-radius: 4px; padding: 6px; text-align: center; display: flex; flex-direction: column; align-items: center; }
     .f-track { width: 14px; height: 120px; background: #000; border-radius: 4px; position: relative; margin: 8px 0; cursor: pointer; border: 1px solid #333; touch-action: none; }
     .f-thumb { width: 34px; height: 18px; background: #333; border: 1px solid #666; border-radius: 2px; border-top: 3px solid var(--accent); position: absolute; left: -11px; bottom: 0%; cursor: ns-resize; touch-action: none; }
-    .f-lbl { font-size: 9px; color: var(--dim); font-weight: bold; }
+    .f-lbl { font-size: 10px; color: var(--dim); font-weight: bold; }
     .f-val { font-size: 11px; color: #fff; font-family: monospace; }
     
+    /* FX Grid */
     .fx-list { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; max-height: 250px; overflow-y: auto; }
     .fx-item { background: #111; border: 1px solid #333; padding: 6px; font-size: 9px; cursor: pointer; border-radius: 3px; text-align: center; }
     .fx-item:hover { border-color: var(--accent); }
@@ -65,28 +80,27 @@
     .fx-head { grid-column: 1 / -1; font-size: 9px; color: var(--accent); margin-top: 6px; border-bottom: 1px solid #333; }
     .param-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
     .p-row { background: #0a0a0a; padding: 4px; border-radius: 3px; border: 1px solid #222; display: flex; justify-content: space-between; font-size: 9px; align-items:center;}
-    
-    #cmd-panel { grid-column: 1 / -1; grid-row: 4 / 5; background: #000; border-top: 1px solid var(--border); display: flex; }
-    .cmd-badge { background: var(--accent); color: #000; font-weight: bold; padding: 0 15px; display: flex; align-items: center; font-size: 12px; cursor: pointer; }
-    #cmd-input { flex: 1; background: transparent; border: none; color: var(--accent); font-size: 15px; font-family: monospace; padding: 0 15px; }
 </style>
 </head>
 <body>
 
 <div id="app">
+    <!-- Header -->
     <div class="header">
-        <div>PROLIGHT ONPC v11.0 | DIRECT BEAM ENGINE</div>
+        <div>PROLIGHT ONPC v12.0 | v9 VISUAL ENGINE</div>
         <div><button class="btn" onclick="toggleFS()">Full Screen</button></div>
     </div>
     
+    <!-- Left: Fixture Patch -->
     <div class="panel" id="fixture-panel" style="grid-column: 1 / 2; grid-row: 2 / 4;">
-        <div class="p-title"><span>Fixtures</span><button class="btn" onclick="fullAll()">FULL ON</button></div>
-        <div class="fix-row" style="background:#000; font-weight:bold; cursor:default; padding: 6px 4px;">
+        <div class="p-title"><span>Fixtures</span><button class="btn" onclick="fullAll()">FULL (ON)</button></div>
+        <div class="fix-row" style="background:#000; font-weight:bold; cursor:default; padding: 8px 4px;">
             <span>ID</span><span>Name</span><span>X</span><span>Y</span><span>Z</span>
         </div>
         <div id="fixture-sheet"></div>
     </div>
     
+    <!-- Center: 3D Visualizer -->
     <div class="panel" id="stage-panel">
         <div class="cam-hud">
             <button class="btn cam-btn active" onclick="setCam('FRONT')">FRONT</button>
@@ -95,8 +109,9 @@
             <button class="btn" style="background:#0066cc" onclick="toggleNav()">NAV PAD ✜</button>
         </div>
         
+        <!-- Camera Nav Pad -->
         <div id="nav-popup">
-            <div style="text-align:center; font-size:9px; color:var(--text); margin-bottom:5px; font-weight:bold;">CAMERA NAV</div>
+            <div class="nav-head">CAMERA NAVIGATION</div>
             <div class="nav-grid">
                 <div class="nav-btn" onpointerdown="camCtrl.q=1" onpointerup="camCtrl.q=0">▼</div>
                 <div class="nav-btn" onpointerdown="camCtrl.w=1" onpointerup="camCtrl.w=0">↑</div>
@@ -105,20 +120,24 @@
                 <div class="nav-btn" onpointerdown="camCtrl.s=1" onpointerup="camCtrl.s=0">↓</div>
                 <div class="nav-btn" onpointerdown="camCtrl.d=1" onpointerup="camCtrl.d=0">→</div>
             </div>
-            <div style="text-align:center; font-size:8px; color:var(--dim); margin-top:5px;">Drag Mouse to Rotate</div>
+            <div style="text-align:center; font-size:8px; color:var(--dim); margin-top:5px;">L/R Drag for Rotate</div>
         </div>
+
         <div id="three-canvas"></div>
     </div>
     
+    <!-- Right: Programmer -->
     <div class="panel" id="programmer-panel">
         <div class="tabs">
-            <div class="tab active" onclick="switchTab('faders')">Attrs & Colors</div>
-            <div class="tab" onclick="switchTab('engine')">FX & Wing Engine</div>
+            <div class="tab active" onclick="switchTab('faders')">Attributes</div>
+            <div class="tab" onclick="switchTab('colors')">Colors</div>
+            <div class="tab" onclick="switchTab('engine')">FX Engine</div>
         </div>
         
+        <!-- Tab: Faders -->
         <div id="tab-faders" class="tab-content active">
             <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                <span style="font-size:10px;">Sel: <b id="lbl-sel" style="color:var(--accent);">All</b></span>
+                <span style="font-size:11px;">Sel: <b id="lbl-sel" style="color:var(--accent);">All</b></span>
                 <button class="btn" style="background:#411; border-color:#f33;" onclick="clearProg()">CLEAR</button>
             </div>
             <div class="fader-grid">
@@ -127,20 +146,24 @@
                 <div class="fader-box"><div class="f-lbl">TILT</div><div class="f-track" onpointerdown="initFader(event,'tilt')"><div class="f-thumb" id="th-tilt" style="bottom:50%"></div></div><div class="f-val" id="val-tilt">0°</div></div>
                 <div class="fader-box"><div class="f-lbl">ZOOM</div><div class="f-track" onpointerdown="initFader(event,'zoom')"><div class="f-thumb" id="th-zoom"></div></div><div class="f-val" id="val-zoom">5°</div></div>
             </div>
-            
-            <div style="font-size:9px; color:var(--accent); font-weight:bold; margin-top:10px; margin-bottom:5px;">COLORS</div>
-            <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:4px;">
-                <div class="btn" style="background:#fff; color:#000" onclick="col(255,255,255)">WHT</div>
-                <div class="btn" style="background:#f00; color:#000" onclick="col(255,0,0)">RED</div>
-                <div class="btn" style="background:#0f0; color:#000" onclick="col(0,255,0)">GRN</div>
-                <div class="btn" style="background:#00f; color:#fff" onclick="col(0,0,255)">BLU</div>
-                <div class="btn" style="background:#ff0; color:#000" onclick="col(255,255,0)">YEL</div>
-                <div class="btn" style="background:#f0f; color:#000" onclick="col(255,0,255)">MAG</div>
-                <div class="btn" style="background:#0ff; color:#000" onclick="col(0,255,255)">CYN</div>
-                <div class="btn" style="background:#000; color:#f00; border-color:#f00" onclick="col(0,0,0); setDim(0)">BLK</div>
+        </div>
+
+        <!-- Tab: Colors -->
+        <div id="tab-colors" class="tab-content">
+            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">
+                <button class="btn" style="height:40px; background:#fff; color:#000" onclick="col(255,255,255)">WHITE</button>
+                <button class="btn" style="height:40px; background:#f00; color:#000" onclick="col(255,0,0)">RED</button>
+                <button class="btn" style="height:40px; background:#0f0; color:#000" onclick="col(0,255,0)">GREEN</button>
+                <button class="btn" style="height:40px; background:#00f; color:#fff" onclick="col(0,0,255)">BLUE</button>
+                <button class="btn" style="height:40px; background:#ff0; color:#000" onclick="col(255,255,0)">YELLOW</button>
+                <button class="btn" style="height:40px; background:#f0f; color:#000" onclick="col(255,0,255)">MAGENTA</button>
+                <button class="btn" style="height:40px; background:#0ff; color:#000" onclick="col(0,255,255)">CYAN</button>
+                <button class="btn" style="height:40px; background:#ff8c00; color:#000" onclick="col(255,140,0)">AMBER</button>
+                <button class="btn" style="height:40px; background:#000; color:#f00; border-color:#f00" onclick="col(0,0,0); setDim(0)">BLACKOUT</button>
             </div>
         </div>
 
+        <!-- Tab: FX Engine -->
         <div id="tab-engine" class="tab-content">
             <div class="param-grid">
                 <div class="p-row">Speed/BPM: <input type="number" value="120" onchange="fx.bpm=this.value" style="width:50px"></div>
@@ -153,80 +176,231 @@
                         <option value="alternate">Alternate</option>
                     </select>
                 </div>
-                <div style="grid-column:1/-1;"><button class="btn" style="width:100%; background:#411; border-color:#f00;" onclick="stopFX()">STOP FX</button></div>
+                <div style="grid-column:1/-1;"><button class="btn" style="width:100%; background:#411; border-color:#f00;" onclick="stopFX()">STOP ALL FX</button></div>
             </div>
             <div class="fx-list" id="fx-library"></div>
         </div>
     </div>
     
+    <!-- Command Line Console -->
     <div id="cmd-panel">
-        <div class="cmd-badge" onclick="openHelp()">HELP/DICT</div>
-        <input type="text" id="cmd-input" placeholder="Ketik perintah (cth: fix 1 thru 8 at 100) atau 'help'..." autocomplete="off">
+        <div class="cmd-badge" onclick="openHelp()">HELP / CMD</div>
+        <input type="text" id="cmd-input" placeholder="Ketik perintah (contoh: fixture 1 at 100, atau ketik 'help')... Tekan Enter." autocomplete="off">
     </div>
 
+    <!-- Modal Help / Dictionary -->
     <div id="help-modal">
         <div class="help-header">
-            <h2 style="color:var(--accent); font-size:14px; margin:0;">Command Dictionary (MA3)</h2>
-            <button class="btn" style="background:#f00; color:#000; border:none;" onclick="closeHelp()">CLOSE</button>
+            <h2 style="color:var(--accent); font-size:16px; margin:0;">Command Dictionary (MA3 Reference)</h2>
+            <button class="btn" style="background:#f00; color:#000; border:none;" onclick="closeHelp()">X CLOSE</button>
         </div>
-        <div class="help-search"><input type="text" id="help-search-input" placeholder="Search commands..." oninput="filterHelp(this.value)"></div>
+        <div class="help-search">
+            <input type="text" id="help-search-input" placeholder="Search commands (e.g. Absolute, Patch, Wing)..." oninput="filterHelp(this.value)">
+        </div>
         <div class="help-list" id="help-list-container"></div>
     </div>
 </div>
 
 <script>
-    const patch = [];
-    let selected = [];
-    
+    /* =========================================
+       GRANDMA3 COMMAND DICTIONARY
+    ========================================= */
     const cmdDict = [
-        { c: "Absolute", d: "Sets Absolute layer for attribute values." },
-        { c: "Align", d: "Distributes values across selected fixtures (Fan)." },
-        { c: "At", d: "Applies value to selection (e.g. Fixture 1 At 100)." },
-        { c: "Clear", d: "Clears selection or programmer." },
-        { c: "Color", d: "Accesses color features." },
-        { c: "Dimmer", d: "Accesses dimmer features." },
-        { c: "Effect", d: "Accesses effect engine." },
-        { c: "Fixture", d: "Selects fixture (e.g. Fix 1)." },
-        { c: "Full", d: "Sets dimmer to 100%." },
-        { c: "Group", d: "Selects grouped fixtures." },
-        { c: "Patch", d: "Opens patch menu." },
-        { c: "Store", d: "Saves data into object." },
-        { c: "Thru", d: "Selects range (Fix 1 Thru 8)." },
-        { c: "Wing", d: "Configures Wing symmetry." }
+        { c: "Absolute", d: "Sets or selects the Absolute layer for attribute values." },
+        { c: "Acceleration", d: "Adjusts the acceleration rate of a Phaser/Effect." },
+        { c: "Action", d: "Triggers a specific action or macro step." },
+        { c: "Agenda", d: "Opens the Agenda menu for scheduled tasks." },
+        { c: "ActivationGroup", d: "Groups attributes so activating one activates all in the group." },
+        { c: "Align", d: "Distributes values across selected fixtures (e.g., Fan effect)." },
+        { c: "AlignTransition", d: "Defines the curve/transition used during an Align operation." },
+        { c: "Appearance", d: "Assigns colors or images to UI elements/pools." },
+        { c: "Assign", d: "Assigns objects to executors, keys, or pools." },
+        { c: "At", d: "Applies a value to selected fixtures (e.g., Fixture 1 At 100)." },
+        { c: "Attribute", d: "Selects a specific feature attribute (Dimmer, Pan, Tilt)." },
+        { c: "AutoCreate", d: "Automatically generates presets, groups, or macros." },
+        { c: "AutoStore", d: "Automatically stores data into the target destination." },
+        { c: "Bitmap", d: "Controls bitmap effects running on layout groups." },
+        { c: "Black", d: "Forces blackout on selected fixtures (Dimmer = 0)." },
+        { c: "Blind", d: "Enables Blind mode (programming without outputting to stage)." },
+        { c: "Block", d: "Stops tracking of values in a sequence." },
+        { c: "BPM", d: "Sets speed based on Beats Per Minute." },
+        { c: "Call", d: "Calls a preset, cue, or object into the programmer." },
+        { c: "CancelSoftwareUpdate", d: "Aborts an ongoing software update process." },
+        { c: "Camera", d: "Recalls a 3D camera view perspective." },
+        { c: "Capture", d: "Captures current output values back into the programmer." },
+        { c: "ChangeDestination", d: "Navigates the command line hierarchy (CD)." },
+        { c: "ChangeMulticastBase", d: "Network command to change multicast IP base." },
+        { c: "Channel", d: "Selects a traditional channel fixture type." },
+        { c: "ChannelFunctionDefault", d: "Edits default values for channel functions." },
+        { c: "ChannelSet", d: "Defines distinct ranges/names for a channel (e.g., Open, Closed)." },
+        { c: "Chat", d: "Sends a message to the network chat." },
+        { c: "ChatJoin", d: "Joins a network chat channel." },
+        { c: "ChatLeave", d: "Leaves a network chat channel." },
+        { c: "CleanUp", d: "Removes unused objects from the show file." },
+        { c: "Clear", d: "Clears selection or programmer (Press 3x to clear all)." },
+        { c: "ClearActive", d: "Clears only active (red) values from the programmer." },
+        { c: "ClearAll", d: "Clears selection and all programmer values." },
+        { c: "ClearSelection", d: "Deselects all fixtures." },
+        { c: "Clone", d: "Copies programming from one fixture to another." },
+        { c: "CommandDelay", d: "Waits a specified time before executing next macro line." },
+        { c: "Collect", d: "Collects values into a specific object." },
+        { c: "Collection", d: "Opens or manages user collections." },
+        { c: "Color", d: "Accesses the color feature group or preset." },
+        { c: "ColorControl", d: "Adjusts specific color engine controls." },
+        { c: "ColorDefault", d: "Sets default color definitions." },
+        { c: "ColorTheme", d: "Changes the console's UI color theme." },
+        { c: "Column", d: "Selects a column in a sheet or layout." },
+        { c: "Commit", d: "Commits a temporary change." },
+        { c: "Configuration", d: "Opens network or system configuration." },
+        { c: "Copy", d: "Copies an object to a new destination." },
+        { c: "Crash", d: "Developer command to force a crash log." },
+        { c: "Create", d: "Generates a new object." },
+        { c: "Cue", d: "Selects or stores a specific cue in a sequence." },
+        { c: "CueFade", d: "Sets the basic fade time for a cue." },
+        { c: "CuePart", d: "Selects a specific part/layer of a cue." },
+        { c: "CueXFade", d: "Sets the crossfade transition for a cue." },
+        { c: "DataPool", d: "Changes the active DataPool context." },
+        { c: "Date", d: "Shows or sets system date." },
+        { c: "Delete", d: "Removes an object or value." },
+        { c: "Destination", d: "Displays current command line destination." },
+        { c: "Dimmer", d: "Accesses the dimmer feature group." },
+        { c: "Disable", d: "Disables an object, plugin, or trigger." },
+        { c: "Display", d: "Manages display screens on the console." },
+        { c: "DMX", d: "Views or patches direct DMX addresses." },
+        { c: "DMXAddress", d: "Points to a specific DMX footprint." },
+        { c: "DMXChannel", d: "Selects a direct DMX output channel." },
+        { c: "DMXUniverse", d: "Selects an entire DMX universe." },
+        { c: "Edit", d: "Opens an editor window for an object." },
+        { c: "Effect", d: "Accesses legacy effects or specific effect pool." },
+        { c: "Encoder", d: "Manipulates physical encoder settings." },
+        { c: "EncoderBank", d: "Changes the encoder attribute bank." },
+        { c: "EncoderGroup", d: "Selects grouped encoder attributes." },
+        { c: "EncoderPage", d: "Pages through encoder features." },
+        { c: "Executor", d: "Selects or interacts with a playback executor." },
+        { c: "Export", d: "Exports objects to XML/Drive." },
+        { c: "Fade", d: "Sets a fade time for the programmer or cue." },
+        { c: "Feature", d: "Selects a feature subset (e.g., ColorRGB)." },
+        { c: "FeatureGroup", d: "Selects a main feature group (Color, Position)." },
+        { c: "Fixture", d: "Selects a patched fixture (e.g., Fixture 1)." },
+        { c: "FixtureType", d: "Accesses the fixture profile library." },
+        { c: "FixtureTypePreset", d: "Edits global presets for a fixture type." },
+        { c: "Flash", d: "Temporarily bumps an executor to full." },
+        { c: "Freeze", d: "Freezes output so programmer changes aren't seen live." },
+        { c: "Full", d: "Sets selected fixtures' dimmer to 100%." },
+        { c: "Get", d: "Retrieves a property value." },
+        { c: "Go", d: "Triggers the next step in a sequence." },
+        { c: "GoFastBackward", d: "Jumps back in a sequence without fading." },
+        { c: "GoFastForward", d: "Jumps forward in a sequence without fading." },
+        { c: "Goto", d: "Jumps to a specific cue (e.g., Goto Cue 5)." },
+        { c: "Group", d: "Selects a predefined group of fixtures." },
+        { c: "Help", d: "Opens the Help manual (You are here!)." },
+        { c: "Highlight", d: "Sets selected fixtures to open white for easy identification." },
+        { c: "Import", d: "Imports XML data into the show file." },
+        { c: "Invert", d: "Inverts DMX values or selection." },
+        { c: "IP", d: "Shows or sets IP address." },
+        { c: "Label", d: "Renames an object." },
+        { c: "Layout", d: "Opens a 2D layout view." },
+        { c: "Learn", d: "Taps tempo to learn BPM." },
+        { c: "List", d: "Lists contents of the current command destination." },
+        { c: "ListRef", d: "Shows object dependencies." },
+        { c: "Load", d: "Preloads a cue to be fired next." },
+        { c: "Macro", d: "Triggers an automated command script." },
+        { c: "Master", d: "Selects a speed, rate, or grand master." },
+        { c: "Merge", d: "Merges programmer data into an existing object." },
+        { c: "Message", d: "Displays a popup message." },
+        { c: "MIDI", d: "Sends or configures MIDI notes." },
+        { c: "Move", d: "Moves an object from one ID to another." },
+        { c: "Network", d: "Configures session network." },
+        { c: "Next", d: "Selects the next fixture in the current selection." },
+        { c: "Off", d: "Turns off an executor or removes values." },
+        { c: "On", d: "Activates values in the programmer." },
+        { c: "Oops", d: "Undoes the last action (Ctrl+Z)." },
+        { c: "Output", d: "Opens the DMX Output sheet." },
+        { c: "Page", d: "Changes the active executor page." },
+        { c: "Park", d: "Locks a fixture/DMX address to its current value." },
+        { c: "Patch", d: "Opens the Patch/Fixture Schedule menu." },
+        { c: "Playback", d: "Accesses playback controls." },
+        { c: "Plugin", d: "Runs a Lua script plugin." },
+        { c: "Preset", d: "Calls or stores a preset (Color, Pan/Tilt, etc)." },
+        { c: "Programmer", d: "Accesses the programmer configuration." },
+        { c: "Release", d: "Releases control of an attribute back to sequences." },
+        { c: "Remove", d: "Knocks out values from the programmer." },
+        { c: "Reset", d: "Sends a reset control command to a moving head." },
+        { c: "SaveShow", d: "Saves the current show file." },
+        { c: "Select", d: "Selects an object." },
+        { c: "SelFix", d: "Selects fixtures based on sequence contents." },
+        { c: "Sequence", d: "Accesses a cue list (Sequence)." },
+        { c: "Set", d: "Sets a property value." },
+        { c: "Shutdown", d: "Turns off the console software." },
+        { c: "Store", d: "Saves programmer data into an object." },
+        { c: "Temp", d: "Fades an executor based on fader position." },
+        { c: "Thru", d: "Selects a range (e.g., Fixture 1 Thru 10)." },
+        { c: "Time", d: "Assigns timing to programmer values." },
+        { c: "Toggle", d: "Turns an executor on or off alternatingly." },
+        { c: "Top", d: "Goes to the first cue of a sequence." },
+        { c: "Unblock", d: "Removes unnecessary blocking values." },
+        { c: "Unlock", d: "Unlocks a locked object." },
+        { c: "Update", d: "Updates the current active cue with programmer data." },
+        { c: "Version", d: "Displays software version." },
+        { c: "View", d: "Recalls a saved screen layout." },
+        { c: "Wing", d: "Configures Wing/Symmetry rendering in the engine." },
+        { c: "World", d: "Restricts programming/playback to a subset of fixtures." }
     ];
 
-    function openHelp() { document.getElementById('help-modal').style.display = 'flex'; filterHelp(''); }
+    function openHelp() {
+        document.getElementById('help-modal').style.display = 'flex';
+        filterHelp('');
+        document.getElementById('help-search-input').focus();
+    }
     function closeHelp() { document.getElementById('help-modal').style.display = 'none'; }
-    function filterHelp(q) {
-        q = q.toLowerCase();
-        document.getElementById('help-list-container').innerHTML = cmdDict
+    function filterHelp(query) {
+        const q = query.toLowerCase();
+        const html = cmdDict
             .filter(x => x.c.toLowerCase().includes(q) || x.d.toLowerCase().includes(q))
-            .map(x => `<div class="help-item"><div class="h-cmd">${x.c}</div><div style="color:#ccc">${x.d}</div></div>`).join('');
+            .map(x => `<div class="help-item"><div class="h-cmd">${x.c}</div><div class="h-desc">${x.d}</div></div>`)
+            .join('');
+        document.getElementById('help-list-container').innerHTML = html;
     }
 
+    /* =========================================
+       CORE DATA & INITIALIZATION
+    ========================================= */
+    const patch = [];
+    let selected = [];
+
+    // Console Command Parser
     document.getElementById('cmd-input').addEventListener('keydown', e => {
         if(e.key === 'Enter') {
-            const cmd = e.target.value.trim().toLowerCase();
+            parseCmd(e.target.value);
             e.target.value = '';
-            if(cmd === 'help') { openHelp(); return; }
-            if(cmd === 'clear') { clearProg(); return; }
-            if(cmd === 'full') { fullAll(); return; }
-            
-            const match = cmd.match(/(?:fixture|fix)\s+(\d+)(?:\s+thru\s+(\d+))?(?:\s+at\s+(\d+))?/i);
-            if(match) {
-                const s = parseInt(match[1]), eNum = match[2] ? parseInt(match[2]) : s, val = match[3] ? parseInt(match[3]) : null;
-                selected = [];
-                for(let i=s; i<=eNum; i++) {
-                    if(patch.find(f => f.id === i)) {
-                        selected.push(i);
-                        if(val !== null) patch.find(f => f.id === i).dim = Math.round((val/100)*255);
-                    }
-                }
-                buildPatchUI(); updFaders();
-            }
         }
     });
 
+    function parseCmd(str) {
+        const cmd = str.trim().toLowerCase();
+        if(cmd === 'help') { openHelp(); return; }
+        if(cmd === 'clear') { clearProg(); return; }
+        if(cmd === 'full') { fullAll(); return; }
+        
+        const match = cmd.match(/(?:fixture|fix)\s+(\d+)(?:\s+thru\s+(\d+))?(?:\s+at\s+(\d+))?/i);
+        if(match) {
+            const start = parseInt(match[1]);
+            const end = match[2] ? parseInt(match[2]) : start;
+            const val = match[3] ? parseInt(match[3]) : null;
+            selected = [];
+            for(let i=start; i<=end; i++) {
+                if(patch.find(f => f.id === i)) {
+                    selected.push(i);
+                    if(val !== null) patch.find(f => f.id === i).dim = Math.round((val/100)*255);
+                }
+            }
+            buildPatchUI(); updFaders();
+        }
+    }
+
+    /* =========================================
+       FX & FORM ENGINE
+    ========================================= */
     const fx = { active: null, bpm: 120, amp: 1.0, spread: 0, offset: 0, wing: 'mirror', time: 0 };
     
     const forms = {
@@ -275,10 +449,9 @@
     function initShow() {
         patch.length = 0;
         selected = [];
-        // Preset 8 Fixtures - Default Dimmer FULL (255) & Target Tilt Down
         for(let i=1; i<=8; i++) {
             patch.push({
-                id: i, n: "Spot "+i, x: (i-4.5)*2.5, y: 6, z: 0,
+                id: i, n: "Spot "+i, x: (i-4.5)*2, y: 6, z: 0,
                 dim: 255, pan: 0, tilt: 30, zoom: 5, r: 255, g: 255, b: 255
             });
             selected.push(i);
@@ -289,6 +462,9 @@
         updFaders();
     }
 
+    /* =========================================
+       THREE.JS ENGINE & VISUALIZER (PERIS KODE V9.0)
+    ========================================= */
     let scene, camera, renderer, meshes = [];
     const camCtrl = { w:0, a:0, s:0, d:0, q:0, e:0, up:0, down:0, left:0, right:0, speed: 0.2 };
     let isCamDrag = false, prevMx = 0, prevMy = 0;
@@ -299,36 +475,31 @@
         
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0x050505);
-        scene.fog = new THREE.FogExp2(0x050505, 0.012);
+        scene.fog = new THREE.FogExp2(0x050505, 0.015);
         
         camera = new THREE.PerspectiveCamera(50, cont.clientWidth/cont.clientHeight, 0.1, 1000);
+        setCam('FRONT');
         
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
         renderer.setSize(cont.clientWidth, cont.clientHeight);
         renderer.setClearColor(0x050505, 1);
         cont.appendChild(renderer.domElement);
         
-        // Panggung, Grid, dan Truss
-        const floorGeo = new THREE.PlaneGeometry(30, 20);
-        const floorMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
-        const floor = new THREE.Mesh(floorGeo, floorMat);
-        floor.rotation.x = -Math.PI / 2;
-        floor.position.y = 0;
-        scene.add(floor);
+        // Environment (v9)
+        const grid = new THREE.GridHelper(40, 40, 0x333333, 0x111111);
+        scene.add(grid);
         
-        scene.add(new THREE.GridHelper(30, 30, 0x444444, 0x111111));
-        scene.add(new THREE.AmbientLight(0x444444));
-
-        const truss = new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,24,8), new THREE.MeshBasicMaterial({color:0x555555}));
+        const truss = new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,20,8), new THREE.MeshBasicMaterial({color:0x333}));
         truss.rotation.z = Math.PI/2; truss.position.y = 6;
         scene.add(truss);
 
+        // Build Fixtures (Struktur v9 Exact)
         meshes = [];
         patch.forEach(f => {
             const base = new THREE.Group();
             base.position.set(f.x, f.y, f.z);
             
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.6,0.4,0.6), new THREE.MeshBasicMaterial({color:0x333333}));
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.4,0.5), new THREE.MeshBasicMaterial({color:0x222}));
             base.add(body);
             
             const yoke = new THREE.Group(); yoke.position.y = -0.3; base.add(yoke);
@@ -337,30 +508,17 @@
             const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,0.4,16), new THREE.MeshBasicMaterial({color:0xffffff}));
             lens.rotation.x = Math.PI/2; head.add(lens);
             
-            // BEAM GEOMETRY RE-ENGINEERED: Dual Cone + Cylinder Core (No Fail Light Guarantee)
-            const bGroup = new THREE.Group();
-            
-            // Outer Volumetric Glow
-            const bGeo = new THREE.ConeGeometry(1.2, 18, 32, 1, true);
-            bGeo.translate(0, -9, 0); bGeo.rotateX(-Math.PI/2);
-            const bMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.8, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide });
-            const beamOuter = new THREE.Mesh(bGeo, bMat);
-            bGroup.add(beamOuter);
-
-            // Inner Intense Laser Core
-            const cGeo = new THREE.CylinderGeometry(0.05, 0.4, 18, 16);
-            cGeo.translate(0, -9, 0); cGeo.rotateX(-Math.PI/2);
-            const cMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.9, depthWrite:false });
-            const beamCore = new THREE.Mesh(cGeo, cMat);
-            bGroup.add(beamCore);
-
-            head.add(bGroup);
+            // Volumetric Beam (v9 Exact)
+            const bGeo = new THREE.ConeGeometry(1, 20, 32, 1, true);
+            bGeo.translate(0, -10, 0); bGeo.rotateX(-Math.PI/2);
+            const bMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide });
+            const beam = new THREE.Mesh(bGeo, bMat);
+            head.add(beam);
             
             scene.add(base);
-            meshes.push({ id: f.id, base, yoke, head, lens, beamGroup: bGroup, matOuter: bMat, matCore: cMat, body });
+            meshes.push({ id: f.id, base, yoke, head, lens, beam, mat: bMat, body });
         });
         
-        setCam('FRONT');
         setupInput(cont);
         animate();
     }
@@ -368,9 +526,11 @@
     function animate() {
         requestAnimationFrame(animate);
         
-        // Camera Movement
-        const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
+        // Camera Update
+        const dir = new THREE.Vector3();
+        camera.getWorldDirection(dir);
         const right = new THREE.Vector3().crossVectors(dir, camera.up).normalize();
+        
         if(camCtrl.w || camCtrl.up) camera.position.addScaledVector(dir, camCtrl.speed);
         if(camCtrl.s || camCtrl.down) camera.position.addScaledVector(dir, -camCtrl.speed);
         if(camCtrl.a || camCtrl.left) camera.position.addScaledVector(right, -camCtrl.speed);
@@ -378,7 +538,7 @@
         if(camCtrl.e) camera.position.y += camCtrl.speed;
         if(camCtrl.q) camera.position.y -= camCtrl.speed;
 
-        // FX Math & Mesh Rendering
+        // Phaser Animation Processing
         fx.time += 0.016 * (fx.bpm/60) * Math.PI;
         const cIdx = (patch.length - 1) / 2;
 
@@ -431,26 +591,22 @@
                 }
             }
 
+            // Sync to 3D Meshes (v9 Calculation Exact)
             const m = meshes.find(x => x.id === f.id);
             if(m) {
                 m.yoke.rotation.y = panOut * (Math.PI/180);
                 m.head.rotation.x = tiltOut * (Math.PI/180);
                 
                 let int = dimOut / 255;
-                let c = new THREE.Color(colOut.r/255, colOut.g/255, colOut.b/255);
+                let col = new THREE.Color(colOut.r/255, colOut.g/255, colOut.b/255);
+                m.lens.material.color = int > 0 ? col : new THREE.Color(0x222);
+                m.mat.color = col;
+                m.mat.opacity = int * 0.8;
                 
-                m.lens.material.color = int > 0 ? c : new THREE.Color(0x222222);
+                let zs = Math.tan((f.zoom/2)*(Math.PI/180)) * 20;
+                m.beam.scale.set(zs, 1, zs);
                 
-                // Force Guaranteed Beam Output
-                m.matOuter.color = c;
-                m.matOuter.opacity = int * 0.65;
-                
-                m.matCore.color = new THREE.Color(0xffffff); // Laser core remains bright white
-                m.matCore.opacity = int * 0.85;
-                
-                let zs = Math.max(0.2, Math.tan((f.zoom/2)*(Math.PI/180)) * 18);
-                m.beamGroup.scale.set(zs, 1, zs);
-                m.body.material.color.setHex(selected.includes(f.id) ? 0xffb700 : 0x333333);
+                m.body.material.color.setHex(selected.includes(f.id) ? 0xffb700 : 0x222);
             }
         });
         
@@ -476,45 +632,42 @@
             if(camCtrl.hasOwnProperty(k)) camCtrl[k] = 0;
             if(e.key.startsWith('Arrow')) camCtrl[e.key.replace('Arrow','').toLowerCase()] = 0;
         });
+        
         c.addEventListener('contextmenu', e => e.preventDefault());
         c.addEventListener('mousedown', e => { isCamDrag = true; prevMx = e.clientX; prevMy = e.clientY; });
         window.addEventListener('mouseup', () => { isCamDrag = false; });
         window.addEventListener('mousemove', e => {
             if(isCamDrag) {
-                camera.rotation.y -= (e.clientX - prevMx) * 0.005; 
-                camera.rotation.x -= (e.clientY - prevMy) * 0.005;
+                let dx = e.clientX - prevMx; let dy = e.clientY - prevMy;
+                camera.rotation.y -= dx * 0.005; camera.rotation.x -= dy * 0.005;
                 prevMx = e.clientX; prevMy = e.clientY;
             }
         });
         c.addEventListener('wheel', e => { camera.translateZ(e.deltaY > 0 ? 1 : -1); });
     }
 
-    function setCam(v) {
+    function setCam(view) {
         document.querySelectorAll('.cam-btn').forEach(b => b.classList.remove('active'));
         if(event && event.target) event.target.classList.add('active');
-        if(v === 'FRONT') { 
-            camera.position.set(0, 3, 22); 
-            camera.rotation.set(0, 0, 0); 
-            camera.lookAt(0, 3, 0); 
-        }
-        if(v === 'TOP') { 
-            camera.position.set(0, 25, 0); 
-            camera.rotation.set(-Math.PI/2, 0, 0); 
-        }
-        if(v === 'PERSPECTIVE') { 
-            camera.position.set(-15, 12, 20); 
-            camera.lookAt(0, 3, 0); 
-        }
+        if(view === 'FRONT') { camera.position.set(0, 3, 25); camera.rotation.set(0,0,0); }
+        if(view === 'TOP') { camera.position.set(0, 30, 0); camera.rotation.set(-Math.PI/2,0,0); }
+        if(view === 'PERSPECTIVE') { camera.position.set(-15, 10, 20); camera.rotation.set(-0.2,-0.5,0); }
     }
-    
-    function toggleNav() { const e = document.getElementById('nav-popup'); e.style.display = e.style.display === 'block' ? 'none' : 'block'; }
+
+    function toggleNav() {
+        const el = document.getElementById('nav-popup');
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+
     function switchTab(t) {
         document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
-        event.target.classList.add('active'); document.getElementById('tab-'+t).classList.add('active');
+        if(event && event.target) event.target.classList.add('active'); 
+        document.getElementById('tab-'+t).classList.add('active');
     }
     function toggleFS() { if(!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
 
+    /* FADER INTERACTION */
     let actFader = null;
     function initFader(e, type) {
         let el = e.currentTarget;
@@ -524,8 +677,8 @@
         let move = ev => {
             let pct = Math.max(0, Math.min(1, (actFader.rect.bottom - ev.clientY)/actFader.rect.height));
             let val = Math.round(pct * 100);
-            el.children[0].style.bottom = val+'%';
             
+            el.children[0].style.bottom = val+'%';
             let tgts = selected.length > 0 ? selected : patch.map(x=>x.id);
             tgts.forEach(fid => {
                 let f = patch.find(x=>x.id===fid);
@@ -536,13 +689,14 @@
                 if(actFader.type === 'zoom') { f.zoom = 5 + (val/100)*15; document.getElementById('val-zoom').innerText = Math.round(f.zoom)+'°'; }
             });
         };
+        
         let up = ev => { el.releasePointerCapture(ev.pointerId); el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); actFader = null; };
         el.addEventListener('pointermove', move); el.addEventListener('pointerup', up);
         move(e);
     }
     
     function updFaders() {
-        document.getElementById('lbl-sel').innerText = selected.length > 0 ? "Fix " + selected.join(',') : "All";
+        document.getElementById('lbl-sel').innerText = selected.length > 0 ? "Fix " + selected.join(',') : "All/None";
         let f = selected.length > 0 ? patch.find(x=>x.id===selected[0]) : patch[0];
         if(!f) return;
         document.getElementById('th-dimmer').style.bottom = (f.dim/255*100)+'%'; document.getElementById('val-dimmer').innerText = Math.round(f.dim/255*100)+'%';
@@ -552,10 +706,13 @@
     }
 
     function buildPatchUI() {
-        document.getElementById('fixture-sheet').innerHTML = patch.map(f => `
+        const s = document.getElementById('fixture-sheet');
+        s.innerHTML = patch.map(f => `
             <div class="fix-row ${selected.includes(f.id)?'selected':''}" onclick="selFix(${f.id}, event)">
-                <b>${f.id}</b> <span>${f.n}</span><span>${f.x}</span><span>${f.y}</span><span>${f.z}</span>
-            </div>`).join('');
+                <b>${f.id}</b> <span>${f.n}</span>
+                <span>${f.x}</span><span>${f.y}</span><span>${f.z}</span>
+            </div>
+        `).join('');
     }
 
     function selFix(id, e) {
@@ -563,8 +720,15 @@
         else selected = [id];
         buildPatchUI(); updFaders();
     }
-    function col(r,g,b) { let t = selected.length>0?selected:patch.map(x=>x.id); t.forEach(id=>{ let f=patch.find(x=>x.id===id); if(f){f.r=r;f.g=g;f.b=b;} }); }
-    function setDim(v) { let t = selected.length>0?selected:patch.map(x=>x.id); t.forEach(id=>{ let f=patch.find(x=>x.id===id); if(f) f.dim=v; }); updFaders(); }
+
+    function col(r,g,b) {
+        let tgts = selected.length > 0 ? selected : patch.map(x=>x.id);
+        tgts.forEach(id => { let f = patch.find(x=>x.id===id); if(f) { f.r = r; f.g = g; f.b = b; }});
+    }
+    function setDim(v) { 
+        let tgts = selected.length > 0 ? selected : patch.map(x=>x.id);
+        tgts.forEach(id => { let f = patch.find(x=>x.id===id); if(f) f.dim = v; }); updFaders(); 
+    }
     function clearProg() { selected = []; stopFX(); buildPatchUI(); updFaders(); }
     function fullAll() { setDim(255); }
 
