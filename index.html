@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ProLight OnPC v2.0 - Professional Lighting Console</title>
+<title>ProLight OnPC v3.0 - Professional Lighting Console & Phaser Engine</title>
 <!-- Three.js untuk Visualizer 3D -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
     :root { 
         --bg-dark: #121212; 
-        --panel-bg: #1a1a1a; 
-        --panel-header: #282828; 
+        --panel-bg: #181818; 
+        --panel-header: #262626; 
         --accent: #ffb700; 
         --accent-hover: #ffa200;
         --text: #e0e0e0; 
@@ -33,44 +33,52 @@
     .input-group label { display: block; font-size: 11px; color: var(--text-dim); margin-bottom: 5px; text-transform: uppercase; }
     .input-group input { width: 100%; background: #111; border: 1px solid var(--border); color: #fff; padding: 10px; font-size: 14px; border-radius: 4px; }
     
-    /* Desktop Mode Workspace Layout */
-    #workspace { display: none; width: 100vw; height: 100vh; grid-template-rows: 35px 1fr 180px 40px; grid-template-columns: 280px 1fr 340px; }
+    /* Workspace Layout */
+    #workspace { display: none; width: 100vw; height: 100vh; grid-template-rows: 35px 1fr 200px 40px; grid-template-columns: 280px 1fr 360px; }
     
     .header { grid-column: 1 / -1; background: #080808; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 15px; font-size: 12px; color: var(--text-dim); }
     .header-left, .header-right { display: flex; align-items: center; gap: 15px; }
     
-    /* Universal Panels */
     .panel { border: 1px solid var(--border); background: var(--panel-bg); display: flex; flex-direction: column; overflow: hidden; }
     .panel-title { background: var(--panel-header); color: var(--accent); padding: 6px 10px; font-size: 11px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
     
-    /* Fixture Sheet */
     #fixture-panel { grid-column: 1 / 2; grid-row: 2 / 3; }
     #fixture-sheet { padding: 5px; font-family: monospace; font-size: 11px; overflow-y: auto; flex: 1; }
     .fix-row { display: flex; justify-content: space-between; padding: 6px 8px; border-bottom: 1px solid #282828; cursor: pointer; }
     .fix-row:hover { background: #252525; }
     .fix-row.selected { background: var(--selected); color: #fff; }
     
-    /* 3D Stage Visualizer Panel */
     #stage-panel { grid-column: 2 / 3; grid-row: 2 / 3; position: relative; }
     #three-canvas-container { width: 100%; height: 100%; }
     
-    /* Programmer & Encoders Panel */
-    #programmer-panel { grid-column: 3 / 4; grid-row: 2 / 3; padding: 8px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
-    .encoder-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-    .encoder-box { background: #151515; border: 1px solid var(--border); border-radius: 6px; padding: 6px; text-align: center; }
+    /* Programmer & Phaser Pool Panel */
+    #programmer-panel { grid-column: 3 / 4; grid-row: 2 / 3; display: flex; flex-direction: column; }
+    .sub-tabs { display: flex; background: #181818; border-bottom: 1px solid var(--border); }
+    .sub-tab { flex: 1; padding: 6px; text-align: center; font-size: 10px; cursor: pointer; color: var(--text-dim); font-weight: bold; }
+    .sub-tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); background: #222; }
+    .tab-content { display: none; padding: 8px; font-size: 11px; overflow-y: auto; flex: 1; }
+    .tab-content.active { display: block; }
     
-    /* Rotary Dial Encoders */
+    /* Encoders */
+    .encoder-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 6px; }
+    .encoder-box { background: #141414; border: 1px solid var(--border); border-radius: 6px; padding: 6px; text-align: center; }
     .encoder-knob { width: 44px; height: 44px; background: radial-gradient(circle, #2a2a2a 0%, #151515 100%); border: 2px solid var(--accent); border-radius: 50%; margin: 4px auto; position: relative; display: flex; align-items: center; justify-content: center; cursor: ns-resize; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
     .encoder-indicator { position: absolute; top: 3px; width: 3px; height: 12px; background: var(--accent); border-radius: 2px; transform-origin: 50% 19px; pointer-events: none; }
     .encoder-label { font-size: 9px; color: var(--text-dim); text-transform: uppercase; font-weight: bold; pointer-events: none; }
     .encoder-val { font-size: 11px; font-weight: bold; color: #fff; margin-top: 1px; font-family: monospace; pointer-events: none; }
     
-    /* Tabs for Presets / Cues / FX */
-    .sub-tabs { display: flex; background: #181818; border-bottom: 1px solid var(--border); }
-    .sub-tab { flex: 1; padding: 4px; text-align: center; font-size: 10px; cursor: pointer; color: var(--text-dim); font-weight: bold; }
-    .sub-tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); background: #222; }
-    .tab-content { display: none; padding: 6px; font-size: 11px; overflow-y: auto; flex: 1; }
-    .tab-content.active { display: block; }
+    /* Phaser Library Grid */
+    .phaser-pool-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; max-height: 280px; overflow-y: auto; }
+    .phaser-card { background: #1f1f1f; border: 1px solid var(--border); border-radius: 4px; padding: 8px; cursor: pointer; transition: 0.1s; }
+    .phaser-card:hover { border-color: var(--accent); background: #252525; }
+    .phaser-card.active { border-color: var(--accent); background: #332900; }
+    .phaser-name { font-weight: bold; color: #fff; font-size: 11px; margin-bottom: 2px; }
+    .phaser-desc { font-size: 9px; color: var(--text-dim); }
+    
+    /* Parameters Controls */
+    .param-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 11px; }
+    .param-row input[type="range"] { width: 120px; accent-color: var(--accent); }
+    .param-row select { background: #111; color: #fff; border: 1px solid var(--border); padding: 2px 4px; border-radius: 3px; font-size: 10px; }
     
     /* Executors Panel */
     #executor-panel { grid-column: 1 / -1; grid-row: 3 / 4; display: flex; padding: 6px; gap: 6px; background: #161616; border-top: 1px solid var(--border); }
@@ -85,17 +93,11 @@
     .exec-btn.flash { background: #522; border-color: #733; }
     .exec-btn.flash:active { background: #f55; }
     
-    /* Command Line Panel & Help Drawer */
+    /* Command Line */
     #cmd-panel { grid-column: 1 / -1; grid-row: 4 / 5; display: flex; background: #000; border-top: 1px solid var(--border); align-items: center; position: relative; }
     .cmd-badge { background: var(--accent); color: black; padding: 0 15px; height: 100%; display: flex; align-items: center; font-weight: bold; font-size: 12px; font-family: monospace; cursor: pointer; }
-    .cmd-badge:hover { background: var(--accent-hover); }
     #cmd-input { flex: 1; background: transparent; border: none; color: var(--accent); font-family: monospace; font-size: 15px; padding: 0 15px; outline: none; }
     .cmd-help { color: var(--text-dim); font-size: 11px; padding-right: 15px; font-family: monospace; }
-    
-    #cmd-help-drawer { display: none; position: absolute; bottom: 42px; left: 0; right: 0; background: #181818; border: 1px solid var(--accent); border-radius: 4px 4px 0 0; padding: 12px; z-index: 1000; box-shadow: 0 -5px 20px rgba(0,0,0,0.8); }
-    .cmd-help-title { color: var(--accent); font-size: 12px; font-weight: bold; margin-bottom: 6px; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 4px; }
-    .cmd-help-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-family: monospace; font-size: 11px; }
-    .cmd-help-item span { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -103,15 +105,15 @@
 <!-- Startup Screen -->
 <div id="startup-screen">
     <div class="startup-box">
-        <h1 style="color: var(--accent); margin-bottom: 5px; font-size: 22px;">PROLIGHT ONPC v2.0</h1>
-        <p style="color: var(--text-dim); font-size: 11px; margin-bottom: 25px;">Professional Lighting Console & 3D Engine</p>
+        <h1 style="color: var(--accent); margin-bottom: 5px; font-size: 22px;">PROLIGHT ONPC v3.0</h1>
+        <p style="color: var(--text-dim); font-size: 11px; margin-bottom: 25px;">Advanced Phaser & Professional Lighting Engine</p>
         
         <div class="input-group">
             <label>Show Name</label>
-            <input type="text" id="show-name-input" value="Main Arena Tour 2026">
+            <input type="text" id="show-name-input" value="Arena Tour Phaser Show 2026">
         </div>
         
-        <button class="btn" onclick="startShow()">New Show / Start Workspace</button>
+        <button class="btn" onclick="startShow()">New Show / Launch Console</button>
         <button class="btn btn-secondary" onclick="toggleFullScreen()">Toggle Full Screen Mode</button>
         <button class="btn btn-secondary" style="margin-top: 4px;" onclick="loadDemoShow()">Load Demo Show</button>
     </div>
@@ -123,7 +125,7 @@
     <div class="header">
         <div class="header-left">
             <span>Show: <strong id="lbl-showname" style="color:#fff;">New Show</strong></span>
-            <span>Universe: <strong style="color:var(--accent);">1</strong></span>
+            <span>Active Phaser: <strong id="lbl-active-phaser" style="color:var(--accent);">None</strong></span>
         </div>
         <div class="header-right">
             <button class="btn-secondary" style="padding: 2px 8px; font-size:10px; cursor:pointer;" onclick="saveShow()">Save Show</button>
@@ -140,19 +142,18 @@
     <!-- 3D Stage Visualizer -->
     <div class="panel" id="stage-panel">
         <div class="panel-title">
-            <span>3D Stage Visualizer (WebGL)</span>
+            <span>3D Stage Visualizer (WebGL Realtime)</span>
             <span style="font-size:9px; color:var(--text-dim);">Orbit: Drag Mouse | Zoom: Scroll</span>
         </div>
         <div id="three-canvas-container"></div>
     </div>
     
-    <!-- Programmer & Encoders Panel with Tabs -->
+    <!-- Programmer & Phaser Engine Panel -->
     <div class="panel" id="programmer-panel">
         <div class="sub-tabs">
             <div class="sub-tab active" onclick="switchTab('encoders')">Encoders</div>
-            <div class="sub-tab" onclick="switchTab('presets')">Presets</div>
-            <div class="sub-tab" onclick="switchTab('cues')">Cues</div>
-            <div class="sub-tab" onclick="switchTab('fx')">Effects</div>
+            <div class="sub-tab" onclick="switchTab('phaserpool')">Phaser Library</div>
+            <div class="sub-tab" onclick="switchTab('phasereditor')">Phaser Editor</div>
         </div>
         
         <!-- Encoders Tab -->
@@ -193,36 +194,53 @@
             <button class="btn" style="padding: 4px; margin-top: auto; font-size: 10px;" onclick="clearProgrammer()">Clear Programmer (ESC)</button>
         </div>
 
-        <!-- Presets Tab -->
-        <div id="tab-presets" class="tab-content">
-            <div style="font-weight:bold; color:var(--accent); margin-bottom:4px;">Color Presets</div>
-            <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:4px;">
-                <button class="btn" style="margin:0; padding:6px; font-size:10px; background:#400; border-color:#f00;" onclick="applyPreset('color', 'red')">RED</button>
-                <button class="btn" style="margin:0; padding:6px; font-size:10px; background:#040; border-color:#0f0;" onclick="applyPreset('color', 'green')">GREEN</button>
-                <button class="btn" style="margin:0; padding:6px; font-size:10px; background:#004; border-color:#00f;" onclick="applyPreset('color', 'blue')">BLUE</button>
-                <button class="btn" style="margin:0; padding:6px; font-size:10px; background:#444; border-color:#fff;" onclick="applyPreset('color', 'white')">WHITE</button>
+        <!-- Phaser Library Tab -->
+        <div id="tab-phaserpool" class="tab-content">
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px; align-items:center;">
+                <span style="font-weight:bold; color:var(--accent);">Phaser Engine Library</span>
+                <button class="btn" style="margin:0; padding:2px 6px; font-size:9px; width:auto; background:#311; border-color:#f55;" onclick="stopPhaser()">Stop FX</button>
+            </div>
+            <div class="phaser-pool-grid" id="phaser-pool-container">
+                <!-- Rendered dynamically by JS -->
             </div>
         </div>
 
-        <!-- Cues Tab -->
-        <div id="tab-cues" class="tab-content">
-            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                <span style="font-weight:bold; color:var(--accent);">Sequence List</span>
-                <button class="btn" style="margin:0; padding:2px 6px; font-size:9px; width:auto;" onclick="storeCue()">Store Cue</button>
+        <!-- Phaser Editor Tab -->
+        <div id="tab-phasereditor" class="tab-content">
+            <div style="font-weight:bold; color:var(--accent); margin-bottom:6px;">Custom Phaser Builder</div>
+            <div class="param-row">
+                <span>Attribute:</span>
+                <select id="editor-attr">
+                    <option value="dimmer">Dimmer</option>
+                    <option value="pan">Pan</option>
+                    <option value="tilt">Tilt</option>
+                    <option value="color">Color RGB</option>
+                </select>
             </div>
-            <div id="cue-list-container" style="font-family:monospace; font-size:10px;">
-                <!-- Rendered by JS -->
+            <div class="param-row">
+                <span>Shape / Wave:</span>
+                <select id="editor-shape">
+                    <option value="sine">Sine Wave</option>
+                    <option value="cosine">Cosine Wave</option>
+                    <option value="sawtooth">Sawtooth</option>
+                    <option value="triangle">Triangle</option>
+                    <option value="circle">Circle (Pan/Tilt)</option>
+                    <option value="figure8">Figure 8</option>
+                </select>
             </div>
-        </div>
-
-        <!-- FX Tab -->
-        <div id="tab-fx" class="tab-content">
-            <div style="font-weight:bold; color:var(--accent); margin-bottom:4px;">Effects Engine</div>
-            <div style="display:flex; flex-direction:column; gap:4px;">
-                <button class="btn" style="margin:0; padding:6px; font-size:10px;" onclick="toggleFX('dimmer_chase')">Dimmer Chase FX</button>
-                <button class="btn" style="margin:0; padding:6px; font-size:10px;" onclick="toggleFX('pan_wave')">Pan Wave FX</button>
-                <button class="btn" style="margin:0; padding:6px; font-size:10px; background:#311;" onclick="stopFX()">Stop All FX</button>
+            <div class="param-row">
+                <span>Speed (Hz): <strong id="lbl-ed-speed">1.0</strong></span>
+                <input type="range" id="editor-speed" min="0.1" max="5.0" step="0.1" value="1.0" oninput="document.getElementById('lbl-ed-speed').innerText=this.value">
             </div>
+            <div class="param-row">
+                <span>Width (%): <strong id="lbl-ed-width">100</strong></span>
+                <input type="range" id="editor-width" min="10" max="360" step="10" value="100" oninput="document.getElementById('lbl-ed-width').innerText=this.value">
+            </div>
+            <div class="param-row">
+                <span>Phase Spread (°): <strong id="lbl-ed-phase">90</strong></span>
+                <input type="range" id="editor-phase" min="0" max="360" step="15" value="90" oninput="document.getElementById('lbl-ed-phase').innerText=this.value">
+            </div>
+            <button class="btn" style="margin-top:6px; padding:6px; font-size:10px;" onclick="applyCustomPhaser()">Apply Custom Phaser</button>
         </div>
     </div>
     
@@ -231,43 +249,46 @@
     
     <!-- Command Line -->
     <div id="cmd-panel">
-        <div id="cmd-help-drawer">
-            <div class="cmd-help-title">Command Line Reference</div>
-            <div class="cmd-help-grid">
-                <div class="cmd-help-item"><span>Fixture 1</span> : Pilih fixture 1</div>
-                <div class="cmd-help-item"><span>Fix 1 thru 3</span> : Pilih rentang fixture</div>
-                <div class="cmd-help-item"><span>At 100</span> : Set dimmer ke 100%</div>
-                <div class="cmd-help-item"><span>store cue 1</span> : Rekam ke cue 1</div>
-                <div class="cmd-help-item"><span>fullsc</span> : Toggle Fullscreen</div>
-                <div class="cmd-help-item"><span>clear</span> : Reset programmer</div>
-            </div>
-        </div>
-        
-        <div class="cmd-badge" onclick="toggleCmdHelp()" title="Bantuan Command">CMD (?)</div>
-        <input type="text" id="cmd-input" placeholder="Ketik perintah (cth: Fix 1 thru 3 At 100, store cue 1, fullsc)..." autocomplete="off">
+        <div class="cmd-badge" onclick="alert('Ketik: Fix 1 thru 4 | At 100 | FX Dimmer Chase | Clear')" title="Command Help">CMD</div>
+        <input type="text" id="cmd-input" placeholder="Ketik perintah (cth: Fix 1 thru 4 At 100, FX Dimmer Chase, Clear)..." autocomplete="off">
         <div class="cmd-help">Tekan ENTER untuk eksekusi</div>
     </div>
 </div>
 
 <script>
+    // --- SHOW & PHASER DATABASE ---
     const showData = {
-        name: "Main Arena Tour 2026",
+        name: "Arena Tour Phaser Show 2026",
         patch: [
-            { id: 1, name: "Moving Head Spot 1", type: "Spot", universe: 1, address: 1, x: -4, z: -2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 },
+            { id: 1, name: "Moving Head Spot 1", type: "Spot", universe: 1, address: 1, x: -5, z: -2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 },
             { id: 2, name: "Moving Head Spot 2", type: "Spot", universe: 1, address: 17, x: -2, z: -2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 },
             { id: 3, name: "Moving Head Spot 3", type: "Spot", universe: 1, address: 33, x: 2, z: -2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 },
-            { id: 4, name: "Moving Head Spot 4", type: "Spot", universe: 1, address: 49, x: 4, z: -2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 },
-            { id: 5, name: "LED Wash Bar", type: "Bar", universe: 1, address: 70, x: 0, z: 2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 100, colorB: 0 }
-        ],
-        cues: [
-            { number: 1, name: "Intro Blackout", values: {} },
-            { number: 2, name: "Verse Beam Up", values: {} }
+            { id: 4, name: "Moving Head Spot 4", type: "Spot", universe: 1, address: 49, x: 5, z: -2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 },
+            { id: 5, name: "LED Wash Bar 1", type: "Bar", universe: 1, address: 70, x: -3, z: 2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 },
+            { id: 6, name: "LED Wash Bar 2", type: "Bar", universe: 1, address: 90, x: 3, z: 2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 }
         ]
     };
 
     let selectedFixtures = [];
-    let activeFX = null;
-    let fxTick = 0;
+
+    // --- EXTENSIVE PHASER LIBRARY ---
+    const phaserLibrary = [
+        { id: 'dim_chase', name: 'Dimmer Chase', attr: 'dimmer', shape: 'sine', speed: 1.5, width: 50, phase: 60, desc: 'Sequential flowing chase' },
+        { id: 'dim_pulse', name: 'Dimmer Pulse', attr: 'dimmer', shape: 'triangle', speed: 2.0, width: 100, phase: 90, desc: 'Sharp snappy pulse' },
+        { id: 'dim_wave', name: 'Dimmer Wave', attr: 'dimmer', shape: 'sine', speed: 1.0, width: 100, phase: 45, desc: 'Smooth sinusoidal wave' },
+        { id: 'dim_random', name: 'Dimmer Flicker', attr: 'dimmer', shape: 'random', speed: 4.0, width: 100, phase: 180, desc: 'Stochastic strobe flicker' },
+        { id: 'color_rainbow', name: 'Color Rainbow', attr: 'color', shape: 'sine', speed: 0.8, width: 360, phase: 60, desc: 'Full spectrum color cycle' },
+        { id: 'color_chase', name: 'Color Chase', attr: 'color', shape: 'sawtooth', speed: 1.2, width: 180, phase: 90, desc: 'Dynamic multi-color sweep' },
+        { id: 'pan_wave', name: 'Pan Wave', attr: 'pan', shape: 'sine', speed: 1.0, width: 60, phase: 45, desc: 'Horizontal swing wave' },
+        { id: 'tilt_wave', name: 'Tilt Wave', attr: 'tilt', shape: 'cosine', speed: 1.0, width: 45, phase: 45, desc: 'Vertical tilt oscillation' },
+        { id: 'pt_circle', name: 'Pan/Tilt Circle', attr: 'position', shape: 'circle', speed: 1.2, width: 50, phase: 90, desc: 'Circular beam rotation' },
+        { id: 'pt_fig8', name: 'Pan/Tilt Figure 8', attr: 'position', shape: 'figure8', speed: 1.0, width: 60, phase: 90, desc: 'Figure 8 infinity sweep' },
+        { id: 'zoom_pulse', name: 'Zoom Pulse', attr: 'zoom', shape: 'triangle', speed: 2.0, width: 100, phase: 30, desc: 'Beam spread pulsing' },
+        { id: 'strobe_chase', name: 'Strobe Chase', attr: 'strobe', shape: 'sawtooth', speed: 3.0, width: 20, phase: 90, desc: 'Rapid synchronized flash' }
+    ];
+
+    let activePhaser = null;
+    let phaserTick = 0;
 
     function toggleFullScreen() {
         if (!document.fullscreenElement) {
@@ -280,7 +301,6 @@
     function switchTab(tabName) {
         document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        
         event.currentTarget.classList.add('active');
         document.getElementById('tab-' + tabName).classList.add('active');
     }
@@ -296,7 +316,7 @@
         scene.background = new THREE.Color(0x0a0a0a);
 
         camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
-        camera.position.set(0, 5, 12);
+        camera.position.set(0, 5, 14);
         camera.lookAt(0, 0, 0);
 
         renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -306,14 +326,14 @@
 
         scene.add(new THREE.AmbientLight(0x222222));
 
-        const floorGeo = new THREE.PlaneGeometry(14, 10);
+        const floorGeo = new THREE.PlaneGeometry(16, 12);
         const floorMat = new THREE.MeshStandardMaterial({ color: 0x181818, roughness: 0.8 });
         const floor = new THREE.Mesh(floorGeo, floorMat);
         floor.rotation.x = -Math.PI / 2;
         floor.position.y = -1;
         scene.add(floor);
 
-        const grid = new THREE.GridHelper(14, 14, 0x444444, 0x222222);
+        const grid = new THREE.GridHelper(16, 16, 0x444444, 0x222222);
         grid.position.y = -0.99;
         scene.add(grid);
 
@@ -334,7 +354,7 @@
             lens.position.y = -0.3;
             group.add(lens);
 
-            const spotLight = new THREE.SpotLight(0xffffff, 0, 15, Math.PI / 6, 0.5, 1);
+            const spotLight = new THREE.SpotLight(0xffffff, 0, 18, Math.PI / 6, 0.5, 1);
             spotLight.position.set(0, -0.3, 0);
             
             const targetObj = new THREE.Object3D();
@@ -364,23 +384,51 @@
         animate3D();
     }
 
+    // --- ADVANCED PHASER ENGINE MATH SOLVER ---
     function animate3D() {
         requestAnimationFrame(animate3D);
-        fxTick += 0.05;
+        
+        if (activePhaser) {
+            phaserTick += 0.03 * activePhaser.speed;
+            const phaseRadSpread = THREE.MathUtils.degToRad(activePhaser.phase);
 
-        // Effects Engine Real-time calculation
-        if(activeFX === 'dimmer_chase') {
             showData.patch.forEach((fix, idx) => {
-                fix.dimmer = Math.floor((Math.sin(fxTick + (idx * 0.8)) + 1) * 127.5);
-            });
-            updateProgrammerUI();
-        } else if(activeFX === 'pan_wave') {
-            showData.patch.forEach((fix, idx) => {
-                fix.pan = Math.sin(fxTick + (idx * 0.5)) * 45;
+                const individualOffset = idx * phaseRadSpread;
+                const t = phaserTick + individualOffset;
+
+                if (activePhaser.attr === 'dimmer' || activePhaser.attr === 'all') {
+                    let val = 0;
+                    if (activePhaser.shape === 'sine') val = (Math.sin(t) + 1) * 127.5;
+                    else if (activePhaser.shape === 'triangle') val = Math.abs((t % (Math.PI * 2)) - Math.PI) * (255 / Math.PI);
+                    else if (activePhaser.shape === 'sawtooth') val = ((t % (Math.PI * 2)) / (Math.PI * 2)) * 255;
+                    else if (activePhaser.shape === 'random') val = Math.random() * 255;
+                    fix.dimmer = Math.floor(val);
+                }
+
+                if (activePhaser.attr === 'color' || activePhaser.attr === 'all') {
+                    const hue = (t * 50) % 360;
+                    const rgb = hslToRgb(hue / 360, 1, 0.5);
+                    fix.colorR = Math.floor(rgb[0] * 255);
+                    fix.colorG = Math.floor(rgb[1] * 255);
+                    fix.colorB = Math.floor(rgb[2] * 255);
+                }
+
+                if (activePhaser.attr === 'pan' || activePhaser.attr === 'position' || activePhaser.attr === 'all') {
+                    if (activePhaser.shape === 'circle') {
+                        fix.pan = Math.sin(t) * activePhaser.width;
+                        fix.tilt = Math.cos(t) * (activePhaser.width / 2);
+                    } else if (activePhaser.shape === 'figure8') {
+                        fix.pan = Math.sin(t) * activePhaser.width;
+                        fix.tilt = Math.sin(t * 2) * (activePhaser.width / 2);
+                    } else {
+                        fix.pan = Math.sin(t) * activePhaser.width;
+                    }
+                }
             });
             updateProgrammerUI();
         }
 
+        // Render 3D transformations
         showData.patch.forEach(fix => {
             const meshObj = fixtureMeshes.find(m => m.id === fix.id);
             if (!meshObj) return;
@@ -388,7 +436,7 @@
             const intensityFactor = fix.dimmer / 255;
             const col = new THREE.Color(fix.colorR / 255, fix.colorG / 255, fix.colorB / 255);
 
-            meshObj.light.intensity = intensityFactor * 10;
+            meshObj.light.intensity = intensityFactor * 12;
             meshObj.light.color = col;
             meshObj.lens.material.color = intensityFactor > 0 ? col : new THREE.Color(0x444444);
 
@@ -396,14 +444,36 @@
             const tiltRad = THREE.MathUtils.degToRad(fix.tilt);
             
             meshObj.group.rotation.y = panRad;
-            meshObj.target.position.x = fix.x + Math.sin(panRad) * 5 + Math.sin(tiltRad) * 3;
-            meshObj.target.position.z = fix.z + Math.cos(panRad) * 5;
+            meshObj.target.position.x = fix.x + Math.sin(panRad) * 6 + Math.sin(tiltRad) * 3;
+            meshObj.target.position.z = fix.z + Math.cos(panRad) * 6;
 
             const isSelected = selectedFixtures.includes(fix.id);
             meshObj.group.children[0].material.color.setHex(isSelected ? 0xffb700 : 0x333333);
         });
 
         renderer.render(scene, camera);
+    }
+
+    function hslToRgb(h, s, l) {
+        let r, g, b;
+        if (s === 0) {
+            r = g = b = l;
+        } else {
+            const hue2rgb = (p, q, t) => {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1/6) return p + (q - p) * 6 * t;
+                if (t < 1/2) return q;
+                if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                return p;
+            };
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            const p = 2 * l - q;
+            r = hue2rgb(p, q, h + 1/3);
+            g = hue2rgb(p, q, h);
+            b = hue2rgb(p, q, h - 1/3);
+        }
+        return [r, g, b];
     }
 
     function startShow() {
@@ -415,14 +485,14 @@
         document.getElementById('workspace').style.display = 'grid';
 
         renderFixtureSheet();
-        renderCueList();
+        renderPhaserLibrary();
         buildExecutors();
         init3DVisualizer();
         document.getElementById('cmd-input').focus();
     }
 
     function loadDemoShow() {
-        document.getElementById('show-name-input').value = "Mega Arena Tour 2026";
+        document.getElementById('show-name-input').value = "Mega Arena Phaser Tour 2026";
         startShow();
     }
 
@@ -446,14 +516,48 @@
         `).join('');
     }
 
-    function renderCueList() {
-        const container = document.getElementById('cue-list-container');
-        container.innerHTML = showData.cues.map(c => `
-            <div style="padding: 4px; border-bottom: 1px solid #333; display:flex; justify-content:space-between;">
-                <span>Cue ${c.number}: ${c.name}</span>
-                <span style="color:var(--accent);">Ready</span>
+    function renderPhaserLibrary() {
+        const container = document.getElementById('phaser-pool-container');
+        container.innerHTML = phaserLibrary.map(p => `
+            <div class="phaser-card ${activePhaser && activePhaser.id === p.id ? 'active' : ''}" onclick="applyPhaser('${p.id}')">
+                <div class="phaser-name">${p.name}</div>
+                <div class="phaser-desc">${p.desc}</div>
             </div>
         `).join('');
+    }
+
+    function applyPhaser(id) {
+        const p = phaserLibrary.find(item => item.id === id);
+        if(!p) return;
+        activePhaser = { ...p };
+        document.getElementById('lbl-active-phaser').innerText = p.name;
+        renderPhaserLibrary();
+    }
+
+    function stopPhaser() {
+        activePhaser = null;
+        document.getElementById('lbl-active-phaser').innerText = "None";
+        renderPhaserLibrary();
+    }
+
+    function applyCustomPhaser() {
+        const attr = document.getElementById('editor-attr').value;
+        const shape = document.getElementById('editor-shape').value;
+        const speed = parseFloat(document.getElementById('editor-speed').value);
+        const width = parseFloat(document.getElementById('editor-width').value);
+        const phase = parseFloat(document.getElementById('editor-phase').value);
+
+        activePhaser = {
+            id: 'custom_fx',
+            name: 'Custom ' + attr.toUpperCase(),
+            attr: attr,
+            shape: shape,
+            speed: speed,
+            width: width,
+            phase: phase,
+            desc: 'Custom user defined phaser'
+        };
+        document.getElementById('lbl-active-phaser').innerText = activePhaser.name;
     }
 
     function buildExecutors() {
@@ -488,7 +592,7 @@
 
     function clearProgrammer() {
         selectedFixtures = [];
-        activeFX = null;
+        stopPhaser();
         renderFixtureSheet();
         updateProgrammerUI();
     }
@@ -503,11 +607,10 @@
         
         if(selectedFixtures.length > 0) {
             const fix = showData.patch.find(f => f.id === selectedFixtures[0]);
-            
             const dimPercent = Math.round((fix.dimmer / 255) * 100);
             document.getElementById('val-dimmer').innerText = dimPercent + '%';
-            document.getElementById('val-pan').innerText = fix.pan + '°';
-            document.getElementById('val-tilt').innerText = fix.tilt + '°';
+            document.getElementById('val-pan').innerText = Math.round(fix.pan) + '°';
+            document.getElementById('val-tilt').innerText = Math.round(fix.tilt) + '°';
             document.getElementById('val-colorR').innerText = fix.colorR;
             document.getElementById('val-colorG').innerText = fix.colorG;
             document.getElementById('val-colorB').innerText = fix.colorB;
@@ -539,48 +642,12 @@
         indicator.style.transform = `rotate(${deg}deg)`;
     }
 
-    function applyPreset(type, colorName) {
-        if(selectedFixtures.length === 0) return;
-        let r=255, g=255, b=255;
-        if(colorName === 'red') { r=255; g=0; b=0; }
-        else if(colorName === 'green') { r=0; g=255; b=0; }
-        else if(colorName === 'blue') { r=0; g=0; b=255; }
-        else if(colorName === 'white') { r=255; g=255; b=255; }
-
-        selectedFixtures.forEach(id => {
-            const fix = showData.patch.find(f => f.id === id);
-            if(fix) {
-                fix.colorR = r; fix.colorG = g; fix.colorB = b;
-            }
-        });
-        updateProgrammerUI();
-    }
-
-    function storeCue() {
-        const nextNum = showData.cues.length + 1;
-        showData.cues.push({ number: nextNum, name: "Live State Cue " + nextNum });
-        renderCueList();
-    }
-
-    function toggleFX(fxName) { activeFX = fxName; }
-    function stopFX() { activeFX = null; }
-
     // --- COMMAND LINE PARSER ---
     const cmdInput = document.getElementById('cmd-input');
-    
-    function toggleCmdHelp() {
-        const drawer = document.getElementById('cmd-help-drawer');
-        drawer.style.display = drawer.style.display === 'block' ? 'none' : 'block';
-    }
-
-    cmdInput.addEventListener('focus', () => { document.getElementById('cmd-help-drawer').style.display = 'block'; });
-    cmdInput.addEventListener('blur', () => { setTimeout(() => { document.getElementById('cmd-help-drawer').style.display = 'none'; }, 250); });
-
     cmdInput.addEventListener('keydown', function(e) {
         if(e.key === 'Enter') {
             parseCommand(this.value.trim());
             this.value = '';
-            document.getElementById('cmd-help-drawer').style.display = 'none';
         }
     });
 
@@ -588,8 +655,12 @@
         const lower = cmdText.toLowerCase();
         if(lower === 'clear') { clearProgrammer(); return; }
         if(lower === 'fullsc') { toggleFullScreen(); return; }
-        if(lower === 'store cue') { storeCue(); return; }
-        if(lower === 'help' || lower === '?') { toggleCmdHelp(); return; }
+        if(lower.startsWith('fx ')) {
+            const fxName = cmdText.substring(3).trim();
+            const found = phaserLibrary.find(p => p.name.toLowerCase() === fxName);
+            if(found) applyPhaser(found.id);
+            return;
+        }
 
         const regex = /(?:fixture|fix)\s+(\d+)(?:\s+thru\s+(\d+))?(?:\s+at\s+(\d+))?/i;
         const match = lower.match(regex);
