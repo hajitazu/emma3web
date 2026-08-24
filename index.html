@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ProLight OnPC - Professional Lighting Console</title>
+<!-- Three.js untuk Visualizer 3D -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
     :root { 
@@ -26,6 +27,8 @@
     .startup-box { background: var(--panel-bg); padding: 40px; border-radius: 8px; border: 1px solid var(--border); text-align: center; width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
     .btn { background: #2a2a2a; color: var(--accent); border: 1px solid var(--accent); padding: 12px 24px; margin: 8px 0; width: 100%; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 13px; border-radius: 4px; transition: 0.2s; }
     .btn:hover { background: var(--accent); color: #000; }
+    .btn-secondary { background: transparent; border-color: #555; color: #aaa; }
+    .btn-secondary:hover { background: #333; color: #fff; }
     .input-group { margin-bottom: 15px; text-align: left; }
     .input-group label { display: block; font-size: 11px; color: var(--text-dim); margin-bottom: 5px; text-transform: uppercase; }
     .input-group input { width: 100%; background: #111; border: 1px solid var(--border); color: #fff; padding: 10px; font-size: 14px; border-radius: 4px; }
@@ -52,13 +55,15 @@
     #three-canvas-container { width: 100%; height: 100%; }
     
     /* Programmer & Encoders Panel */
-    #programmer-panel { grid-column: 3 / 4; grid-row: 2 / 3; padding: 10px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; }
+    #programmer-panel { grid-column: 3 / 4; grid-row: 2 / 3; padding: 10px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
     .encoder-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .encoder-box { background: #151515; border: 1px solid var(--border); border-radius: 6px; padding: 10px; text-align: center; }
-    .encoder-knob { width: 50px; height: 50px; background: #222; border: 2px solid var(--accent); border-radius: 50%; margin: 8px auto; position: relative; display: flex; align-items: center; justify-content: center; cursor: ns-resize; }
-    .encoder-knob::after { content: ''; position: absolute; top: 4px; width: 3px; height: 12px; background: var(--accent); border-radius: 2px; }
-    .encoder-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; }
-    .encoder-val { font-size: 13px; font-weight: bold; color: #fff; margin-top: 2px; }
+    .encoder-box { background: #151515; border: 1px solid var(--border); border-radius: 6px; padding: 8px; text-align: center; }
+    
+    /* Rotary Dial Encoders */
+    .encoder-knob { width: 56px; height: 56px; background: radial-gradient(circle, #2a2a2a 0%, #151515 100%); border: 2px solid var(--accent); border-radius: 50%; margin: 6px auto; position: relative; display: flex; align-items: center; justify-content: center; cursor: ns-resize; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    .encoder-indicator { position: absolute; top: 4px; width: 4px; height: 16px; background: var(--accent); border-radius: 2px; transform-origin: 50% 24px; transition: transform 0.05s linear; }
+    .encoder-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; font-weight: bold; }
+    .encoder-val { font-size: 12px; font-weight: bold; color: #fff; margin-top: 2px; font-family: monospace; }
     
     /* Executors Panel */
     #executor-panel { grid-column: 1 / -1; grid-row: 3 / 4; display: flex; padding: 6px; gap: 6px; background: #161616; border-top: 1px solid var(--border); }
@@ -73,19 +78,27 @@
     .exec-btn.flash { background: #522; border-color: #733; }
     .exec-btn.flash:active { background: #f55; }
     
-    /* Command Line Panel */
-    #cmd-panel { grid-column: 1 / -1; grid-row: 4 / 5; display: flex; background: #000; border-top: 1px solid var(--border); align-items: center; }
-    .cmd-badge { background: var(--accent); color: black; padding: 0 15px; height: 100%; display: flex; align-items: center; font-weight: bold; font-size: 12px; font-family: monospace; }
+    /* Command Line Panel & Help Popover */
+    #cmd-panel { grid-column: 1 / -1; grid-row: 4 / 5; display: flex; background: #000; border-top: 1px solid var(--border); align-items: center; position: relative; }
+    .cmd-badge { background: var(--accent); color: black; padding: 0 15px; height: 100%; display: flex; align-items: center; font-weight: bold; font-size: 12px; font-family: monospace; cursor: pointer; }
+    .cmd-badge:hover { background: var(--accent-hover); }
     #cmd-input { flex: 1; background: transparent; border: none; color: var(--accent); font-family: monospace; font-size: 15px; padding: 0 15px; outline: none; }
     .cmd-help { color: var(--text-dim); font-size: 11px; padding-right: 15px; font-family: monospace; }
+    
+    /* Command Help Drawer / Popup */
+    #cmd-help-drawer { display: none; position: absolute; bottom: 42px; left: 0; right: 0; background: #181818; border: 1px solid var(--accent); border-radius: 4px 4px 0 0; padding: 12px; z-index: 1000; box-shadow: 0 -5px 20px rgba(0,0,0,0.8); }
+    .cmd-help-title { color: var(--accent); font-size: 12px; font-weight: bold; margin-bottom: 6px; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 4px; }
+    .cmd-help-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-family: monospace; font-size: 11px; }
+    .cmd-help-item span { color: var(--accent); }
 </style>
 </head>
 <body>
 
+<!-- Startup Screen -->
 <div id="startup-screen">
     <div class="startup-box">
         <h1 style="color: var(--accent); margin-bottom: 5px; font-size: 22px;">PROLIGHT ONPC</h1>
-        <p style="color: var(--text-dim); font-size: 11px; margin-bottom: 25px;">Professional Lighting Console v1.5 (Desktop Engine)</p>
+        <p style="color: var(--text-dim); font-size: 11px; margin-bottom: 25px;">Professional Lighting Console v1.6</p>
         
         <div class="input-group">
             <label>Show Name</label>
@@ -93,11 +106,14 @@
         </div>
         
         <button class="btn" onclick="startShow()">New Show / Start Workspace</button>
-        <button class="btn" style="background: transparent; border-color: #555; color: #aaa;" onclick="loadDemoShow()">Load Demo Show</button>
+        <button class="btn btn-secondary" onclick="toggleFullScreen()">Toggle Full Screen Mode</button>
+        <button class="btn btn-secondary" style="margin-top: 4px;" onclick="loadDemoShow()">Load Demo Show</button>
     </div>
 </div>
 
+<!-- Main Desktop Workspace -->
 <div id="workspace">
+    <!-- Header -->
     <div class="header">
         <div class="header-left">
             <span>Show: <strong id="lbl-showname" style="color:#fff;">New Show</strong></span>
@@ -105,16 +121,19 @@
         </div>
         <div class="header-right">
             <span>Programmer State: <strong id="sys-state" style="color:var(--accent);">ACTIVE</strong></span>
-            <span>FPS: <strong style="color:#0f0;">60</strong></span>
+            <button class="btn-secondary" style="padding: 2px 8px; font-size:10px; cursor:pointer;" onclick="toggleFullScreen()">Full Screen</button>
         </div>
     </div>
     
+    <!-- Fixture Sheet -->
     <div class="panel" id="fixture-panel">
         <div class="panel-title">Fixture Sheet <span>[Patch]</span></div>
         <div id="fixture-sheet">
-            </div>
+            <!-- Rendered via JS -->
+        </div>
     </div>
     
+    <!-- 3D Stage Visualizer -->
     <div class="panel" id="stage-panel">
         <div class="panel-title">
             <span>3D Stage Visualizer (WebGL)</span>
@@ -123,45 +142,70 @@
         <div id="three-canvas-container"></div>
     </div>
     
+    <!-- Programmer & Encoders -->
     <div class="panel" id="programmer-panel">
-        <div class="panel-title">Programmer / Attributes</div>
-        <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 5px;">Selected: <span id="lbl-selection" style="color:var(--accent);">None</span></div>
+        <div class="panel-title">Programmer / Encoders</div>
+        <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 2px;">Selected: <span id="lbl-selection" style="color:var(--accent);">None</span></div>
         
         <div class="encoder-grid">
             <div class="encoder-box">
                 <div class="encoder-label">Dimmer</div>
-                <div class="encoder-knob" data-attr="dimmer"></div>
+                <div class="encoder-knob" data-attr="dimmer">
+                    <div class="encoder-indicator" id="ind-dimmer"></div>
+                </div>
                 <div class="encoder-val" id="val-dimmer">0%</div>
             </div>
             <div class="encoder-box">
                 <div class="encoder-label">Pan</div>
-                <div class="encoder-knob" data-attr="pan"></div>
+                <div class="encoder-knob" data-attr="pan">
+                    <div class="encoder-indicator" id="ind-pan"></div>
+                </div>
                 <div class="encoder-val" id="val-pan">0°</div>
             </div>
             <div class="encoder-box">
                 <div class="encoder-label">Tilt</div>
-                <div class="encoder-knob" data-attr="tilt"></div>
+                <div class="encoder-knob" data-attr="tilt">
+                    <div class="encoder-indicator" id="ind-tilt"></div>
+                </div>
                 <div class="encoder-val" id="val-tilt">0°</div>
             </div>
             <div class="encoder-box">
                 <div class="encoder-label">Color (Red)</div>
-                <div class="encoder-knob" data-attr="colorR"></div>
+                <div class="encoder-knob" data-attr="colorR">
+                    <div class="encoder-indicator" id="ind-colorR"></div>
+                </div>
                 <div class="encoder-val" id="val-colorR">255</div>
             </div>
         </div>
         
-        <div style="margin-top: auto; border-top: 1px solid var(--border); padding-top: 10px;">
-            <button class="btn" style="padding: 8px; margin: 0; font-size: 11px;" onclick="clearProgrammer()">Clear Programmer (ESC)</button>
+        <div style="margin-top: auto; border-top: 1px solid var(--border); padding-top: 8px;">
+            <button class="btn" style="padding: 6px; margin: 0; font-size: 11px;" onclick="clearProgrammer()">Clear Programmer (ESC)</button>
         </div>
     </div>
     
+    <!-- Executors -->
     <div class="panel" id="executor-panel">
-        </div>
+        <!-- Rendered via JS -->
+    </div>
     
+    <!-- Command Line -->
     <div id="cmd-panel">
-        <div class="cmd-badge">CMD LINE</div>
-        <input type="text" id="cmd-input" placeholder="Ketik perintah misal: Fix 1 thru 3 At 100, atau Clear..." autocomplete="off">
-        <div class="cmd-help">Syntax: Fixture [id] At [0-100] | Clear</div>
+        <!-- Command Help Drawer -->
+        <div id="cmd-help-drawer">
+            <div class="cmd-help-title">Command Line Syntax Reference</div>
+            <div class="cmd-help-grid">
+                <div class="cmd-help-item"><span>Fixture 1</span> : Pilih fixture 1</div>
+                <div class="cmd-help-item"><span>Fix 1 thru 3</span> : Pilih fixture 1 sampai 3</div>
+                <div class="cmd-help-item"><span>At 100</span> : Set nilai aktif ke 100%</div>
+                <div class="cmd-help-item"><span>Fix 1 At 50</span> : Pilih & atur langsung</div>
+                <div class="cmd-help-item"><span>Clear</span> : Kosongkan programmer</div>
+                <div class="cmd-help-item"><span>Help</span> : Tampilkan/tutup panduan ini</div>
+            </div>
+        </div>
+        
+        <div class="cmd-badge" onclick="toggleCmdHelp()" title="Klik untuk lihat fungsi Command">CMD (?)</div>
+        <input type="text" id="cmd-input" placeholder="Ketik perintah (cth: Fix 1 thru 3 At 100, ketik 'help' untuk panduan)..." autocomplete="off">
+        <div class="cmd-help">Tekan ENTER untuk eksekusi</div>
     </div>
 </div>
 
@@ -181,12 +225,25 @@
     let selectedFixtures = [];
     const dmxUniverse = new Uint8Array(512);
 
+    // --- FULLSCREEN HANDLER ---
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                alert(`Error attempting to enable fullscreen: ${err.message}`);
+            });
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    }
+
     // --- THREE.JS 3D STAGE VISUALIZER ---
-    let scene, camera, renderer, fixtureMeshes = [], spotLightMeshes = [];
+    let scene, camera, renderer, fixtureMeshes = [];
 
     function init3DVisualizer() {
         const container = document.getElementById('three-canvas-container');
-        container.innerHTML = ''; // Clear prior if any
+        container.innerHTML = ''; 
 
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0x0a0a0a);
@@ -200,9 +257,7 @@
         renderer.shadowMap.enabled = true;
         container.appendChild(renderer.domElement);
 
-        // Ambient Light
-        const ambientLight = new THREE.AmbientLight(0x222222);
-        scene.add(ambientLight);
+        scene.add(new THREE.AmbientLight(0x222222));
 
         // Stage Floor
         const floorGeo = new THREE.PlaneGeometry(12, 8);
@@ -212,37 +267,30 @@
         floor.position.y = -1;
         scene.add(floor);
 
-        // Grid Helper on Floor
         const grid = new THREE.GridHelper(12, 12, 0x444444, 0x222222);
         grid.position.y = -0.99;
         scene.add(grid);
 
-        // Build 3D Fixtures from Patch
         fixtureMeshes = [];
-        spotLightMeshes = [];
 
         showData.patch.forEach(fix => {
             const group = new THREE.Group();
             group.position.set(fix.x, 3, fix.z);
 
-            // Fixture Body Box
             const bodyGeo = new THREE.BoxGeometry(0.6, 0.6, 0.6);
             const bodyMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.5 });
             const body = new THREE.Mesh(bodyGeo, bodyMat);
             group.add(body);
 
-            // Lens / Light Source Object
             const lensGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.1, 16);
             const lensMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
             const lens = new THREE.Mesh(lensGeo, lensMat);
             lens.position.y = -0.35;
             group.add(lens);
 
-            // Real 3D SpotLight pointing down/forward
             const spotLight = new THREE.SpotLight(0xffffff, 0, 15, Math.PI / 6, 0.5, 1);
             spotLight.position.set(0, -0.4, 0);
             
-            // Target object for panning/tilting
             const targetObj = new THREE.Object3D();
             targetObj.position.set(fix.x, -5, fix.z + 5);
             scene.add(targetObj);
@@ -260,7 +308,6 @@
             });
         });
 
-        // Window resize handler
         window.addEventListener('resize', () => {
             if(!container) return;
             camera.aspect = container.clientWidth / container.clientHeight;
@@ -274,7 +321,6 @@
     function animate3D() {
         requestAnimationFrame(animate3D);
 
-        // Sync DMX & Fixture States to 3D properties
         showData.patch.forEach(fix => {
             const meshObj = fixtureMeshes.find(m => m.id === fix.id);
             if (!meshObj) return;
@@ -282,12 +328,10 @@
             const intensityFactor = fix.dimmer / 255;
             const col = new THREE.Color(fix.colorR / 255, fix.colorG / 255, fix.colorB / 255);
 
-            // Update Light intensity & color
             meshObj.light.intensity = intensityFactor * 10;
             meshObj.light.color = col;
             meshObj.lens.material.color = intensityFactor > 0 ? col : new THREE.Color(0x444444);
 
-            // Rotation Pan/Tilt simulation
             const panRad = THREE.MathUtils.degToRad(fix.pan);
             const tiltRad = THREE.MathUtils.degToRad(fix.tilt);
             
@@ -295,7 +339,6 @@
             meshObj.target.position.x = fix.x + Math.sin(panRad) * 5 + Math.sin(tiltRad) * 3;
             meshObj.target.position.z = fix.z + Math.cos(panRad) * 5;
 
-            // Highlight selected fixture body color
             const isSelected = selectedFixtures.includes(fix.id);
             meshObj.group.children[0].material.color.setHex(isSelected ? 0xffb700 : 0x333333);
         });
@@ -378,22 +421,61 @@
             lbl.innerText = "Fixture " + selectedFixtures.join(', ');
         }
         
-        // Update encoder displays based on first selected fixture
         if(selectedFixtures.length > 0) {
             const fix = showData.patch.find(f => f.id === selectedFixtures[0]);
-            document.getElementById('val-dimmer').innerText = Math.round((fix.dimmer / 255) * 100) + '%';
+            
+            // Values
+            const dimPercent = Math.round((fix.dimmer / 255) * 100);
+            document.getElementById('val-dimmer').innerText = dimPercent + '%';
             document.getElementById('val-pan').innerText = fix.pan + '°';
             document.getElementById('val-tilt').innerText = fix.tilt + '°';
             document.getElementById('val-colorR').innerText = fix.colorR;
+
+            // Rotate Encoder Knobs Visual Indicators (-135deg to +135deg range)
+            setKnobRotation('ind-dimmer', dimPercent, 0, 100);
+            setKnobRotation('ind-pan', fix.pan, -180, 180);
+            setKnobRotation('ind-tilt', fix.tilt, -90, 90);
+            setKnobRotation('ind-colorR', fix.colorR, 0, 255);
+        } else {
+            setKnobRotation('ind-dimmer', 0, 0, 100);
+            setKnobRotation('ind-pan', 0, -180, 180);
+            setKnobRotation('ind-tilt', 0, -90, 90);
+            setKnobRotation('ind-colorR', 255, 0, 255);
         }
     }
 
-    // --- COMMAND LINE INTERPRETER ---
+    function setKnobRotation(elementId, val, min, max) {
+        const indicator = document.getElementById(elementId);
+        if(!indicator) return;
+        const percentage = (val - min) / (max - min);
+        const deg = -135 + (percentage * 270); // Map to 270 degree dial arc
+        indicator.style.transform = `rotate(${deg}deg)`;
+    }
+
+    // --- COMMAND LINE INTERPRETER & HELP DRAWER ---
     const cmdInput = document.getElementById('cmd-input');
+    
+    function toggleCmdHelp() {
+        const drawer = document.getElementById('cmd-help-drawer');
+        drawer.style.display = drawer.style.display === 'block' ? 'none' : 'block';
+    }
+
+    cmdInput.addEventListener('focus', () => {
+        document.getElementById('cmd-help-drawer').style.display = 'block';
+    });
+
+    cmdInput.addEventListener('blur', () => {
+        // Delay closing so user can click items if needed
+        setTimeout(() => {
+            document.getElementById('cmd-help-drawer').style.display = 'none';
+        }, 250);
+    });
+
     cmdInput.addEventListener('keydown', function(e) {
         if(e.key === 'Enter') {
             parseCommand(this.value.trim());
             this.value = '';
+            document.getElementById('cmd-help-drawer').style.display = 'none';
         }
     });
 
@@ -403,8 +485,11 @@
             clearProgrammer();
             return;
         }
+        if(lower === 'help' || lower === '?') {
+            toggleCmdHelp();
+            return;
+        }
 
-        // Match: "fixture 1 thru 3 at 100" or "fix 1 at 50"
         const regex = /(?:fixture|fix)\s+(\d+)(?:\s+thru\s+(\d+))?(?:\s+at\s+(\d+))?/i;
         const match = lower.match(regex);
 
@@ -429,14 +514,13 @@
     }
 
     function triggerExec(num, action) {
-        // Simple mock executor trigger
         if(num === 1) {
             showData.patch.forEach(f => f.dimmer = action === 'GO' ? 255 : 0);
             updateProgrammerUI();
         }
     }
 
-    // --- ENCODER MOUSE DRAG SIMULATION ---
+    // --- ROTARY ENCODER DRAG INTERACTION ---
     let activeEncoder = null;
     let startY = 0;
 
