@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ProLight OnPC v3.0 - Professional Lighting Console & Phaser Engine</title>
+<title>ProLight OnPC v4.0 - Professional Lighting Console & Phaser Engine</title>
 <!-- Three.js untuk Visualizer 3D -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
@@ -34,7 +34,7 @@
     .input-group input { width: 100%; background: #111; border: 1px solid var(--border); color: #fff; padding: 10px; font-size: 14px; border-radius: 4px; }
     
     /* Workspace Layout */
-    #workspace { display: none; width: 100vw; height: 100vh; grid-template-rows: 35px 1fr 200px 40px; grid-template-columns: 280px 1fr 360px; }
+    #workspace { display: none; width: 100vw; height: 100vh; grid-template-rows: 35px 1fr 200px 40px; grid-template-columns: 280px 1fr 380px; }
     
     .header { grid-column: 1 / -1; background: #080808; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 15px; font-size: 12px; color: var(--text-dim); }
     .header-left, .header-right { display: flex; align-items: center; gap: 15px; }
@@ -51,7 +51,7 @@
     #stage-panel { grid-column: 2 / 3; grid-row: 2 / 3; position: relative; }
     #three-canvas-container { width: 100%; height: 100%; }
     
-    /* Programmer & Phaser Pool Panel */
+    /* Programmer & Panels */
     #programmer-panel { grid-column: 3 / 4; grid-row: 2 / 3; display: flex; flex-direction: column; }
     .sub-tabs { display: flex; background: #181818; border-bottom: 1px solid var(--border); }
     .sub-tab { flex: 1; padding: 6px; text-align: center; font-size: 10px; cursor: pointer; color: var(--text-dim); font-weight: bold; }
@@ -59,26 +59,28 @@
     .tab-content { display: none; padding: 8px; font-size: 11px; overflow-y: auto; flex: 1; }
     .tab-content.active { display: block; }
     
-    /* Encoders */
-    .encoder-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 6px; }
-    .encoder-box { background: #141414; border: 1px solid var(--border); border-radius: 6px; padding: 6px; text-align: center; }
-    .encoder-knob { width: 44px; height: 44px; background: radial-gradient(circle, #2a2a2a 0%, #151515 100%); border: 2px solid var(--accent); border-radius: 50%; margin: 4px auto; position: relative; display: flex; align-items: center; justify-content: center; cursor: ns-resize; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-    .encoder-indicator { position: absolute; top: 3px; width: 3px; height: 12px; background: var(--accent); border-radius: 2px; transform-origin: 50% 19px; pointer-events: none; }
-    .encoder-label { font-size: 9px; color: var(--text-dim); text-transform: uppercase; font-weight: bold; pointer-events: none; }
-    .encoder-val { font-size: 11px; font-weight: bold; color: #fff; margin-top: 1px; font-family: monospace; pointer-events: none; }
+    /* Fader Encoders Replacement */
+    .fader-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 4px; }
+    .fader-control-box { background: #141414; border: 1px solid var(--border); border-radius: 6px; padding: 6px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+    .fader-track-v { width: 10px; height: 90px; background: #050505; border-radius: 5px; position: relative; margin: 6px 0; cursor: pointer; }
+    .fader-thumb-v { width: 26px; height: 16px; background: #444; border: 1px solid #666; border-radius: 3px; border-top: 3px solid var(--accent); position: absolute; left: -8px; bottom: 0%; cursor: ns-resize; }
+    .fader-label { font-size: 9px; color: var(--text-dim); text-transform: uppercase; font-weight: bold; }
+    .fader-val { font-size: 11px; font-weight: bold; color: #fff; margin-top: 2px; font-family: monospace; }
     
-    /* Phaser Library Grid */
-    .phaser-pool-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; max-height: 280px; overflow-y: auto; }
-    .phaser-card { background: #1f1f1f; border: 1px solid var(--border); border-radius: 4px; padding: 8px; cursor: pointer; transition: 0.1s; }
+    /* Color Swatch Pool (GrandMA3 Style) */
+    .color-pool-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 6px; }
+    .color-swatch { height: 35px; border-radius: 4px; border: 2px solid #444; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; color: #000; text-shadow: 0 0 2px #fff; transition: 0.1s; }
+    .color-swatch:hover { border-color: #fff; transform: scale(1.03); }
+    
+    /* Search Bar & Phaser Library */
+    .search-box { width: 100%; background: #111; border: 1px solid var(--border); color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 11px; margin-bottom: 6px; outline: none; }
+    .search-box:focus { border-color: var(--accent); }
+    .phaser-pool-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; max-height: 250px; overflow-y: auto; }
+    .phaser-card { background: #1f1f1f; border: 1px solid var(--border); border-radius: 4px; padding: 6px; cursor: pointer; transition: 0.1s; }
     .phaser-card:hover { border-color: var(--accent); background: #252525; }
     .phaser-card.active { border-color: var(--accent); background: #332900; }
-    .phaser-name { font-weight: bold; color: #fff; font-size: 11px; margin-bottom: 2px; }
-    .phaser-desc { font-size: 9px; color: var(--text-dim); }
-    
-    /* Parameters Controls */
-    .param-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 11px; }
-    .param-row input[type="range"] { width: 120px; accent-color: var(--accent); }
-    .param-row select { background: #111; color: #fff; border: 1px solid var(--border); padding: 2px 4px; border-radius: 3px; font-size: 10px; }
+    .phaser-name { font-weight: bold; color: #fff; font-size: 10px; margin-bottom: 2px; }
+    .phaser-desc { font-size: 8px; color: var(--text-dim); }
     
     /* Executors Panel */
     #executor-panel { grid-column: 1 / -1; grid-row: 3 / 4; display: flex; padding: 6px; gap: 6px; background: #161616; border-top: 1px solid var(--border); }
@@ -105,12 +107,12 @@
 <!-- Startup Screen -->
 <div id="startup-screen">
     <div class="startup-box">
-        <h1 style="color: var(--accent); margin-bottom: 5px; font-size: 22px;">PROLIGHT ONPC v3.0</h1>
-        <p style="color: var(--text-dim); font-size: 11px; margin-bottom: 25px;">Advanced Phaser & Professional Lighting Engine</p>
+        <h1 style="color: var(--accent); margin-bottom: 5px; font-size: 22px;">PROLIGHT ONPC v4.0</h1>
+        <p style="color: var(--text-dim); font-size: 11px; margin-bottom: 25px;">Console Professional dengan Fader & Color Pool GrandMA3 Style</p>
         
         <div class="input-group">
             <label>Show Name</label>
-            <input type="text" id="show-name-input" value="Arena Tour Phaser Show 2026">
+            <input type="text" id="show-name-input" value="Main Stage Live 2026">
         </div>
         
         <button class="btn" onclick="startShow()">New Show / Launch Console</button>
@@ -148,99 +150,75 @@
         <div id="three-canvas-container"></div>
     </div>
     
-    <!-- Programmer & Phaser Engine Panel -->
+    <!-- Programmer & Control Panels -->
     <div class="panel" id="programmer-panel">
         <div class="sub-tabs">
-            <div class="sub-tab active" onclick="switchTab('encoders')">Encoders</div>
-            <div class="sub-tab" onclick="switchTab('phaserpool')">Phaser Library</div>
-            <div class="sub-tab" onclick="switchTab('phasereditor')">Phaser Editor</div>
+            <div class="sub-tab active" onclick="switchTab('faders')">Faders</div>
+            <div class="sub-tab" onclick="switchTab('colors')">Color Pool</div>
+            <div class="sub-tab" onclick="switchTab('phasers')">Phaser Library</div>
         </div>
         
-        <!-- Encoders Tab -->
-        <div id="tab-encoders" class="tab-content active" style="display:flex; flex-direction:column; gap:6px;">
-            <div style="font-size: 10px; color: var(--text-dim);">Sel: <span id="lbl-selection" style="color:var(--accent);">None</span></div>
-            <div class="encoder-grid">
-                <div class="encoder-box">
-                    <div class="encoder-label">Dim</div>
-                    <div class="encoder-knob" data-attr="dimmer"><div class="encoder-indicator" id="ind-dimmer"></div></div>
-                    <div class="encoder-val" id="val-dimmer">0%</div>
+        <!-- Faders Tab (Pengganti Spinner) -->
+        <div id="tab-faders" class="tab-content active">
+            <div style="font-size: 10px; color: var(--text-dim); margin-bottom: 4px;">Sel: <span id="lbl-selection" style="color:var(--accent);">None</span></div>
+            <div class="fader-grid">
+                <!-- Dimmer Fader -->
+                <div class="fader-control-box">
+                    <div class="fader-label">Dim</div>
+                    <div class="fader-track-v" data-attr="dimmer" onmousedown="startFaderDrag(event, 'dimmer')">
+                        <div class="fader-thumb-v" id="thumb-dimmer" style="bottom: 0%;"></div>
+                    </div>
+                    <div class="fader-val" id="val-dimmer">0%</div>
                 </div>
-                <div class="encoder-box">
-                    <div class="encoder-label">Pan</div>
-                    <div class="encoder-knob" data-attr="pan"><div class="encoder-indicator" id="ind-pan"></div></div>
-                    <div class="encoder-val" id="val-pan">0°</div>
+                <!-- Pan Fader -->
+                <div class="fader-control-box">
+                    <div class="fader-label">Pan</div>
+                    <div class="fader-track-v" data-attr="pan" onmousedown="startFaderDrag(event, 'pan')">
+                        <div class="fader-thumb-v" id="thumb-pan" style="bottom: 50%;"></div>
+                    </div>
+                    <div class="fader-val" id="val-pan">0°</div>
                 </div>
-                <div class="encoder-box">
-                    <div class="encoder-label">Tilt</div>
-                    <div class="encoder-knob" data-attr="tilt"><div class="encoder-indicator" id="ind-tilt"></div></div>
-                    <div class="encoder-val" id="val-tilt">0°</div>
-                </div>
-                <div class="encoder-box">
-                    <div class="encoder-label">Red</div>
-                    <div class="encoder-knob" data-attr="colorR"><div class="encoder-indicator" id="ind-colorR"></div></div>
-                    <div class="encoder-val" id="val-colorR">255</div>
-                </div>
-                <div class="encoder-box">
-                    <div class="encoder-label">Green</div>
-                    <div class="encoder-knob" data-attr="colorG"><div class="encoder-indicator" id="ind-colorG"></div></div>
-                    <div class="encoder-val" id="val-colorG">255</div>
-                </div>
-                <div class="encoder-box">
-                    <div class="encoder-label">Blue</div>
-                    <div class="encoder-knob" data-attr="colorB"><div class="encoder-indicator" id="ind-colorB"></div></div>
-                    <div class="encoder-val" id="val-colorB">255</div>
+                <!-- Tilt Fader -->
+                <div class="fader-control-box">
+                    <div class="fader-label">Tilt</div>
+                    <div class="fader-track-v" data-attr="tilt" onmousedown="startFaderDrag(event, 'tilt')">
+                        <div class="fader-thumb-v" id="thumb-tilt" style="bottom: 50%;"></div>
+                    </div>
+                    <div class="fader-val" id="val-tilt">0°</div>
                 </div>
             </div>
-            <button class="btn" style="padding: 4px; margin-top: auto; font-size: 10px;" onclick="clearProgrammer()">Clear Programmer (ESC)</button>
+            <button class="btn" style="padding: 6px; margin-top: 12px; font-size: 10px;" onclick="clearProgrammer()">Clear Programmer (ESC)</button>
         </div>
 
-        <!-- Phaser Library Tab -->
-        <div id="tab-phaserpool" class="tab-content">
-            <div style="display:flex; justify-content:space-between; margin-bottom:6px; align-items:center;">
-                <span style="font-weight:bold; color:var(--accent);">Phaser Engine Library</span>
+        <!-- Color Pool Tab (GrandMA3 Style) -->
+        <div id="tab-colors" class="tab-content">
+            <div style="font-weight:bold; color:var(--accent); margin-bottom:4px;">GrandMA3 Color Pool Swatches</div>
+            <div class="color-pool-grid">
+                <div class="color-swatch" style="background: #ff0000;" onclick="applyColorSwatch(255, 0, 0)">RED</div>
+                <div class="color-swatch" style="background: #00ff00;" onclick="applyColorSwatch(0, 255, 0)">GREEN</div>
+                <div class="color-swatch" style="background: #0000ff;" onclick="applyColorSwatch(0, 0, 255)">BLUE</div>
+                <div class="color-swatch" style="background: #ffff00;" onclick="applyColorSwatch(255, 255, 0)">YELLOW</div>
+                <div class="color-swatch" style="background: #00ffff;" onclick="applyColorSwatch(0, 255, 255)">CYAN</div>
+                <div class="color-swatch" style="background: #ff00ff;" onclick="applyColorSwatch(255, 0, 255)">MAGENTA</div>
+                <div class="color-swatch" style="background: #ffffff;" onclick="applyColorSwatch(255, 255, 255)">WHITE</div>
+                <div class="color-swatch" style="background: #ffa500;" onclick="applyColorSwatch(255, 165, 0)">AMBER</div>
+                <div class="color-swatch" style="background: #ee82ee;" onclick="applyColorSwatch(238, 130, 238)">VIOLET</div>
+                <div class="color-swatch" style="background: #adff2f;" onclick="applyColorSwatch(173, 255, 47)">LIME</div>
+                <div class="color-swatch" style="background: #ff1493;" onclick="applyColorSwatch(255, 20, 147)">PINK</div>
+                <div class="color-swatch" style="background: #4b0082;" onclick="applyColorSwatch(75, 0, 130)">UV / BLUE</div>
+            </div>
+        </div>
+
+        <!-- Phaser Library Tab with Search Bar -->
+        <div id="tab-phasers" class="tab-content">
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px; align-items:center;">
+                <span style="font-weight:bold; color:var(--accent);">Phaser Effects Library</span>
                 <button class="btn" style="margin:0; padding:2px 6px; font-size:9px; width:auto; background:#311; border-color:#f55;" onclick="stopPhaser()">Stop FX</button>
             </div>
+            <input type="text" id="phaser-search" class="search-box" placeholder="Cari efek (cth: wave, chase, circle)..." oninput="filterPhasers(this.value)">
             <div class="phaser-pool-grid" id="phaser-pool-container">
                 <!-- Rendered dynamically by JS -->
             </div>
-        </div>
-
-        <!-- Phaser Editor Tab -->
-        <div id="tab-phasereditor" class="tab-content">
-            <div style="font-weight:bold; color:var(--accent); margin-bottom:6px;">Custom Phaser Builder</div>
-            <div class="param-row">
-                <span>Attribute:</span>
-                <select id="editor-attr">
-                    <option value="dimmer">Dimmer</option>
-                    <option value="pan">Pan</option>
-                    <option value="tilt">Tilt</option>
-                    <option value="color">Color RGB</option>
-                </select>
-            </div>
-            <div class="param-row">
-                <span>Shape / Wave:</span>
-                <select id="editor-shape">
-                    <option value="sine">Sine Wave</option>
-                    <option value="cosine">Cosine Wave</option>
-                    <option value="sawtooth">Sawtooth</option>
-                    <option value="triangle">Triangle</option>
-                    <option value="circle">Circle (Pan/Tilt)</option>
-                    <option value="figure8">Figure 8</option>
-                </select>
-            </div>
-            <div class="param-row">
-                <span>Speed (Hz): <strong id="lbl-ed-speed">1.0</strong></span>
-                <input type="range" id="editor-speed" min="0.1" max="5.0" step="0.1" value="1.0" oninput="document.getElementById('lbl-ed-speed').innerText=this.value">
-            </div>
-            <div class="param-row">
-                <span>Width (%): <strong id="lbl-ed-width">100</strong></span>
-                <input type="range" id="editor-width" min="10" max="360" step="10" value="100" oninput="document.getElementById('lbl-ed-width').innerText=this.value">
-            </div>
-            <div class="param-row">
-                <span>Phase Spread (°): <strong id="lbl-ed-phase">90</strong></span>
-                <input type="range" id="editor-phase" min="0" max="360" step="15" value="90" oninput="document.getElementById('lbl-ed-phase').innerText=this.value">
-            </div>
-            <button class="btn" style="margin-top:6px; padding:6px; font-size:10px;" onclick="applyCustomPhaser()">Apply Custom Phaser</button>
         </div>
     </div>
     
@@ -249,16 +227,15 @@
     
     <!-- Command Line -->
     <div id="cmd-panel">
-        <div class="cmd-badge" onclick="alert('Ketik: Fix 1 thru 4 | At 100 | FX Dimmer Chase | Clear')" title="Command Help">CMD</div>
-        <input type="text" id="cmd-input" placeholder="Ketik perintah (cth: Fix 1 thru 4 At 100, FX Dimmer Chase, Clear)..." autocomplete="off">
+        <div class="cmd-badge" onclick="alert('Ketik: Fix 1 thru 4 | At 100 | Clear')" title="Command Help">CMD</div>
+        <input type="text" id="cmd-input" placeholder="Ketik perintah (cth: Fix 1 thru 4 At 100, Clear)..." autocomplete="off">
         <div class="cmd-help">Tekan ENTER untuk eksekusi</div>
     </div>
 </div>
 
 <script>
-    // --- SHOW & PHASER DATABASE ---
     const showData = {
-        name: "Arena Tour Phaser Show 2026",
+        name: "Main Stage Live 2026",
         patch: [
             { id: 1, name: "Moving Head Spot 1", type: "Spot", universe: 1, address: 1, x: -5, z: -2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 },
             { id: 2, name: "Moving Head Spot 2", type: "Spot", universe: 1, address: 17, x: -2, z: -2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 },
@@ -271,20 +248,16 @@
 
     let selectedFixtures = [];
 
-    // --- EXTENSIVE PHASER LIBRARY ---
     const phaserLibrary = [
         { id: 'dim_chase', name: 'Dimmer Chase', attr: 'dimmer', shape: 'sine', speed: 1.5, width: 50, phase: 60, desc: 'Sequential flowing chase' },
         { id: 'dim_pulse', name: 'Dimmer Pulse', attr: 'dimmer', shape: 'triangle', speed: 2.0, width: 100, phase: 90, desc: 'Sharp snappy pulse' },
         { id: 'dim_wave', name: 'Dimmer Wave', attr: 'dimmer', shape: 'sine', speed: 1.0, width: 100, phase: 45, desc: 'Smooth sinusoidal wave' },
-        { id: 'dim_random', name: 'Dimmer Flicker', attr: 'dimmer', shape: 'random', speed: 4.0, width: 100, phase: 180, desc: 'Stochastic strobe flicker' },
         { id: 'color_rainbow', name: 'Color Rainbow', attr: 'color', shape: 'sine', speed: 0.8, width: 360, phase: 60, desc: 'Full spectrum color cycle' },
         { id: 'color_chase', name: 'Color Chase', attr: 'color', shape: 'sawtooth', speed: 1.2, width: 180, phase: 90, desc: 'Dynamic multi-color sweep' },
         { id: 'pan_wave', name: 'Pan Wave', attr: 'pan', shape: 'sine', speed: 1.0, width: 60, phase: 45, desc: 'Horizontal swing wave' },
         { id: 'tilt_wave', name: 'Tilt Wave', attr: 'tilt', shape: 'cosine', speed: 1.0, width: 45, phase: 45, desc: 'Vertical tilt oscillation' },
         { id: 'pt_circle', name: 'Pan/Tilt Circle', attr: 'position', shape: 'circle', speed: 1.2, width: 50, phase: 90, desc: 'Circular beam rotation' },
-        { id: 'pt_fig8', name: 'Pan/Tilt Figure 8', attr: 'position', shape: 'figure8', speed: 1.0, width: 60, phase: 90, desc: 'Figure 8 infinity sweep' },
-        { id: 'zoom_pulse', name: 'Zoom Pulse', attr: 'zoom', shape: 'triangle', speed: 2.0, width: 100, phase: 30, desc: 'Beam spread pulsing' },
-        { id: 'strobe_chase', name: 'Strobe Chase', attr: 'strobe', shape: 'sawtooth', speed: 3.0, width: 20, phase: 90, desc: 'Rapid synchronized flash' }
+        { id: 'pt_fig8', name: 'Pan/Tilt Figure 8', attr: 'position', shape: 'figure8', speed: 1.0, width: 60, phase: 90, desc: 'Figure 8 infinity sweep' }
     ];
 
     let activePhaser = null;
@@ -384,7 +357,6 @@
         animate3D();
     }
 
-    // --- ADVANCED PHASER ENGINE MATH SOLVER ---
     function animate3D() {
         requestAnimationFrame(animate3D);
         
@@ -401,7 +373,6 @@
                     if (activePhaser.shape === 'sine') val = (Math.sin(t) + 1) * 127.5;
                     else if (activePhaser.shape === 'triangle') val = Math.abs((t % (Math.PI * 2)) - Math.PI) * (255 / Math.PI);
                     else if (activePhaser.shape === 'sawtooth') val = ((t % (Math.PI * 2)) / (Math.PI * 2)) * 255;
-                    else if (activePhaser.shape === 'random') val = Math.random() * 255;
                     fix.dimmer = Math.floor(val);
                 }
 
@@ -428,7 +399,6 @@
             updateProgrammerUI();
         }
 
-        // Render 3D transformations
         showData.patch.forEach(fix => {
             const meshObj = fixtureMeshes.find(m => m.id === fix.id);
             if (!meshObj) return;
@@ -485,14 +455,14 @@
         document.getElementById('workspace').style.display = 'grid';
 
         renderFixtureSheet();
-        renderPhaserLibrary();
+        renderPhaserLibrary(phaserLibrary);
         buildExecutors();
         init3DVisualizer();
         document.getElementById('cmd-input').focus();
     }
 
     function loadDemoShow() {
-        document.getElementById('show-name-input').value = "Mega Arena Phaser Tour 2026";
+        document.getElementById('show-name-input').value = "Mega Concert Stage 2026";
         startShow();
     }
 
@@ -516,9 +486,9 @@
         `).join('');
     }
 
-    function renderPhaserLibrary() {
+    function renderPhaserLibrary(list) {
         const container = document.getElementById('phaser-pool-container');
-        container.innerHTML = phaserLibrary.map(p => `
+        container.innerHTML = list.map(p => `
             <div class="phaser-card ${activePhaser && activePhaser.id === p.id ? 'active' : ''}" onclick="applyPhaser('${p.id}')">
                 <div class="phaser-name">${p.name}</div>
                 <div class="phaser-desc">${p.desc}</div>
@@ -526,38 +496,34 @@
         `).join('');
     }
 
+    function filterPhasers(query) {
+        const q = query.toLowerCase();
+        const filtered = phaserLibrary.filter(p => p.name.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q));
+        renderPhaserLibrary(filtered);
+    }
+
     function applyPhaser(id) {
         const p = phaserLibrary.find(item => item.id === id);
         if(!p) return;
         activePhaser = { ...p };
         document.getElementById('lbl-active-phaser').innerText = p.name;
-        renderPhaserLibrary();
+        renderPhaserLibrary(phaserLibrary);
     }
 
     function stopPhaser() {
         activePhaser = null;
         document.getElementById('lbl-active-phaser').innerText = "None";
-        renderPhaserLibrary();
+        renderPhaserLibrary(phaserLibrary);
     }
 
-    function applyCustomPhaser() {
-        const attr = document.getElementById('editor-attr').value;
-        const shape = document.getElementById('editor-shape').value;
-        const speed = parseFloat(document.getElementById('editor-speed').value);
-        const width = parseFloat(document.getElementById('editor-width').value);
-        const phase = parseFloat(document.getElementById('editor-phase').value);
-
-        activePhaser = {
-            id: 'custom_fx',
-            name: 'Custom ' + attr.toUpperCase(),
-            attr: attr,
-            shape: shape,
-            speed: speed,
-            width: width,
-            phase: phase,
-            desc: 'Custom user defined phaser'
-        };
-        document.getElementById('lbl-active-phaser').innerText = activePhaser.name;
+    function applyColorSwatch(r, g, b) {
+        if(selectedFixtures.length === 0) return;
+        selectedFixtures.forEach(id => {
+            const fix = showData.patch.find(f => f.id === id);
+            if(fix) {
+                fix.colorR = r; fix.colorG = g; fix.colorB = b;
+            }
+        });
     }
 
     function buildExecutors() {
@@ -608,39 +574,59 @@
         if(selectedFixtures.length > 0) {
             const fix = showData.patch.find(f => f.id === selectedFixtures[0]);
             const dimPercent = Math.round((fix.dimmer / 255) * 100);
+            
             document.getElementById('val-dimmer').innerText = dimPercent + '%';
-            document.getElementById('val-pan').innerText = Math.round(fix.pan) + '°';
-            document.getElementById('val-tilt').innerText = Math.round(fix.tilt) + '°';
-            document.getElementById('val-colorR').innerText = fix.colorR;
-            document.getElementById('val-colorG').innerText = fix.colorG;
-            document.getElementById('val-colorB').innerText = fix.colorB;
+            document.getElementById('thumb-dimmer').style.bottom = dimPercent + '%';
 
-            setKnobRotation('ind-dimmer', dimPercent, 0, 100);
-            setKnobRotation('ind-pan', fix.pan, -180, 180);
-            setKnobRotation('ind-tilt', fix.tilt, -90, 90);
-            setKnobRotation('ind-colorR', fix.colorR, 0, 255);
-            setKnobRotation('ind-colorG', fix.colorG, 0, 255);
-            setKnobRotation('ind-colorB', fix.colorB, 0, 255);
+            document.getElementById('val-pan').innerText = Math.round(fix.pan) + '°';
+            const panPct = ((fix.pan + 180) / 360) * 100;
+            document.getElementById('thumb-pan').style.bottom = panPct + '%';
+
+            document.getElementById('val-tilt').innerText = Math.round(fix.tilt) + '°';
+            const tiltPct = ((fix.tilt + 90) / 180) * 100;
+            document.getElementById('thumb-tilt').style.bottom = tiltPct + '%';
         } else {
-            ['dimmer', 'pan', 'tilt', 'colorR', 'colorG', 'colorB'].forEach(k => {
-                document.getElementById('val-' + k).innerText = '0' + (k.includes('color') || k === 'dimmer' ? '' : '°');
-            });
-            setKnobRotation('ind-dimmer', 0, 0, 100);
-            setKnobRotation('ind-pan', 0, -180, 180);
-            setKnobRotation('ind-tilt', 0, -90, 90);
-            setKnobRotation('ind-colorR', 0, 0, 255);
-            setKnobRotation('ind-colorG', 0, 0, 255);
-            setKnobRotation('ind-colorB', 0, 0, 255);
+            document.getElementById('val-dimmer').innerText = '0%';
+            document.getElementById('thumb-dimmer').style.bottom = '0%';
+            document.getElementById('val-pan').innerText = '0°';
+            document.getElementById('thumb-pan').style.bottom = '50%';
+            document.getElementById('val-tilt').innerText = '0°';
+            document.getElementById('thumb-tilt').style.bottom = '50%';
         }
     }
 
-    function setKnobRotation(elementId, val, min, max) {
-        const indicator = document.getElementById(elementId);
-        if(!indicator) return;
-        const percentage = (val - min) / (max - min);
-        const deg = -135 + (percentage * 270); 
-        indicator.style.transform = `rotate(${deg}deg)`;
+    // --- FADER DRAG INTERACTION SYSTEM (PENGGANTI SPINNER) ---
+    let activeFaderAttr = null;
+    let faderStartY = 0;
+
+    function startFaderDrag(e, attr) {
+        if(selectedFixtures.length === 0) return;
+        activeFaderAttr = attr;
+        faderStartY = e.clientY;
+        e.preventDefault();
     }
+
+    window.addEventListener('mousemove', (e) => {
+        if (!activeFaderAttr || selectedFixtures.length === 0) return;
+        const delta = faderStartY - e.clientY;
+        faderStartY = e.clientY;
+
+        selectedFixtures.forEach(fixId => {
+            const fix = showData.patch.find(f => f.id === fixId);
+            if (!fix) return;
+
+            if (activeFaderAttr === 'dimmer') {
+                fix.dimmer = Math.max(0, Math.min(255, fix.dimmer + (delta * 3)));
+            } else if (activeFaderAttr === 'pan') {
+                fix.pan = Math.max(-180, Math.min(180, fix.pan + (delta * 2)));
+            } else if (activeFaderAttr === 'tilt') {
+                fix.tilt = Math.max(-90, Math.min(90, fix.tilt + (delta * 2)));
+            }
+        });
+        updateProgrammerUI();
+    });
+
+    window.addEventListener('mouseup', () => { activeFaderAttr = null; });
 
     // --- COMMAND LINE PARSER ---
     const cmdInput = document.getElementById('cmd-input');
@@ -655,12 +641,6 @@
         const lower = cmdText.toLowerCase();
         if(lower === 'clear') { clearProgrammer(); return; }
         if(lower === 'fullsc') { toggleFullScreen(); return; }
-        if(lower.startsWith('fx ')) {
-            const fxName = cmdText.substring(3).trim();
-            const found = phaserLibrary.find(p => p.name.toLowerCase() === fxName);
-            if(found) applyPhaser(found.id);
-            return;
-        }
 
         const regex = /(?:fixture|fix)\s+(\d+)(?:\s+thru\s+(\d+))?(?:\s+at\s+(\d+))?/i;
         const match = lower.match(regex);
@@ -691,47 +671,6 @@
             updateProgrammerUI();
         }
     }
-
-    // --- UNIVERSAL ROTARY ENCODER INTERACTION (SPINNER DRAG) ---
-    let activeEncoder = null;
-    let startY = 0;
-
-    document.addEventListener('mousedown', (e) => {
-        const knobBox = e.target.closest('.encoder-knob');
-        if (knobBox) {
-            activeEncoder = knobBox.getAttribute('data-attr');
-            startY = e.clientY;
-            e.preventDefault();
-        }
-    });
-
-    window.addEventListener('mousemove', (e) => {
-        if (!activeEncoder || selectedFixtures.length === 0) return;
-        const delta = startY - e.clientY;
-        startY = e.clientY;
-
-        selectedFixtures.forEach(fixId => {
-            const fix = showData.patch.find(f => f.id === fixId);
-            if (!fix) return;
-
-            if (activeEncoder === 'dimmer') {
-                fix.dimmer = Math.max(0, Math.min(255, fix.dimmer + (delta * 2)));
-            } else if (activeEncoder === 'pan') {
-                fix.pan = Math.max(-180, Math.min(180, fix.pan + delta));
-            } else if (activeEncoder === 'tilt') {
-                fix.tilt = Math.max(-90, Math.min(90, fix.tilt + delta));
-            } else if (activeEncoder === 'colorR') {
-                fix.colorR = Math.max(0, Math.min(255, fix.colorR + (delta * 2)));
-            } else if (activeEncoder === 'colorG') {
-                fix.colorG = Math.max(0, Math.min(255, fix.colorG + (delta * 2)));
-            } else if (activeEncoder === 'colorB') {
-                fix.colorB = Math.max(0, Math.min(255, fix.colorB + (delta * 2)));
-            }
-        });
-        updateProgrammerUI();
-    });
-
-    window.addEventListener('mouseup', () => { activeEncoder = null; });
 </script>
 </body>
 </html>
