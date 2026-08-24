@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ProLight OnPC v4.0 - Professional Lighting Console & Phaser Engine</title>
+<title>ProLight OnPC v4.1 - Professional Lighting Console</title>
 <!-- Three.js untuk Visualizer 3D -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
@@ -59,29 +59,32 @@
     .tab-content { display: none; padding: 8px; font-size: 11px; overflow-y: auto; flex: 1; }
     .tab-content.active { display: block; }
     
-    /* Fader Encoders Replacement */
+    /* Faders */
     .fader-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 4px; }
     .fader-control-box { background: #141414; border: 1px solid var(--border); border-radius: 6px; padding: 6px; text-align: center; display: flex; flex-direction: column; align-items: center; }
-    .fader-track-v { width: 10px; height: 90px; background: #050505; border-radius: 5px; position: relative; margin: 6px 0; cursor: pointer; }
-    .fader-thumb-v { width: 26px; height: 16px; background: #444; border: 1px solid #666; border-radius: 3px; border-top: 3px solid var(--accent); position: absolute; left: -8px; bottom: 0%; cursor: ns-resize; }
+    .fader-track-v { width: 12px; height: 110px; background: #050505; border-radius: 6px; position: relative; margin: 8px 0; cursor: pointer; border: 1px solid #333; }
+    .fader-thumb-v { width: 32px; height: 18px; background: #444; border: 1px solid #666; border-radius: 3px; border-top: 3px solid var(--accent); position: absolute; left: -11px; bottom: 0%; cursor: ns-resize; }
     .fader-label { font-size: 9px; color: var(--text-dim); text-transform: uppercase; font-weight: bold; }
     .fader-val { font-size: 11px; font-weight: bold; color: #fff; margin-top: 2px; font-family: monospace; }
     
-    /* Color Swatch Pool (GrandMA3 Style) */
+    /* Color Pool */
     .color-pool-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 6px; }
     .color-swatch { height: 35px; border-radius: 4px; border: 2px solid #444; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; color: #000; text-shadow: 0 0 2px #fff; transition: 0.1s; }
     .color-swatch:hover { border-color: #fff; transform: scale(1.03); }
     
-    /* Search Bar & Phaser Library */
+    /* Search & Phaser */
     .search-box { width: 100%; background: #111; border: 1px solid var(--border); color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 11px; margin-bottom: 6px; outline: none; }
     .search-box:focus { border-color: var(--accent); }
-    .phaser-pool-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; max-height: 250px; overflow-y: auto; }
+    .phaser-pool-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; max-height: 200px; overflow-y: auto; }
     .phaser-card { background: #1f1f1f; border: 1px solid var(--border); border-radius: 4px; padding: 6px; cursor: pointer; transition: 0.1s; }
     .phaser-card:hover { border-color: var(--accent); background: #252525; }
     .phaser-card.active { border-color: var(--accent); background: #332900; }
     .phaser-name { font-weight: bold; color: #fff; font-size: 10px; margin-bottom: 2px; }
     .phaser-desc { font-size: 8px; color: var(--text-dim); }
     
+    .param-row { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 10px; }
+    .param-row input[type="range"] { width: 120px; accent-color: var(--accent); }
+
     /* Executors Panel */
     #executor-panel { grid-column: 1 / -1; grid-row: 3 / 4; display: flex; padding: 6px; gap: 6px; background: #161616; border-top: 1px solid var(--border); }
     .executor { flex: 1; background: #1e1e1e; border: 1px solid var(--border); border-radius: 4px; display: flex; flex-direction: column; padding: 4px; }
@@ -107,8 +110,8 @@
 <!-- Startup Screen -->
 <div id="startup-screen">
     <div class="startup-box">
-        <h1 style="color: var(--accent); margin-bottom: 5px; font-size: 22px;">PROLIGHT ONPC v4.0</h1>
-        <p style="color: var(--text-dim); font-size: 11px; margin-bottom: 25px;">Console Professional dengan Fader & Color Pool GrandMA3 Style</p>
+        <h1 style="color: var(--accent); margin-bottom: 5px; font-size: 22px;">PROLIGHT ONPC v4.1</h1>
+        <p style="color: var(--text-dim); font-size: 11px; margin-bottom: 25px;">Console Professional dengan Fader & Wing Phaser Engine</p>
         
         <div class="input-group">
             <label>Show Name</label>
@@ -135,9 +138,15 @@
         </div>
     </div>
     
-    <!-- Fixture Sheet -->
+    <!-- Fixture Sheet & Patch Manager -->
     <div class="panel" id="fixture-panel">
-        <div class="panel-title">Fixture Sheet <span>[Patch]</span></div>
+        <div class="panel-title">
+            <span>Fixture Sheet [Patch]</span>
+            <div style="display:flex; gap:4px;">
+                <button class="btn" style="margin:0; padding:1px 6px; font-size:9px; width:auto;" onclick="addNewFixture()">+ Add</button>
+                <button class="btn" style="margin:0; padding:1px 6px; font-size:9px; width:auto; background:#411; border-color:#f55;" onclick="deleteSelectedFixture()">Del</button>
+            </div>
+        </div>
         <div id="fixture-sheet"></div>
     </div>
     
@@ -155,17 +164,17 @@
         <div class="sub-tabs">
             <div class="sub-tab active" onclick="switchTab('faders')">Faders</div>
             <div class="sub-tab" onclick="switchTab('colors')">Color Pool</div>
-            <div class="sub-tab" onclick="switchTab('phasers')">Phaser Library</div>
+            <div class="sub-tab" onclick="switchTab('phasers')">Phaser & Wings</div>
         </div>
         
-        <!-- Faders Tab (Pengganti Spinner) -->
+        <!-- Faders Tab -->
         <div id="tab-faders" class="tab-content active">
             <div style="font-size: 10px; color: var(--text-dim); margin-bottom: 4px;">Sel: <span id="lbl-selection" style="color:var(--accent);">None</span></div>
             <div class="fader-grid">
                 <!-- Dimmer Fader -->
                 <div class="fader-control-box">
                     <div class="fader-label">Dim</div>
-                    <div class="fader-track-v" data-attr="dimmer" onmousedown="startFaderDrag(event, 'dimmer')">
+                    <div class="fader-track-v" id="track-dimmer" onmousedown="startFaderDrag(event, 'dimmer')">
                         <div class="fader-thumb-v" id="thumb-dimmer" style="bottom: 0%;"></div>
                     </div>
                     <div class="fader-val" id="val-dimmer">0%</div>
@@ -173,7 +182,7 @@
                 <!-- Pan Fader -->
                 <div class="fader-control-box">
                     <div class="fader-label">Pan</div>
-                    <div class="fader-track-v" data-attr="pan" onmousedown="startFaderDrag(event, 'pan')">
+                    <div class="fader-track-v" id="track-pan" onmousedown="startFaderDrag(event, 'pan')">
                         <div class="fader-thumb-v" id="thumb-pan" style="bottom: 50%;"></div>
                     </div>
                     <div class="fader-val" id="val-pan">0°</div>
@@ -181,7 +190,7 @@
                 <!-- Tilt Fader -->
                 <div class="fader-control-box">
                     <div class="fader-label">Tilt</div>
-                    <div class="fader-track-v" data-attr="tilt" onmousedown="startFaderDrag(event, 'tilt')">
+                    <div class="fader-track-v" id="track-tilt" onmousedown="startFaderDrag(event, 'tilt')">
                         <div class="fader-thumb-v" id="thumb-tilt" style="bottom: 50%;"></div>
                     </div>
                     <div class="fader-val" id="val-tilt">0°</div>
@@ -190,7 +199,7 @@
             <button class="btn" style="padding: 6px; margin-top: 12px; font-size: 10px;" onclick="clearProgrammer()">Clear Programmer (ESC)</button>
         </div>
 
-        <!-- Color Pool Tab (GrandMA3 Style) -->
+        <!-- Color Pool Tab -->
         <div id="tab-colors" class="tab-content">
             <div style="font-weight:bold; color:var(--accent); margin-bottom:4px;">GrandMA3 Color Pool Swatches</div>
             <div class="color-pool-grid">
@@ -205,20 +214,31 @@
                 <div class="color-swatch" style="background: #ee82ee;" onclick="applyColorSwatch(238, 130, 238)">VIOLET</div>
                 <div class="color-swatch" style="background: #adff2f;" onclick="applyColorSwatch(173, 255, 47)">LIME</div>
                 <div class="color-swatch" style="background: #ff1493;" onclick="applyColorSwatch(255, 20, 147)">PINK</div>
-                <div class="color-swatch" style="background: #4b0082;" onclick="applyColorSwatch(75, 0, 130)">UV / BLUE</div>
+                <div class="color-swatch" style="background: #4b0082;" onclick="applyColorSwatch(75, 0, 130)">UV</div>
             </div>
         </div>
 
-        <!-- Phaser Library Tab with Search Bar -->
+        <!-- Phaser & Wings Tab -->
         <div id="tab-phasers" class="tab-content">
             <div style="display:flex; justify-content:space-between; margin-bottom:4px; align-items:center;">
-                <span style="font-weight:bold; color:var(--accent);">Phaser Effects Library</span>
+                <span style="font-weight:bold; color:var(--accent);">Phaser & Wing Library</span>
                 <button class="btn" style="margin:0; padding:2px 6px; font-size:9px; width:auto; background:#311; border-color:#f55;" onclick="stopPhaser()">Stop FX</button>
             </div>
-            <input type="text" id="phaser-search" class="search-box" placeholder="Cari efek (cth: wave, chase, circle)..." oninput="filterPhasers(this.value)">
-            <div class="phaser-pool-grid" id="phaser-pool-container">
-                <!-- Rendered dynamically by JS -->
+            <input type="text" id="phaser-search" class="search-box" placeholder="Cari efek..." oninput="filterPhasers(this.value)">
+            
+            <!-- Wing Parameter Controls -->
+            <div style="background:#141414; padding:6px; border-radius:4px; margin-bottom:6px; border:1px solid var(--border);">
+                <div class="param-row">
+                    <span>Wings: <strong id="lbl-wings">1</strong></span>
+                    <input type="range" id="param-wings" min="1" max="4" step="1" value="1" oninput="updateWingParam('wings', this.value)">
+                </div>
+                <div class="param-row">
+                    <span>Groups: <strong id="lbl-groups">1</strong></span>
+                    <input type="range" id="param-groups" min="1" max="6" step="1" value="1" oninput="updateWingParam('groups', this.value)">
+                </div>
             </div>
+
+            <div class="phaser-pool-grid" id="phaser-pool-container"></div>
         </div>
     </div>
     
@@ -240,24 +260,20 @@
             { id: 1, name: "Moving Head Spot 1", type: "Spot", universe: 1, address: 1, x: -5, z: -2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 },
             { id: 2, name: "Moving Head Spot 2", type: "Spot", universe: 1, address: 17, x: -2, z: -2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 },
             { id: 3, name: "Moving Head Spot 3", type: "Spot", universe: 1, address: 33, x: 2, z: -2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 },
-            { id: 4, name: "Moving Head Spot 4", type: "Spot", universe: 1, address: 49, x: 5, z: -2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 },
-            { id: 5, name: "LED Wash Bar 1", type: "Bar", universe: 1, address: 70, x: -3, z: 2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 },
-            { id: 6, name: "LED Wash Bar 2", type: "Bar", universe: 1, address: 90, x: 3, z: 2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 }
+            { id: 4, name: "Moving Head Spot 4", type: "Spot", universe: 1, address: 49, x: 5, z: -2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 }
         ]
     };
 
     let selectedFixtures = [];
+    let wingConfig = { wings: 1, groups: 1 };
 
     const phaserLibrary = [
         { id: 'dim_chase', name: 'Dimmer Chase', attr: 'dimmer', shape: 'sine', speed: 1.5, width: 50, phase: 60, desc: 'Sequential flowing chase' },
         { id: 'dim_pulse', name: 'Dimmer Pulse', attr: 'dimmer', shape: 'triangle', speed: 2.0, width: 100, phase: 90, desc: 'Sharp snappy pulse' },
-        { id: 'dim_wave', name: 'Dimmer Wave', attr: 'dimmer', shape: 'sine', speed: 1.0, width: 100, phase: 45, desc: 'Smooth sinusoidal wave' },
         { id: 'color_rainbow', name: 'Color Rainbow', attr: 'color', shape: 'sine', speed: 0.8, width: 360, phase: 60, desc: 'Full spectrum color cycle' },
-        { id: 'color_chase', name: 'Color Chase', attr: 'color', shape: 'sawtooth', speed: 1.2, width: 180, phase: 90, desc: 'Dynamic multi-color sweep' },
         { id: 'pan_wave', name: 'Pan Wave', attr: 'pan', shape: 'sine', speed: 1.0, width: 60, phase: 45, desc: 'Horizontal swing wave' },
         { id: 'tilt_wave', name: 'Tilt Wave', attr: 'tilt', shape: 'cosine', speed: 1.0, width: 45, phase: 45, desc: 'Vertical tilt oscillation' },
-        { id: 'pt_circle', name: 'Pan/Tilt Circle', attr: 'position', shape: 'circle', speed: 1.2, width: 50, phase: 90, desc: 'Circular beam rotation' },
-        { id: 'pt_fig8', name: 'Pan/Tilt Figure 8', attr: 'position', shape: 'figure8', speed: 1.0, width: 60, phase: 90, desc: 'Figure 8 infinity sweep' }
+        { id: 'pt_circle', name: 'Pan/Tilt Circle', attr: 'position', shape: 'circle', speed: 1.2, width: 50, phase: 90, desc: 'Circular beam rotation' }
     ];
 
     let activePhaser = null;
@@ -276,6 +292,38 @@
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         event.currentTarget.classList.add('active');
         document.getElementById('tab-' + tabName).classList.add('active');
+    }
+
+    // --- FIXTURE PATCH MANAGER ---
+    function addNewFixture() {
+        const newId = showData.patch.length > 0 ? Math.max(...showData.patch.map(f => f.id)) + 1 : 1;
+        const newX = (newId - 2.5) * 2.5;
+        showData.patch.push({
+            id: newId,
+            name: "Moving Head Spot " + newId,
+            type: "Spot",
+            universe: 1,
+            address: (newId - 1) * 16 + 1,
+            x: newX,
+            z: -2,
+            dimmer: 0,
+            pan: 0,
+            tilt: 0,
+            colorR: 255,
+            colorG: 255,
+            colorB: 255
+        });
+        renderFixtureSheet();
+        init3DVisualizer();
+    }
+
+    function deleteSelectedFixture() {
+        if (selectedFixtures.length === 0) return;
+        showData.patch = showData.patch.filter(f => !selectedFixtures.includes(f.id));
+        selectedFixtures = [];
+        renderFixtureSheet();
+        updateProgrammerUI();
+        init3DVisualizer();
     }
 
     // --- THREE.JS 3D STAGE VISUALIZER ---
@@ -362,20 +410,18 @@
         
         if (activePhaser) {
             phaserTick += 0.03 * activePhaser.speed;
-            const phaseRadSpread = THREE.MathUtils.degToRad(activePhaser.phase);
+            const totalFix = showData.patch.length;
 
             showData.patch.forEach((fix, idx) => {
-                const individualOffset = idx * phaseRadSpread;
-                const t = phaserTick + individualOffset;
+                // Wing & Group Phaser calculation math
+                let groupIdx = Math.floor(idx / Math.max(1, Math.ceil(totalFix / wingConfig.groups)));
+                let wingOffset = (idx % wingConfig.wings) * (Math.PI / wingConfig.wings);
+                let t = phaserTick + (groupIdx * 0.5) + wingOffset;
 
                 if (activePhaser.attr === 'dimmer' || activePhaser.attr === 'all') {
-                    let val = 0;
-                    if (activePhaser.shape === 'sine') val = (Math.sin(t) + 1) * 127.5;
-                    else if (activePhaser.shape === 'triangle') val = Math.abs((t % (Math.PI * 2)) - Math.PI) * (255 / Math.PI);
-                    else if (activePhaser.shape === 'sawtooth') val = ((t % (Math.PI * 2)) / (Math.PI * 2)) * 255;
+                    let val = (Math.sin(t) + 1) * 127.5;
                     fix.dimmer = Math.floor(val);
                 }
-
                 if (activePhaser.attr === 'color' || activePhaser.attr === 'all') {
                     const hue = (t * 50) % 360;
                     const rgb = hslToRgb(hue / 360, 1, 0.5);
@@ -383,14 +429,10 @@
                     fix.colorG = Math.floor(rgb[1] * 255);
                     fix.colorB = Math.floor(rgb[2] * 255);
                 }
-
                 if (activePhaser.attr === 'pan' || activePhaser.attr === 'position' || activePhaser.attr === 'all') {
                     if (activePhaser.shape === 'circle') {
                         fix.pan = Math.sin(t) * activePhaser.width;
                         fix.tilt = Math.cos(t) * (activePhaser.width / 2);
-                    } else if (activePhaser.shape === 'figure8') {
-                        fix.pan = Math.sin(t) * activePhaser.width;
-                        fix.tilt = Math.sin(t * 2) * (activePhaser.width / 2);
                     } else {
                         fix.pan = Math.sin(t) * activePhaser.width;
                     }
@@ -516,6 +558,11 @@
         renderPhaserLibrary(phaserLibrary);
     }
 
+    function updateWingParam(type, val) {
+        wingConfig[type] = parseInt(val);
+        document.getElementById('lbl-' + type).innerText = val;
+    }
+
     function applyColorSwatch(r, g, b) {
         if(selectedFixtures.length === 0) return;
         selectedFixtures.forEach(id => {
@@ -595,7 +642,7 @@
         }
     }
 
-    // --- FADER DRAG INTERACTION SYSTEM (PENGGANTI SPINNER) ---
+    // --- ROBUST FADER DRAG INTERACTION ---
     let activeFaderAttr = null;
     let faderStartY = 0;
 
