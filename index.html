@@ -61,7 +61,7 @@
     
     /* Rotary Dial Encoders */
     .encoder-knob { width: 56px; height: 56px; background: radial-gradient(circle, #2a2a2a 0%, #151515 100%); border: 2px solid var(--accent); border-radius: 50%; margin: 6px auto; position: relative; display: flex; align-items: center; justify-content: center; cursor: ns-resize; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-    .encoder-indicator { position: absolute; top: 4px; width: 4px; height: 16px; background: var(--accent); border-radius: 2px; transform-origin: 50% 24px; transition: transform 0.05s linear; }
+    .encoder-indicator { position: absolute; top: 4px; width: 4px; height: 16px; background: var(--accent); border-radius: 2px; transform-origin: 50% 24px; transition: transform 0.05s linear; pointer-events: none; }
     .encoder-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; font-weight: bold; }
     .encoder-val { font-size: 12px; font-weight: bold; color: #fff; margin-top: 2px; font-family: monospace; }
     
@@ -78,7 +78,7 @@
     .exec-btn.flash { background: #522; border-color: #733; }
     .exec-btn.flash:active { background: #f55; }
     
-    /* Command Line Panel & Help Popover */
+    /* Command Line Panel & Help Drawer */
     #cmd-panel { grid-column: 1 / -1; grid-row: 4 / 5; display: flex; background: #000; border-top: 1px solid var(--border); align-items: center; position: relative; }
     .cmd-badge { background: var(--accent); color: black; padding: 0 15px; height: 100%; display: flex; align-items: center; font-weight: bold; font-size: 12px; font-family: monospace; cursor: pointer; }
     .cmd-badge:hover { background: var(--accent-hover); }
@@ -98,7 +98,7 @@
 <div id="startup-screen">
     <div class="startup-box">
         <h1 style="color: var(--accent); margin-bottom: 5px; font-size: 22px;">PROLIGHT ONPC</h1>
-        <p style="color: var(--text-dim); font-size: 11px; margin-bottom: 25px;">Professional Lighting Console v1.6</p>
+        <p style="color: var(--text-dim); font-size: 11px; margin-bottom: 25px;">Professional Lighting Console v1.7</p>
         
         <div class="input-group">
             <label>Show Name</label>
@@ -128,9 +128,7 @@
     <!-- Fixture Sheet -->
     <div class="panel" id="fixture-panel">
         <div class="panel-title">Fixture Sheet <span>[Patch]</span></div>
-        <div id="fixture-sheet">
-            <!-- Rendered via JS -->
-        </div>
+        <div id="fixture-sheet"></div>
     </div>
     
     <!-- 3D Stage Visualizer -->
@@ -184,33 +182,29 @@
     </div>
     
     <!-- Executors -->
-    <div class="panel" id="executor-panel">
-        <!-- Rendered via JS -->
-    </div>
+    <div class="panel" id="executor-panel"></div>
     
     <!-- Command Line -->
     <div id="cmd-panel">
-        <!-- Command Help Drawer -->
         <div id="cmd-help-drawer">
             <div class="cmd-help-title">Command Line Syntax Reference</div>
             <div class="cmd-help-grid">
                 <div class="cmd-help-item"><span>Fixture 1</span> : Pilih fixture 1</div>
-                <div class="cmd-help-item"><span>Fix 1 thru 3</span> : Pilih fixture 1 sampai 3</div>
+                <div class="cmd-help-item"><span>Fix 1 thru 3</span> : Pilih rentang fixture</div>
                 <div class="cmd-help-item"><span>At 100</span> : Set nilai aktif ke 100%</div>
-                <div class="cmd-help-item"><span>Fix 1 At 50</span> : Pilih & atur langsung</div>
+                <div class="cmd-help-item"><span>fullsc</span> : Masuk/Keluar Fullscreen</div>
                 <div class="cmd-help-item"><span>Clear</span> : Kosongkan programmer</div>
-                <div class="cmd-help-item"><span>Help</span> : Tampilkan/tutup panduan ini</div>
+                <div class="cmd-help-item"><span>Help</span> : Tampilkan panduan ini</div>
             </div>
         </div>
         
         <div class="cmd-badge" onclick="toggleCmdHelp()" title="Klik untuk lihat fungsi Command">CMD (?)</div>
-        <input type="text" id="cmd-input" placeholder="Ketik perintah (cth: Fix 1 thru 3 At 100, ketik 'help' untuk panduan)..." autocomplete="off">
+        <input type="text" id="cmd-input" placeholder="Ketik perintah (cth: Fix 1 thru 3 At 100, fullsc, help)..." autocomplete="off">
         <div class="cmd-help">Tekan ENTER untuk eksekusi</div>
     </div>
 </div>
 
 <script>
-    // --- SHOW & FIXTURE DATABASE ---
     const showData = {
         name: "Tour Concert 2026",
         patch: [
@@ -223,13 +217,11 @@
     };
 
     let selectedFixtures = [];
-    const dmxUniverse = new Uint8Array(512);
 
-    // --- FULLSCREEN HANDLER ---
     function toggleFullScreen() {
         if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen().catch(err => {
-                alert(`Error attempting to enable fullscreen: ${err.message}`);
+                console.error(`Error enabling fullscreen: ${err.message}`);
             });
         } else {
             if (document.exitFullscreen) {
@@ -259,7 +251,6 @@
 
         scene.add(new THREE.AmbientLight(0x222222));
 
-        // Stage Floor
         const floorGeo = new THREE.PlaneGeometry(12, 8);
         const floorMat = new THREE.MeshStandardMaterial({ color: 0x181818, roughness: 0.8 });
         const floor = new THREE.Mesh(floorGeo, floorMat);
@@ -346,7 +337,6 @@
         renderer.render(scene, camera);
     }
 
-    // --- APPLICATION START ---
     function startShow() {
         const customName = document.getElementById('show-name-input').value;
         if(customName) showData.name = customName;
@@ -395,7 +385,6 @@
         }
     }
 
-    // --- SELECTION & PROGRAMMER LOGIC ---
     function toggleSelectFixture(id) {
         const index = selectedFixtures.indexOf(id);
         if(index > -1) {
@@ -424,23 +413,25 @@
         if(selectedFixtures.length > 0) {
             const fix = showData.patch.find(f => f.id === selectedFixtures[0]);
             
-            // Values
             const dimPercent = Math.round((fix.dimmer / 255) * 100);
             document.getElementById('val-dimmer').innerText = dimPercent + '%';
             document.getElementById('val-pan').innerText = fix.pan + '°';
             document.getElementById('val-tilt').innerText = fix.tilt + '°';
             document.getElementById('val-colorR').innerText = fix.colorR;
 
-            // Rotate Encoder Knobs Visual Indicators (-135deg to +135deg range)
             setKnobRotation('ind-dimmer', dimPercent, 0, 100);
             setKnobRotation('ind-pan', fix.pan, -180, 180);
             setKnobRotation('ind-tilt', fix.tilt, -90, 90);
             setKnobRotation('ind-colorR', fix.colorR, 0, 255);
         } else {
+            document.getElementById('val-dimmer').innerText = '0%';
+            document.getElementById('val-pan').innerText = '0°';
+            document.getElementById('val-tilt').innerText = '0°';
+            document.getElementById('val-colorR').innerText = '0';
             setKnobRotation('ind-dimmer', 0, 0, 100);
             setKnobRotation('ind-pan', 0, -180, 180);
             setKnobRotation('ind-tilt', 0, -90, 90);
-            setKnobRotation('ind-colorR', 255, 0, 255);
+            setKnobRotation('ind-colorR', 0, 0, 255);
         }
     }
 
@@ -448,7 +439,7 @@
         const indicator = document.getElementById(elementId);
         if(!indicator) return;
         const percentage = (val - min) / (max - min);
-        const deg = -135 + (percentage * 270); // Map to 270 degree dial arc
+        const deg = -135 + (percentage * 270); 
         indicator.style.transform = `rotate(${deg}deg)`;
     }
 
@@ -465,7 +456,6 @@
     });
 
     cmdInput.addEventListener('blur', () => {
-        // Delay closing so user can click items if needed
         setTimeout(() => {
             document.getElementById('cmd-help-drawer').style.display = 'none';
         }, 250);
@@ -483,6 +473,10 @@
         const lower = cmdText.toLowerCase();
         if(lower === 'clear') {
             clearProgrammer();
+            return;
+        }
+        if(lower === 'fullsc') {
+            toggleFullScreen();
             return;
         }
         if(lower === 'help' || lower === '?') {
@@ -520,7 +514,7 @@
         }
     }
 
-    // --- ROTARY ENCODER DRAG INTERACTION ---
+    // --- ROTARY ENCODER DRAG INTERACTION (PUTAR/DRAG) ---
     let activeEncoder = null;
     let startY = 0;
 
@@ -542,13 +536,13 @@
             if(!fix) return;
 
             if(activeEncoder === 'dimmer') {
-                fix.dimmer = Math.max(0, Math.min(255, fix.dimmer + delta));
+                fix.dimmer = Math.max(0, Math.min(255, fix.dimmer + (delta * 2)));
             } else if(activeEncoder === 'pan') {
                 fix.pan = Math.max(-180, Math.min(180, fix.pan + delta));
             } else if(activeEncoder === 'tilt') {
                 fix.tilt = Math.max(-90, Math.min(90, fix.tilt + delta));
             } else if(activeEncoder === 'colorR') {
-                fix.colorR = Math.max(0, Math.min(255, fix.colorR + delta));
+                fix.colorR = Math.max(0, Math.min(255, fix.colorR + (delta * 2)));
             }
         });
         updateProgrammerUI();
