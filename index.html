@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ProLight OnPC - Professional Lighting Console</title>
+<title>ProLight OnPC v2.0 - Professional Lighting Console</title>
 <!-- Three.js untuk Visualizer 3D -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
     :root { 
         --bg-dark: #121212; 
-        --panel-bg: #1e1e1e; 
-        --panel-header: #2c2c2c; 
+        --panel-bg: #1a1a1a; 
+        --panel-header: #282828; 
         --accent: #ffb700; 
         --accent-hover: #ffa200;
         --text: #e0e0e0; 
@@ -24,7 +24,7 @@
     
     /* Startup Screen */
     #startup-screen { position: absolute; inset: 0; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; }
-    .startup-box { background: var(--panel-bg); padding: 40px; border-radius: 8px; border: 1px solid var(--border); text-align: center; width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+    .startup-box { background: var(--panel-bg); padding: 40px; border-radius: 8px; border: 1px solid var(--border); text-align: center; width: 480px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
     .btn { background: #2a2a2a; color: var(--accent); border: 1px solid var(--accent); padding: 12px 24px; margin: 8px 0; width: 100%; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 13px; border-radius: 4px; transition: 0.2s; }
     .btn:hover { background: var(--accent); color: #000; }
     .btn-secondary { background: transparent; border-color: #555; color: #aaa; }
@@ -34,7 +34,7 @@
     .input-group input { width: 100%; background: #111; border: 1px solid var(--border); color: #fff; padding: 10px; font-size: 14px; border-radius: 4px; }
     
     /* Desktop Mode Workspace Layout */
-    #workspace { display: none; width: 100vw; height: 100vh; grid-template-rows: 35px 1fr 160px 40px; grid-template-columns: 280px 1fr 320px; }
+    #workspace { display: none; width: 100vw; height: 100vh; grid-template-rows: 35px 1fr 180px 40px; grid-template-columns: 280px 1fr 340px; }
     
     .header { grid-column: 1 / -1; background: #080808; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 15px; font-size: 12px; color: var(--text-dim); }
     .header-left, .header-right { display: flex; align-items: center; gap: 15px; }
@@ -55,15 +55,22 @@
     #three-canvas-container { width: 100%; height: 100%; }
     
     /* Programmer & Encoders Panel */
-    #programmer-panel { grid-column: 3 / 4; grid-row: 2 / 3; padding: 10px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
-    .encoder-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .encoder-box { background: #151515; border: 1px solid var(--border); border-radius: 6px; padding: 8px; text-align: center; }
+    #programmer-panel { grid-column: 3 / 4; grid-row: 2 / 3; padding: 8px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+    .encoder-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .encoder-box { background: #151515; border: 1px solid var(--border); border-radius: 6px; padding: 6px; text-align: center; }
     
     /* Rotary Dial Encoders */
-    .encoder-knob { width: 56px; height: 56px; background: radial-gradient(circle, #2a2a2a 0%, #151515 100%); border: 2px solid var(--accent); border-radius: 50%; margin: 6px auto; position: relative; display: flex; align-items: center; justify-content: center; cursor: ns-resize; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-    .encoder-indicator { position: absolute; top: 4px; width: 4px; height: 16px; background: var(--accent); border-radius: 2px; transform-origin: 50% 24px; pointer-events: none; }
-    .encoder-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; font-weight: bold; pointer-events: none; }
-    .encoder-val { font-size: 12px; font-weight: bold; color: #fff; margin-top: 2px; font-family: monospace; pointer-events: none; }
+    .encoder-knob { width: 44px; height: 44px; background: radial-gradient(circle, #2a2a2a 0%, #151515 100%); border: 2px solid var(--accent); border-radius: 50%; margin: 4px auto; position: relative; display: flex; align-items: center; justify-content: center; cursor: ns-resize; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    .encoder-indicator { position: absolute; top: 3px; width: 3px; height: 12px; background: var(--accent); border-radius: 2px; transform-origin: 50% 19px; pointer-events: none; }
+    .encoder-label { font-size: 9px; color: var(--text-dim); text-transform: uppercase; font-weight: bold; pointer-events: none; }
+    .encoder-val { font-size: 11px; font-weight: bold; color: #fff; margin-top: 1px; font-family: monospace; pointer-events: none; }
+    
+    /* Tabs for Presets / Cues / FX */
+    .sub-tabs { display: flex; background: #181818; border-bottom: 1px solid var(--border); }
+    .sub-tab { flex: 1; padding: 4px; text-align: center; font-size: 10px; cursor: pointer; color: var(--text-dim); font-weight: bold; }
+    .sub-tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); background: #222; }
+    .tab-content { display: none; padding: 6px; font-size: 11px; overflow-y: auto; flex: 1; }
+    .tab-content.active { display: block; }
     
     /* Executors Panel */
     #executor-panel { grid-column: 1 / -1; grid-row: 3 / 4; display: flex; padding: 6px; gap: 6px; background: #161616; border-top: 1px solid var(--border); }
@@ -85,7 +92,6 @@
     #cmd-input { flex: 1; background: transparent; border: none; color: var(--accent); font-family: monospace; font-size: 15px; padding: 0 15px; outline: none; }
     .cmd-help { color: var(--text-dim); font-size: 11px; padding-right: 15px; font-family: monospace; }
     
-    /* Command Help Drawer / Popup */
     #cmd-help-drawer { display: none; position: absolute; bottom: 42px; left: 0; right: 0; background: #181818; border: 1px solid var(--accent); border-radius: 4px 4px 0 0; padding: 12px; z-index: 1000; box-shadow: 0 -5px 20px rgba(0,0,0,0.8); }
     .cmd-help-title { color: var(--accent); font-size: 12px; font-weight: bold; margin-bottom: 6px; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 4px; }
     .cmd-help-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-family: monospace; font-size: 11px; }
@@ -97,12 +103,12 @@
 <!-- Startup Screen -->
 <div id="startup-screen">
     <div class="startup-box">
-        <h1 style="color: var(--accent); margin-bottom: 5px; font-size: 22px;">PROLIGHT ONPC</h1>
-        <p style="color: var(--text-dim); font-size: 11px; margin-bottom: 25px;">Professional Lighting Console v1.8</p>
+        <h1 style="color: var(--accent); margin-bottom: 5px; font-size: 22px;">PROLIGHT ONPC v2.0</h1>
+        <p style="color: var(--text-dim); font-size: 11px; margin-bottom: 25px;">Professional Lighting Console & 3D Engine</p>
         
         <div class="input-group">
             <label>Show Name</label>
-            <input type="text" id="show-name-input" value="Tour Concert 2026">
+            <input type="text" id="show-name-input" value="Main Arena Tour 2026">
         </div>
         
         <button class="btn" onclick="startShow()">New Show / Start Workspace</button>
@@ -120,7 +126,7 @@
             <span>Universe: <strong style="color:var(--accent);">1</strong></span>
         </div>
         <div class="header-right">
-            <span>Programmer State: <strong id="sys-state" style="color:var(--accent);">ACTIVE</strong></span>
+            <button class="btn-secondary" style="padding: 2px 8px; font-size:10px; cursor:pointer;" onclick="saveShow()">Save Show</button>
             <button class="btn-secondary" style="padding: 2px 8px; font-size:10px; cursor:pointer;" onclick="toggleFullScreen()">Full Screen</button>
         </div>
     </div>
@@ -140,44 +146,83 @@
         <div id="three-canvas-container"></div>
     </div>
     
-    <!-- Programmer & Encoders -->
+    <!-- Programmer & Encoders Panel with Tabs -->
     <div class="panel" id="programmer-panel">
-        <div class="panel-title">Programmer / Encoders</div>
-        <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 2px;">Selected: <span id="lbl-selection" style="color:var(--accent);">None</span></div>
-        
-        <div class="encoder-grid">
-            <div class="encoder-box">
-                <div class="encoder-label">Dimmer</div>
-                <div class="encoder-knob" data-attr="dimmer">
-                    <div class="encoder-indicator" id="ind-dimmer"></div>
-                </div>
-                <div class="encoder-val" id="val-dimmer">0%</div>
-            </div>
-            <div class="encoder-box">
-                <div class="encoder-label">Pan</div>
-                <div class="encoder-knob" data-attr="pan">
-                    <div class="encoder-indicator" id="ind-pan"></div>
-                </div>
-                <div class="encoder-val" id="val-pan">0°</div>
-            </div>
-            <div class="encoder-box">
-                <div class="encoder-label">Tilt</div>
-                <div class="encoder-knob" data-attr="tilt">
-                    <div class="encoder-indicator" id="ind-tilt"></div>
-                </div>
-                <div class="encoder-val" id="val-tilt">0°</div>
-            </div>
-            <div class="encoder-box">
-                <div class="encoder-label">Color (Red)</div>
-                <div class="encoder-knob" data-attr="colorR">
-                    <div class="encoder-indicator" id="ind-colorR"></div>
-                </div>
-                <div class="encoder-val" id="val-colorR">255</div>
-            </div>
+        <div class="sub-tabs">
+            <div class="sub-tab active" onclick="switchTab('encoders')">Encoders</div>
+            <div class="sub-tab" onclick="switchTab('presets')">Presets</div>
+            <div class="sub-tab" onclick="switchTab('cues')">Cues</div>
+            <div class="sub-tab" onclick="switchTab('fx')">Effects</div>
         </div>
         
-        <div style="margin-top: auto; border-top: 1px solid var(--border); padding-top: 8px;">
-            <button class="btn" style="padding: 6px; margin: 0; font-size: 11px;" onclick="clearProgrammer()">Clear Programmer (ESC)</button>
+        <!-- Encoders Tab -->
+        <div id="tab-encoders" class="tab-content active" style="display:flex; flex-direction:column; gap:6px;">
+            <div style="font-size: 10px; color: var(--text-dim);">Sel: <span id="lbl-selection" style="color:var(--accent);">None</span></div>
+            <div class="encoder-grid">
+                <div class="encoder-box">
+                    <div class="encoder-label">Dim</div>
+                    <div class="encoder-knob" data-attr="dimmer"><div class="encoder-indicator" id="ind-dimmer"></div></div>
+                    <div class="encoder-val" id="val-dimmer">0%</div>
+                </div>
+                <div class="encoder-box">
+                    <div class="encoder-label">Pan</div>
+                    <div class="encoder-knob" data-attr="pan"><div class="encoder-indicator" id="ind-pan"></div></div>
+                    <div class="encoder-val" id="val-pan">0°</div>
+                </div>
+                <div class="encoder-box">
+                    <div class="encoder-label">Tilt</div>
+                    <div class="encoder-knob" data-attr="tilt"><div class="encoder-indicator" id="ind-tilt"></div></div>
+                    <div class="encoder-val" id="val-tilt">0°</div>
+                </div>
+                <div class="encoder-box">
+                    <div class="encoder-label">Red</div>
+                    <div class="encoder-knob" data-attr="colorR"><div class="encoder-indicator" id="ind-colorR"></div></div>
+                    <div class="encoder-val" id="val-colorR">255</div>
+                </div>
+                <div class="encoder-box">
+                    <div class="encoder-label">Green</div>
+                    <div class="encoder-knob" data-attr="colorG"><div class="encoder-indicator" id="ind-colorG"></div></div>
+                    <div class="encoder-val" id="val-colorG">255</div>
+                </div>
+                <div class="encoder-box">
+                    <div class="encoder-label">Blue</div>
+                    <div class="encoder-knob" data-attr="colorB"><div class="encoder-indicator" id="ind-colorB"></div></div>
+                    <div class="encoder-val" id="val-colorB">255</div>
+                </div>
+            </div>
+            <button class="btn" style="padding: 4px; margin-top: auto; font-size: 10px;" onclick="clearProgrammer()">Clear Programmer (ESC)</button>
+        </div>
+
+        <!-- Presets Tab -->
+        <div id="tab-presets" class="tab-content">
+            <div style="font-weight:bold; color:var(--accent); margin-bottom:4px;">Color Presets</div>
+            <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:4px;">
+                <button class="btn" style="margin:0; padding:6px; font-size:10px; background:#400; border-color:#f00;" onclick="applyPreset('color', 'red')">RED</button>
+                <button class="btn" style="margin:0; padding:6px; font-size:10px; background:#040; border-color:#0f0;" onclick="applyPreset('color', 'green')">GREEN</button>
+                <button class="btn" style="margin:0; padding:6px; font-size:10px; background:#004; border-color:#00f;" onclick="applyPreset('color', 'blue')">BLUE</button>
+                <button class="btn" style="margin:0; padding:6px; font-size:10px; background:#444; border-color:#fff;" onclick="applyPreset('color', 'white')">WHITE</button>
+            </div>
+        </div>
+
+        <!-- Cues Tab -->
+        <div id="tab-cues" class="tab-content">
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                <span style="font-weight:bold; color:var(--accent);">Sequence List</span>
+                <button class="btn" style="margin:0; padding:2px 6px; font-size:9px; width:auto;" onclick="storeCue()">Store Cue</button>
+            </div>
+            <div id="cue-list-container" style="font-family:monospace; font-size:10px;">
+                <!-- Rendered by JS -->
+            </div>
+        </div>
+
+        <!-- FX Tab -->
+        <div id="tab-fx" class="tab-content">
+            <div style="font-weight:bold; color:var(--accent); margin-bottom:4px;">Effects Engine</div>
+            <div style="display:flex; flex-direction:column; gap:4px;">
+                <button class="btn" style="margin:0; padding:6px; font-size:10px;" onclick="toggleFX('dimmer_chase')">Dimmer Chase FX</button>
+                <button class="btn" style="margin:0; padding:6px; font-size:10px;" onclick="toggleFX('pan_wave')">Pan Wave FX</button>
+                <button class="btn" style="margin:0; padding:6px; font-size:10px; background:#311;" onclick="stopFX()">Stop All FX</button>
+            </div>
         </div>
     </div>
     
@@ -187,47 +232,57 @@
     <!-- Command Line -->
     <div id="cmd-panel">
         <div id="cmd-help-drawer">
-            <div class="cmd-help-title">Command Line Syntax Reference</div>
+            <div class="cmd-help-title">Command Line Reference</div>
             <div class="cmd-help-grid">
                 <div class="cmd-help-item"><span>Fixture 1</span> : Pilih fixture 1</div>
                 <div class="cmd-help-item"><span>Fix 1 thru 3</span> : Pilih rentang fixture</div>
-                <div class="cmd-help-item"><span>At 100</span> : Set nilai aktif ke 100%</div>
-                <div class="cmd-help-item"><span>fullsc</span> : Masuk/Keluar Fullscreen</div>
-                <div class="cmd-help-item"><span>Clear</span> : Kosongkan programmer</div>
-                <div class="cmd-help-item"><span>Help</span> : Tampilkan panduan ini</div>
+                <div class="cmd-help-item"><span>At 100</span> : Set dimmer ke 100%</div>
+                <div class="cmd-help-item"><span>store cue 1</span> : Rekam ke cue 1</div>
+                <div class="cmd-help-item"><span>fullsc</span> : Toggle Fullscreen</div>
+                <div class="cmd-help-item"><span>clear</span> : Reset programmer</div>
             </div>
         </div>
         
-        <div class="cmd-badge" onclick="toggleCmdHelp()" title="Klik untuk lihat fungsi Command">CMD (?)</div>
-        <input type="text" id="cmd-input" placeholder="Ketik perintah (cth: Fix 1 thru 3 At 100, fullsc, help)..." autocomplete="off">
+        <div class="cmd-badge" onclick="toggleCmdHelp()" title="Bantuan Command">CMD (?)</div>
+        <input type="text" id="cmd-input" placeholder="Ketik perintah (cth: Fix 1 thru 3 At 100, store cue 1, fullsc)..." autocomplete="off">
         <div class="cmd-help">Tekan ENTER untuk eksekusi</div>
     </div>
 </div>
 
 <script>
     const showData = {
-        name: "Tour Concert 2026",
+        name: "Main Arena Tour 2026",
         patch: [
-            { id: 1, name: "Moving Head 1", type: "Spot", universe: 1, address: 1, x: -3, z: -2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 },
-            { id: 2, name: "Moving Head 2", type: "Spot", universe: 1, address: 17, x: 0, z: -2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 },
-            { id: 3, name: "Moving Head 3", type: "Spot", universe: 1, address: 33, x: 3, z: -2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 },
-            { id: 4, name: "LED Bar 1", type: "Bar", universe: 1, address: 50, x: -3, z: 2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 100, colorB: 0 },
-            { id: 5, name: "LED Bar 2", type: "Bar", universe: 1, address: 60, x: 3, z: 2, dimmer: 0, pan: 0, tilt: 0, colorR: 0, colorG: 100, colorB: 255 }
+            { id: 1, name: "Moving Head Spot 1", type: "Spot", universe: 1, address: 1, x: -4, z: -2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 },
+            { id: 2, name: "Moving Head Spot 2", type: "Spot", universe: 1, address: 17, x: -2, z: -2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 },
+            { id: 3, name: "Moving Head Spot 3", type: "Spot", universe: 1, address: 33, x: 2, z: -2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 },
+            { id: 4, name: "Moving Head Spot 4", type: "Spot", universe: 1, address: 49, x: 4, z: -2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 255, colorB: 255 },
+            { id: 5, name: "LED Wash Bar", type: "Bar", universe: 1, address: 70, x: 0, z: 2, dimmer: 0, pan: 0, tilt: 0, colorR: 255, colorG: 100, colorB: 0 }
+        ],
+        cues: [
+            { number: 1, name: "Intro Blackout", values: {} },
+            { number: 2, name: "Verse Beam Up", values: {} }
         ]
     };
 
     let selectedFixtures = [];
+    let activeFX = null;
+    let fxTick = 0;
 
     function toggleFullScreen() {
         if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(err => {
-                console.error(`Error enabling fullscreen: ${err.message}`);
-            });
+            document.documentElement.requestFullscreen().catch(err => console.error(err));
         } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            }
+            if (document.exitFullscreen) document.exitFullscreen();
         }
+    }
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        event.currentTarget.classList.add('active');
+        document.getElementById('tab-' + tabName).classList.add('active');
     }
 
     // --- THREE.JS 3D STAGE VISUALIZER ---
@@ -241,7 +296,7 @@
         scene.background = new THREE.Color(0x0a0a0a);
 
         camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
-        camera.position.set(0, 5, 10);
+        camera.position.set(0, 5, 12);
         camera.lookAt(0, 0, 0);
 
         renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -251,14 +306,14 @@
 
         scene.add(new THREE.AmbientLight(0x222222));
 
-        const floorGeo = new THREE.PlaneGeometry(12, 8);
+        const floorGeo = new THREE.PlaneGeometry(14, 10);
         const floorMat = new THREE.MeshStandardMaterial({ color: 0x181818, roughness: 0.8 });
         const floor = new THREE.Mesh(floorGeo, floorMat);
         floor.rotation.x = -Math.PI / 2;
         floor.position.y = -1;
         scene.add(floor);
 
-        const grid = new THREE.GridHelper(12, 12, 0x444444, 0x222222);
+        const grid = new THREE.GridHelper(14, 14, 0x444444, 0x222222);
         grid.position.y = -0.99;
         scene.add(grid);
 
@@ -268,19 +323,19 @@
             const group = new THREE.Group();
             group.position.set(fix.x, 3, fix.z);
 
-            const bodyGeo = new THREE.BoxGeometry(0.6, 0.6, 0.6);
+            const bodyGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
             const bodyMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.5 });
             const body = new THREE.Mesh(bodyGeo, bodyMat);
             group.add(body);
 
-            const lensGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.1, 16);
+            const lensGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.1, 16);
             const lensMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
             const lens = new THREE.Mesh(lensGeo, lensMat);
-            lens.position.y = -0.35;
+            lens.position.y = -0.3;
             group.add(lens);
 
             const spotLight = new THREE.SpotLight(0xffffff, 0, 15, Math.PI / 6, 0.5, 1);
-            spotLight.position.set(0, -0.4, 0);
+            spotLight.position.set(0, -0.3, 0);
             
             const targetObj = new THREE.Object3D();
             targetObj.position.set(fix.x, -5, fix.z + 5);
@@ -311,6 +366,20 @@
 
     function animate3D() {
         requestAnimationFrame(animate3D);
+        fxTick += 0.05;
+
+        // Effects Engine Real-time calculation
+        if(activeFX === 'dimmer_chase') {
+            showData.patch.forEach((fix, idx) => {
+                fix.dimmer = Math.floor((Math.sin(fxTick + (idx * 0.8)) + 1) * 127.5);
+            });
+            updateProgrammerUI();
+        } else if(activeFX === 'pan_wave') {
+            showData.patch.forEach((fix, idx) => {
+                fix.pan = Math.sin(fxTick + (idx * 0.5)) * 45;
+            });
+            updateProgrammerUI();
+        }
 
         showData.patch.forEach(fix => {
             const meshObj = fixtureMeshes.find(m => m.id === fix.id);
@@ -346,14 +415,25 @@
         document.getElementById('workspace').style.display = 'grid';
 
         renderFixtureSheet();
+        renderCueList();
         buildExecutors();
         init3DVisualizer();
         document.getElementById('cmd-input').focus();
     }
 
     function loadDemoShow() {
-        document.getElementById('show-name-input').value = "Mega Concert Stage 2026";
+        document.getElementById('show-name-input').value = "Mega Arena Tour 2026";
         startShow();
+    }
+
+    function saveShow() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(showData));
+        const dlAnchor = document.createElement('a');
+        dlAnchor.setAttribute("href", dataStr);
+        dlAnchor.setAttribute("download", showData.name.toLowerCase().replace(/\s+/g, '-') + ".json");
+        document.body.appendChild(dlAnchor);
+        dlAnchor.click();
+        dlAnchor.remove();
     }
 
     function renderFixtureSheet() {
@@ -362,6 +442,16 @@
             <div class="fix-row ${selectedFixtures.includes(f.id) ? 'selected' : ''}" onclick="toggleSelectFixture(${f.id})">
                 <span><strong>F${f.id}</strong> - ${f.name}</span>
                 <span style="color:var(--text-dim);">Uni ${f.universe} | Addr ${f.address}</span>
+            </div>
+        `).join('');
+    }
+
+    function renderCueList() {
+        const container = document.getElementById('cue-list-container');
+        container.innerHTML = showData.cues.map(c => `
+            <div style="padding: 4px; border-bottom: 1px solid #333; display:flex; justify-content:space-between;">
+                <span>Cue ${c.number}: ${c.name}</span>
+                <span style="color:var(--accent);">Ready</span>
             </div>
         `).join('');
     }
@@ -398,6 +488,7 @@
 
     function clearProgrammer() {
         selectedFixtures = [];
+        activeFX = null;
         renderFixtureSheet();
         updateProgrammerUI();
     }
@@ -418,20 +509,25 @@
             document.getElementById('val-pan').innerText = fix.pan + '°';
             document.getElementById('val-tilt').innerText = fix.tilt + '°';
             document.getElementById('val-colorR').innerText = fix.colorR;
+            document.getElementById('val-colorG').innerText = fix.colorG;
+            document.getElementById('val-colorB').innerText = fix.colorB;
 
             setKnobRotation('ind-dimmer', dimPercent, 0, 100);
             setKnobRotation('ind-pan', fix.pan, -180, 180);
             setKnobRotation('ind-tilt', fix.tilt, -90, 90);
             setKnobRotation('ind-colorR', fix.colorR, 0, 255);
+            setKnobRotation('ind-colorG', fix.colorG, 0, 255);
+            setKnobRotation('ind-colorB', fix.colorB, 0, 255);
         } else {
-            document.getElementById('val-dimmer').innerText = '0%';
-            document.getElementById('val-pan').innerText = '0°';
-            document.getElementById('val-tilt').innerText = '0°';
-            document.getElementById('val-colorR').innerText = '0';
+            ['dimmer', 'pan', 'tilt', 'colorR', 'colorG', 'colorB'].forEach(k => {
+                document.getElementById('val-' + k).innerText = '0' + (k.includes('color') || k === 'dimmer' ? '' : '°');
+            });
             setKnobRotation('ind-dimmer', 0, 0, 100);
             setKnobRotation('ind-pan', 0, -180, 180);
             setKnobRotation('ind-tilt', 0, -90, 90);
             setKnobRotation('ind-colorR', 0, 0, 255);
+            setKnobRotation('ind-colorG', 0, 0, 255);
+            setKnobRotation('ind-colorB', 0, 0, 255);
         }
     }
 
@@ -443,7 +539,33 @@
         indicator.style.transform = `rotate(${deg}deg)`;
     }
 
-    // --- COMMAND LINE INTERPRETER & HELP DRAWER ---
+    function applyPreset(type, colorName) {
+        if(selectedFixtures.length === 0) return;
+        let r=255, g=255, b=255;
+        if(colorName === 'red') { r=255; g=0; b=0; }
+        else if(colorName === 'green') { r=0; g=255; b=0; }
+        else if(colorName === 'blue') { r=0; g=0; b=255; }
+        else if(colorName === 'white') { r=255; g=255; b=255; }
+
+        selectedFixtures.forEach(id => {
+            const fix = showData.patch.find(f => f.id === id);
+            if(fix) {
+                fix.colorR = r; fix.colorG = g; fix.colorB = b;
+            }
+        });
+        updateProgrammerUI();
+    }
+
+    function storeCue() {
+        const nextNum = showData.cues.length + 1;
+        showData.cues.push({ number: nextNum, name: "Live State Cue " + nextNum });
+        renderCueList();
+    }
+
+    function toggleFX(fxName) { activeFX = fxName; }
+    function stopFX() { activeFX = null; }
+
+    // --- COMMAND LINE PARSER ---
     const cmdInput = document.getElementById('cmd-input');
     
     function toggleCmdHelp() {
@@ -451,15 +573,8 @@
         drawer.style.display = drawer.style.display === 'block' ? 'none' : 'block';
     }
 
-    cmdInput.addEventListener('focus', () => {
-        document.getElementById('cmd-help-drawer').style.display = 'block';
-    });
-
-    cmdInput.addEventListener('blur', () => {
-        setTimeout(() => {
-            document.getElementById('cmd-help-drawer').style.display = 'none';
-        }, 250);
-    });
+    cmdInput.addEventListener('focus', () => { document.getElementById('cmd-help-drawer').style.display = 'block'; });
+    cmdInput.addEventListener('blur', () => { setTimeout(() => { document.getElementById('cmd-help-drawer').style.display = 'none'; }, 250); });
 
     cmdInput.addEventListener('keydown', function(e) {
         if(e.key === 'Enter') {
@@ -471,18 +586,10 @@
 
     function parseCommand(cmdText) {
         const lower = cmdText.toLowerCase();
-        if(lower === 'clear') {
-            clearProgrammer();
-            return;
-        }
-        if(lower === 'fullsc') {
-            toggleFullScreen();
-            return;
-        }
-        if(lower === 'help' || lower === '?') {
-            toggleCmdHelp();
-            return;
-        }
+        if(lower === 'clear') { clearProgrammer(); return; }
+        if(lower === 'fullsc') { toggleFullScreen(); return; }
+        if(lower === 'store cue') { storeCue(); return; }
+        if(lower === 'help' || lower === '?') { toggleCmdHelp(); return; }
 
         const regex = /(?:fixture|fix)\s+(\d+)(?:\s+thru\s+(\d+))?(?:\s+at\s+(\d+))?/i;
         const match = lower.match(regex);
@@ -514,7 +621,7 @@
         }
     }
 
-    // --- ROTARY ENCODER DRAG INTERACTION (FIXED & FULLY FUNCTIONAL) ---
+    // --- UNIVERSAL ROTARY ENCODER INTERACTION (SPINNER DRAG) ---
     let activeEncoder = null;
     let startY = 0;
 
@@ -530,7 +637,7 @@
     window.addEventListener('mousemove', (e) => {
         if (!activeEncoder || selectedFixtures.length === 0) return;
         const delta = startY - e.clientY;
-        startY = e.clientY; // reset baseline
+        startY = e.clientY;
 
         selectedFixtures.forEach(fixId => {
             const fix = showData.patch.find(f => f.id === fixId);
@@ -544,14 +651,16 @@
                 fix.tilt = Math.max(-90, Math.min(90, fix.tilt + delta));
             } else if (activeEncoder === 'colorR') {
                 fix.colorR = Math.max(0, Math.min(255, fix.colorR + (delta * 2)));
+            } else if (activeEncoder === 'colorG') {
+                fix.colorG = Math.max(0, Math.min(255, fix.colorG + (delta * 2)));
+            } else if (activeEncoder === 'colorB') {
+                fix.colorB = Math.max(0, Math.min(255, fix.colorB + (delta * 2)));
             }
         });
         updateProgrammerUI();
     });
 
-    window.addEventListener('mouseup', () => {
-        activeEncoder = null;
-    });
+    window.addEventListener('mouseup', () => { activeEncoder = null; });
 </script>
 </body>
 </html>
