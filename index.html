@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ProLight OnPC v10.0 - Ultimate Engine & Command Line</title>
+<title>ProLight OnPC v11.0 - Guaranteed 3D Beam Fix</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
     :root { 
@@ -14,25 +14,21 @@
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
     body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', Tahoma, sans-serif; overflow: hidden; width: 100vw; height: 100vh; }
     
-    /* Layout */
     #app { display: grid; grid-template-rows: 35px 1fr 220px 40px; grid-template-columns: 280px 1fr 450px; width: 100%; height: 100%; }
     .header { grid-column: 1 / -1; background: #000; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 15px; font-size: 11px; font-weight: bold; }
     .panel { border: 1px solid var(--border); background: var(--panel); display: flex; flex-direction: column; overflow: hidden; position: relative; }
     .p-title { background: var(--header); color: var(--accent); padding: 5px 10px; font-size: 10px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
     
-    /* UI Elements */
     .btn { background: #222; color: #fff; border: 1px solid #444; padding: 4px 8px; font-size: 9px; cursor: pointer; border-radius: 3px; font-weight: bold; text-transform: uppercase; }
     .btn:hover { background: var(--accent); color: #000; border-color: var(--accent); }
     .btn.active { background: var(--accent); color: #000; }
     input, select { background: #000; color: #fff; border: 1px solid #333; padding: 3px 5px; font-size: 10px; border-radius: 2px; outline: none; }
     
-    /* Nav Pad Popup */
     #nav-popup { display: none; position: absolute; bottom: 20px; left: 20px; background: rgba(10,10,10,0.85); border: 1px solid var(--accent); padding: 10px; border-radius: 8px; z-index: 100; backdrop-filter: blur(4px); box-shadow: 0 5px 15px rgba(0,0,0,0.8); }
     .nav-grid { display: grid; grid-template-columns: repeat(3, 40px); gap: 5px; }
     .nav-btn { background: #222; border: 1px solid #444; color: var(--accent); height: 40px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; font-size: 16px; touch-action: none; }
     .nav-btn:active { background: var(--accent); color: #000; }
     
-    /* Help Dictionary Modal */
     #help-modal { display: none; position: fixed; inset: 10%; background: #111; border: 1px solid var(--accent); z-index: 2000; border-radius: 8px; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.9); }
     .help-header { display: flex; justify-content: space-between; padding: 10px 15px; background: #000; border-bottom: 1px solid #333; }
     .help-search { padding: 10px; background: #1a1a1a; border-bottom: 1px solid #333; }
@@ -41,7 +37,6 @@
     .help-item { display: flex; padding: 6px; border-bottom: 1px solid #222; }
     .h-cmd { width: 180px; color: var(--accent); font-weight: bold; }
     
-    /* 3D Stage & Fixtures */
     #fixture-sheet { overflow-y: auto; flex: 1; padding: 5px; font-size: 10px; }
     .fix-row { display: grid; grid-template-columns: 20px 1fr 35px 35px 35px; gap: 4px; padding: 4px; border-bottom: 1px solid #222; cursor: pointer; align-items: center; }
     .fix-row.selected { background: var(--sel); color: #fff; }
@@ -49,7 +44,6 @@
     #three-canvas { width: 100%; height: 100%; }
     .cam-hud { position: absolute; top: 10px; left: 10px; display: flex; gap: 4px; z-index: 10; flex-wrap: wrap; }
     
-    /* Programmer & Engine */
     #programmer-panel { grid-column: 3 / 4; grid-row: 2 / 4; display: flex; flex-direction: column; }
     .tabs { display: flex; background: #0a0a0a; border-bottom: 1px solid var(--border); }
     .tab { flex: 1; padding: 8px; text-align: center; font-size: 9px; cursor: pointer; color: var(--dim); font-weight: bold; text-transform: uppercase; }
@@ -57,7 +51,6 @@
     .tab-content { display: none; padding: 8px; overflow-y: auto; flex: 1; }
     .tab-content.active { display: block; }
     
-    /* Faders */
     .fader-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
     .fader-box { background: #0a0a0a; border: 1px solid #222; border-radius: 4px; padding: 6px; text-align: center; display: flex; flex-direction: column; align-items: center; }
     .f-track { width: 14px; height: 120px; background: #000; border-radius: 4px; position: relative; margin: 8px 0; cursor: pointer; border: 1px solid #333; touch-action: none; }
@@ -65,7 +58,6 @@
     .f-lbl { font-size: 9px; color: var(--dim); font-weight: bold; }
     .f-val { font-size: 11px; color: #fff; font-family: monospace; }
     
-    /* FX Grid */
     .fx-list { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; max-height: 250px; overflow-y: auto; }
     .fx-item { background: #111; border: 1px solid #333; padding: 6px; font-size: 9px; cursor: pointer; border-radius: 3px; text-align: center; }
     .fx-item:hover { border-color: var(--accent); }
@@ -74,7 +66,6 @@
     .param-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
     .p-row { background: #0a0a0a; padding: 4px; border-radius: 3px; border: 1px solid #222; display: flex; justify-content: space-between; font-size: 9px; align-items:center;}
     
-    /* Bottom */
     #cmd-panel { grid-column: 1 / -1; grid-row: 4 / 5; background: #000; border-top: 1px solid var(--border); display: flex; }
     .cmd-badge { background: var(--accent); color: #000; font-weight: bold; padding: 0 15px; display: flex; align-items: center; font-size: 12px; cursor: pointer; }
     #cmd-input { flex: 1; background: transparent; border: none; color: var(--accent); font-size: 15px; font-family: monospace; padding: 0 15px; }
@@ -83,13 +74,11 @@
 <body>
 
 <div id="app">
-    <!-- Header -->
     <div class="header">
-        <div>PROLIGHT ONPC v10.0 | FULL ENGINE</div>
+        <div>PROLIGHT ONPC v11.0 | DIRECT BEAM ENGINE</div>
         <div><button class="btn" onclick="toggleFS()">Full Screen</button></div>
     </div>
     
-    <!-- Left: Patch -->
     <div class="panel" id="fixture-panel" style="grid-column: 1 / 2; grid-row: 2 / 4;">
         <div class="p-title"><span>Fixtures</span><button class="btn" onclick="fullAll()">FULL ON</button></div>
         <div class="fix-row" style="background:#000; font-weight:bold; cursor:default; padding: 6px 4px;">
@@ -98,7 +87,6 @@
         <div id="fixture-sheet"></div>
     </div>
     
-    <!-- Center: Stage -->
     <div class="panel" id="stage-panel">
         <div class="cam-hud">
             <button class="btn cam-btn active" onclick="setCam('FRONT')">FRONT</button>
@@ -107,7 +95,6 @@
             <button class="btn" style="background:#0066cc" onclick="toggleNav()">NAV PAD ✜</button>
         </div>
         
-        <!-- Camera Nav Pad Popup -->
         <div id="nav-popup">
             <div style="text-align:center; font-size:9px; color:var(--text); margin-bottom:5px; font-weight:bold;">CAMERA NAV</div>
             <div class="nav-grid">
@@ -118,26 +105,24 @@
                 <div class="nav-btn" onpointerdown="camCtrl.s=1" onpointerup="camCtrl.s=0">↓</div>
                 <div class="nav-btn" onpointerdown="camCtrl.d=1" onpointerup="camCtrl.d=0">→</div>
             </div>
-            <div style="text-align:center; font-size:8px; color:var(--dim); margin-top:5px;">L/R Drag to Rotate</div>
+            <div style="text-align:center; font-size:8px; color:var(--dim); margin-top:5px;">Drag Mouse to Rotate</div>
         </div>
         <div id="three-canvas"></div>
     </div>
     
-    <!-- Right: Programmer & FX Engine -->
     <div class="panel" id="programmer-panel">
         <div class="tabs">
             <div class="tab active" onclick="switchTab('faders')">Attrs & Colors</div>
             <div class="tab" onclick="switchTab('engine')">FX & Wing Engine</div>
         </div>
         
-        <!-- Attributes Tab -->
         <div id="tab-faders" class="tab-content active">
             <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
                 <span style="font-size:10px;">Sel: <b id="lbl-sel" style="color:var(--accent);">All</b></span>
                 <button class="btn" style="background:#411; border-color:#f33;" onclick="clearProg()">CLEAR</button>
             </div>
             <div class="fader-grid">
-                <div class="fader-box"><div class="f-lbl">DIMMER</div><div class="f-track" onpointerdown="initFader(event,'dimmer')"><div class="f-thumb" id="th-dimmer"></div></div><div class="f-val" id="val-dimmer">100%</div></div>
+                <div class="fader-box"><div class="f-lbl">DIMMER</div><div class="f-track" onpointerdown="initFader(event,'dimmer')"><div class="f-thumb" id="th-dimmer" style="bottom:100%"></div></div><div class="f-val" id="val-dimmer">100%</div></div>
                 <div class="fader-box"><div class="f-lbl">PAN</div><div class="f-track" onpointerdown="initFader(event,'pan')"><div class="f-thumb" id="th-pan" style="bottom:50%"></div></div><div class="f-val" id="val-pan">0°</div></div>
                 <div class="fader-box"><div class="f-lbl">TILT</div><div class="f-track" onpointerdown="initFader(event,'tilt')"><div class="f-thumb" id="th-tilt" style="bottom:50%"></div></div><div class="f-val" id="val-tilt">0°</div></div>
                 <div class="fader-box"><div class="f-lbl">ZOOM</div><div class="f-track" onpointerdown="initFader(event,'zoom')"><div class="f-thumb" id="th-zoom"></div></div><div class="f-val" id="val-zoom">5°</div></div>
@@ -156,7 +141,6 @@
             </div>
         </div>
 
-        <!-- FX Engine Tab -->
         <div id="tab-engine" class="tab-content">
             <div class="param-grid">
                 <div class="p-row">Speed/BPM: <input type="number" value="120" onchange="fx.bpm=this.value" style="width:50px"></div>
@@ -175,13 +159,11 @@
         </div>
     </div>
     
-    <!-- Command Line -->
     <div id="cmd-panel">
         <div class="cmd-badge" onclick="openHelp()">HELP/DICT</div>
-        <input type="text" id="cmd-input" placeholder="Type command (e.g. fix 1 thru 8 at 100) or 'help'..." autocomplete="off">
+        <input type="text" id="cmd-input" placeholder="Ketik perintah (cth: fix 1 thru 8 at 100) atau 'help'..." autocomplete="off">
     </div>
 
-    <!-- Help Modal -->
     <div id="help-modal">
         <div class="help-header">
             <h2 style="color:var(--accent); font-size:14px; margin:0;">Command Dictionary (MA3)</h2>
@@ -193,13 +175,9 @@
 </div>
 
 <script>
-    /* =========================================
-       CORE STATE & COMMANDS
-    ========================================= */
     const patch = [];
     let selected = [];
     
-    // Command Dictionary (Compact)
     const cmdDict = [
         { c: "Absolute", d: "Sets Absolute layer for attribute values." },
         { c: "Align", d: "Distributes values across selected fixtures (Fan)." },
@@ -249,9 +227,6 @@
         }
     });
 
-    /* =========================================
-       FX & FORM ENGINE (RESTORED)
-    ========================================= */
     const fx = { active: null, bpm: 120, amp: 1.0, spread: 0, offset: 0, wing: 'mirror', time: 0 };
     
     const forms = {
@@ -297,15 +272,13 @@
     function applyFX(n) { fx.active = fxLibrary.find(x=>x.n===n); renderFXList(); }
     function stopFX() { fx.active = null; renderFXList(); }
 
-    /* =========================================
-       INITIALIZATION
-    ========================================= */
     function initShow() {
         patch.length = 0;
-        // Fix: Lamps ON by default
+        selected = [];
+        // Preset 8 Fixtures - Default Dimmer FULL (255) & Target Tilt Down
         for(let i=1; i<=8; i++) {
             patch.push({
-                id: i, n: "Spot "+i, x: (i-4.5)*2, y: 6, z: 0,
+                id: i, n: "Spot "+i, x: (i-4.5)*2.5, y: 6, z: 0,
                 dim: 255, pan: 0, tilt: 30, zoom: 5, r: 255, g: 255, b: 255
             });
             selected.push(i);
@@ -316,9 +289,6 @@
         updFaders();
     }
 
-    /* =========================================
-       THREE.JS ENGINE & VOLUMETRIC VISUALIZER
-    ========================================= */
     let scene, camera, renderer, meshes = [];
     const camCtrl = { w:0, a:0, s:0, d:0, q:0, e:0, up:0, down:0, left:0, right:0, speed: 0.2 };
     let isCamDrag = false, prevMx = 0, prevMy = 0;
@@ -329,29 +299,36 @@
         
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0x050505);
-        scene.fog = new THREE.FogExp2(0x050505, 0.015);
+        scene.fog = new THREE.FogExp2(0x050505, 0.012);
         
         camera = new THREE.PerspectiveCamera(50, cont.clientWidth/cont.clientHeight, 0.1, 1000);
-        setCam('FRONT');
         
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
         renderer.setSize(cont.clientWidth, cont.clientHeight);
         renderer.setClearColor(0x050505, 1);
         cont.appendChild(renderer.domElement);
         
-        // Environment (Grid & Truss)
-        scene.add(new THREE.GridHelper(40, 40, 0x333333, 0x111111));
-        const truss = new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,20,8), new THREE.MeshBasicMaterial({color:0x333}));
+        // Panggung, Grid, dan Truss
+        const floorGeo = new THREE.PlaneGeometry(30, 20);
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = 0;
+        scene.add(floor);
+        
+        scene.add(new THREE.GridHelper(30, 30, 0x444444, 0x111111));
+        scene.add(new THREE.AmbientLight(0x444444));
+
+        const truss = new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,24,8), new THREE.MeshBasicMaterial({color:0x555555}));
         truss.rotation.z = Math.PI/2; truss.position.y = 6;
         scene.add(truss);
 
-        // Build Fixtures
         meshes = [];
         patch.forEach(f => {
             const base = new THREE.Group();
             base.position.set(f.x, f.y, f.z);
             
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.4,0.5), new THREE.MeshBasicMaterial({color:0x222}));
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.6,0.4,0.6), new THREE.MeshBasicMaterial({color:0x333333}));
             base.add(body);
             
             const yoke = new THREE.Group(); yoke.position.y = -0.3; base.add(yoke);
@@ -360,17 +337,30 @@
             const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,0.4,16), new THREE.MeshBasicMaterial({color:0xffffff}));
             lens.rotation.x = Math.PI/2; head.add(lens);
             
-            // Volumetric Beam (Needs BasicMaterial and AdditiveBlending to glow without lights)
-            const bGeo = new THREE.ConeGeometry(1, 20, 32, 1, true);
-            bGeo.translate(0, -10, 0); bGeo.rotateX(-Math.PI/2);
-            const bMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide });
-            const beam = new THREE.Mesh(bGeo, bMat);
-            head.add(beam);
+            // BEAM GEOMETRY RE-ENGINEERED: Dual Cone + Cylinder Core (No Fail Light Guarantee)
+            const bGroup = new THREE.Group();
+            
+            // Outer Volumetric Glow
+            const bGeo = new THREE.ConeGeometry(1.2, 18, 32, 1, true);
+            bGeo.translate(0, -9, 0); bGeo.rotateX(-Math.PI/2);
+            const bMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.8, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide });
+            const beamOuter = new THREE.Mesh(bGeo, bMat);
+            bGroup.add(beamOuter);
+
+            // Inner Intense Laser Core
+            const cGeo = new THREE.CylinderGeometry(0.05, 0.4, 18, 16);
+            cGeo.translate(0, -9, 0); cGeo.rotateX(-Math.PI/2);
+            const cMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.9, depthWrite:false });
+            const beamCore = new THREE.Mesh(cGeo, cMat);
+            bGroup.add(beamCore);
+
+            head.add(bGroup);
             
             scene.add(base);
-            meshes.push({ id: f.id, base, yoke, head, lens, beam, mat: bMat, body });
+            meshes.push({ id: f.id, base, yoke, head, lens, beamGroup: bGroup, matOuter: bMat, matCore: cMat, body });
         });
         
+        setCam('FRONT');
         setupInput(cont);
         animate();
     }
@@ -388,7 +378,7 @@
         if(camCtrl.e) camera.position.y += camCtrl.speed;
         if(camCtrl.q) camera.position.y -= camCtrl.speed;
 
-        // Phaser Logic & Mesh Update
+        // FX Math & Mesh Rendering
         fx.time += 0.016 * (fx.bpm/60) * Math.PI;
         const cIdx = (patch.length - 1) / 2;
 
@@ -396,7 +386,6 @@
             let dimOut = f.dim, panOut = f.pan, tiltOut = f.tilt;
             let colOut = { r: f.r, g: f.g, b: f.b };
             
-            // Apply FX Engine calculations
             if(fx.active) {
                 let dist = i - cIdx;
                 let phase = fx.offset * (Math.PI/180);
@@ -442,7 +431,6 @@
                 }
             }
 
-            // Sync to 3D
             const m = meshes.find(x => x.id === f.id);
             if(m) {
                 m.yoke.rotation.y = panOut * (Math.PI/180);
@@ -450,20 +438,25 @@
                 
                 let int = dimOut / 255;
                 let c = new THREE.Color(colOut.r/255, colOut.g/255, colOut.b/255);
-                m.lens.material.color = int > 0 ? c : new THREE.Color(0x222);
-                m.mat.color = c;
-                m.mat.opacity = int * 0.8; 
                 
-                let zs = Math.tan((f.zoom/2)*(Math.PI/180)) * 20;
-                m.beam.scale.set(zs, 1, zs);
-                m.body.material.color.setHex(selected.includes(f.id) ? 0xffb700 : 0x222);
+                m.lens.material.color = int > 0 ? c : new THREE.Color(0x222222);
+                
+                // Force Guaranteed Beam Output
+                m.matOuter.color = c;
+                m.matOuter.opacity = int * 0.65;
+                
+                m.matCore.color = new THREE.Color(0xffffff); // Laser core remains bright white
+                m.matCore.opacity = int * 0.85;
+                
+                let zs = Math.max(0.2, Math.tan((f.zoom/2)*(Math.PI/180)) * 18);
+                m.beamGroup.scale.set(zs, 1, zs);
+                m.body.material.color.setHex(selected.includes(f.id) ? 0xffb700 : 0x333333);
             }
         });
         
         renderer.render(scene, camera);
     }
 
-    /* Helper: HSL to RGB */
     function hsl2rgb(h, s, l) {
         let r, g, b; if (s === 0) r = g = b = l; else {
             const h2r = (p, q, t) => { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1/6) return p + (q - p) * 6 * t; if (t < 1/2) return q; if (t < 2/3) return p + (q - p) * (2/3 - t) * 6; return p; };
@@ -472,9 +465,6 @@
         } return [r, g, b];
     }
 
-    /* =========================================
-       INPUT & UI
-    ========================================= */
     function setupInput(c) {
         window.addEventListener('keydown', e => {
             const k = e.key.toLowerCase();
@@ -501,11 +491,22 @@
 
     function setCam(v) {
         document.querySelectorAll('.cam-btn').forEach(b => b.classList.remove('active'));
-        event.target.classList.add('active');
-        if(v === 'FRONT') { camera.position.set(0, 3, 25); camera.rotation.set(0,0,0); }
-        if(v === 'TOP') { camera.position.set(0, 30, 0); camera.rotation.set(-Math.PI/2,0,0); }
-        if(v === 'PERSPECTIVE') { camera.position.set(-15, 10, 20); camera.rotation.set(-0.2,-0.5,0); }
+        if(event && event.target) event.target.classList.add('active');
+        if(v === 'FRONT') { 
+            camera.position.set(0, 3, 22); 
+            camera.rotation.set(0, 0, 0); 
+            camera.lookAt(0, 3, 0); 
+        }
+        if(v === 'TOP') { 
+            camera.position.set(0, 25, 0); 
+            camera.rotation.set(-Math.PI/2, 0, 0); 
+        }
+        if(v === 'PERSPECTIVE') { 
+            camera.position.set(-15, 12, 20); 
+            camera.lookAt(0, 3, 0); 
+        }
     }
+    
     function toggleNav() { const e = document.getElementById('nav-popup'); e.style.display = e.style.display === 'block' ? 'none' : 'block'; }
     function switchTab(t) {
         document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
@@ -514,7 +515,6 @@
     }
     function toggleFS() { if(!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
 
-    /* FADER INTERACTION */
     let actFader = null;
     function initFader(e, type) {
         let el = e.currentTarget;
