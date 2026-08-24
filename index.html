@@ -1,840 +1,241 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LuxControl onPC - Professional Lighting Console</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        gma: {
-                            bg: '#141414',
-                            panel: '#1f1f1f',
-                            border: '#383838',
-                            borderLight: '#4d4d4d',
-                            accent: '#ff5500',
-                            accentHover: '#ff7722',
-                            text: '#dedede',
-                            muted: '#858585',
-                            screenBg: '#0a0a0a',
-                            button: '#262626',
-                            buttonHover: '#333333',
-                            active: '#22c55e',
-                            selected: '#2563eb'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: #141414; }
-        ::-webkit-scrollbar-thumb { background: #383838; border-radius: 2px; }
-        ::-webkit-scrollbar-thumb:hover { background: #555; }
-        .slider-vertical { writing-mode: bt-lr; -webkit-appearance: slider-vertical; }
-        .gma-screen-grid { background-image: radial-gradient(#262626 1px, transparent 1px); background-size: 20px 20px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProLight Console Web</title>
+<style>
+    :root { --bg-dark: #111; --panel-bg: #222; --accent: #ffcc00; --text: #eee; --border: #333; }
+    body { margin: 0; background: var(--bg-dark); color: var(--text); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; user-select: none; }
+    
+    /* Startup Screen */
+    #startup-screen { position: absolute; inset: 0; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
+    .startup-box { background: var(--panel-bg); padding: 30px; border-radius: 5px; border: 1px solid var(--border); text-align: center; }
+    .btn { background: #333; color: var(--accent); border: 1px solid var(--accent); padding: 10px 20px; margin: 5px; cursor: pointer; font-weight: bold; text-transform: uppercase; }
+    .btn:hover { background: var(--accent); color: #000; }
+    
+    /* Main Workspace */
+    #workspace { display: none; height: 100vh; grid-template-rows: 40px 1fr 150px 40px; grid-template-columns: 250px 1fr 300px; }
+    .header { grid-column: 1 / -1; background: #000; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 10px; font-size: 12px; color: #888; }
+    
+    /* Panels */
+    .panel { border: 1px solid var(--border); background: var(--panel-bg); display: flex; flex-direction: column; overflow: hidden; }
+    .panel-title { background: #000; color: var(--accent); padding: 5px; font-size: 11px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+    
+    /* Stage Visualizer */
+    #stage-panel { grid-column: 2 / 3; grid-row: 2 / 3; }
+    canvas { width: 100%; height: 100%; background: #0a0a0a; }
+    
+    /* Executors */
+    #executor-panel { grid-column: 1 / -1; grid-row: 3 / 4; display: flex; padding: 5px; gap: 5px; }
+    .executor { flex: 1; background: #1a1a1a; border: 1px solid #444; display: flex; flex-direction: column; }
+    .fader-track { flex: 1; background: #000; margin: 5px 20px; position: relative; }
+    .fader-cap { width: 100%; height: 20px; background: #555; position: absolute; bottom: 0; cursor: pointer; border-bottom: 3px solid var(--accent); }
+    .exec-btn { background: #333; border: 1px solid #555; color: white; padding: 5px; text-align: center; font-size: 10px; cursor: pointer; }
+    .exec-btn:active { background: var(--accent); color: black; }
+    
+    /* Command Line */
+    #cmd-panel { grid-column: 1 / -1; grid-row: 4 / 5; display: flex; background: #000; }
+    #cmd-input { flex: 1; background: transparent; border: none; color: var(--accent); font-family: monospace; font-size: 16px; padding: 0 10px; outline: none; }
+    
+    /* Encoders */
+    #encoder-panel { grid-column: 3 / 4; grid-row: 2 / 3; padding: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .encoder { background: #111; border: 1px solid var(--border); aspect-ratio: 1; border-radius: 50%; position: relative; display: flex; align-items: center; justify-content: center; color: #888; font-size: 10px; cursor: ns-resize; }
+    .encoder::after { content: ''; position: absolute; top: 5px; width: 4px; height: 15px; background: var(--accent); border-radius: 2px; }
+</style>
 </head>
-<body class="bg-gma-bg text-gma-text font-mono h-screen flex flex-col overflow-hidden select-none text-xs">
+<body>
 
-    <!-- TOP MENU / SYSTEM BAR (grandMA3 style top bar) -->
-    <header class="bg-gma-panel border-b border-gma-border h-9 flex items-center justify-between px-3 shrink-0">
-        <div class="flex items-center space-x-3">
-            <div class="flex items-center space-x-1.5 bg-black/40 px-2 py-0.5 border border-gma-border rounded">
-                <span class="w-2.5 h-2.5 rounded-full bg-gma-accent animate-pulse"></span>
-                <span class="font-bold tracking-wider text-white">MA3 <span class="text-gma-accent">onPC</span></span>
-            </div>
-            <nav class="hidden md:flex items-center space-x-0.5">
-                <button onclick="app.newProject()" class="px-2 py-1 hover:bg-gma-buttonHover rounded text-gma-muted hover:text-white transition">New</button>
-                <button onclick="app.saveProject()" class="px-2 py-1 hover:bg-gma-buttonHover rounded text-gma-muted hover:text-white transition">Save</button>
-                <button onclick="app.loadProjectPrompt()" class="px-2 py-1 hover:bg-gma-buttonHover rounded text-gma-muted hover:text-white transition">Load</button>
-                <button onclick="app.exportProject()" class="px-2 py-1 hover:bg-gma-buttonHover rounded text-gma-muted hover:text-white transition">Export JSON</button>
-                <label class="px-2 py-1 hover:bg-gma-buttonHover rounded text-gma-muted hover:text-white transition cursor-pointer">
-                    Import <input type="file" id="importFile" class="hidden" accept=".json" onchange="app.importProject(event)">
-                </label>
-            </nav>
-        </div>
-
-        <div class="flex items-center space-x-2">
-            <div class="bg-black/40 px-2 py-0.5 border border-gma-border rounded flex items-center space-x-2">
-                <span class="text-gma-muted">UNDO/REDO:</span>
-                <button onclick="app.undo()" class="hover:text-white px-1">↶</button>
-                <button onclick="app.redo()" class="hover:text-white px-1">↷</button>
-            </div>
-            <button onclick="app.masterBlackout = !app.masterBlackout; app.render();" id="btnBO" class="px-3 py-1 font-bold rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-gma-border transition">
-                GRAND MASTER BO
-            </button>
-        </div>
-    </header>
-
-    <!-- MAIN CONSOLE WORKSPACE (Multi-Screen Screen Layout Simulator) -->
-    <div class="flex-1 grid grid-cols-12 grid-rows-12 gap-1 p-1 bg-gma-bg overflow-hidden">
-        
-        <!-- LEFT SCREEN / VIEWS (Fixtures, Groups, Presets, Sequences, Effects) -->
-        <div class="col-span-12 md:col-span-3 row-span-7 bg-gma-panel border border-gma-border flex flex-col rounded overflow-hidden shadow-lg">
-            <div class="flex bg-gma-screenBg border-b border-gma-border overflow-x-auto shrink-0" id="sidebarTabs">
-                <button onclick="app.switchTab('fixtures')" class="px-2.5 py-1.5 font-bold border-b-2 border-gma-accent text-white flex-1 tab-btn" data-tab="fixtures">FXT</button>
-                <button onclick="app.switchTab('groups')" class="px-2.5 py-1.5 font-bold border-b-2 border-transparent text-gma-muted flex-1 tab-btn" data-tab="groups">GRP</button>
-                <button onclick="app.switchTab('presets')" class="px-2.5 py-1.5 font-bold border-b-2 border-transparent text-gma-muted flex-1 tab-btn" data-tab="presets">PRE</button>
-                <button onclick="app.switchTab('sequences')" class="px-2.5 py-1.5 font-bold border-b-2 border-transparent text-gma-muted flex-1 tab-btn" data-tab="sequences">SEQ</button>
-                <button onclick="app.switchTab('effects')" class="px-2.5 py-1.5 font-bold border-b-2 border-transparent text-gma-muted flex-1 tab-btn" data-tab="effects">FX</button>
-            </div>
-            <div class="flex-1 overflow-y-auto p-2" id="sidebarContent">
-                <!-- Dynamically populated -->
-            </div>
-        </div>
-
-        <!-- CENTER SCREEN: STAGE VISUALIZER (Screen 1 Simulation) -->
-        <div class="col-span-12 md:col-span-6 row-span-7 bg-gma-screenBg border border-gma-border flex flex-col rounded relative overflow-hidden gma-screen-grid shadow-lg">
-            <!-- Stage Toolbar Overlay -->
-            <div class="absolute top-2 left-2 right-2 z-10 flex flex-wrap items-center justify-between bg-gma-panel/90 backdrop-blur border border-gma-border p-1 rounded gap-1">
-                <div class="flex items-center space-x-1 flex-wrap">
-                    <span class="text-gma-muted font-bold px-1">MODE:</span>
-                    <button onclick="app.setTool('select')" id="tool-select" class="px-2 py-0.5 bg-gma-accent text-white rounded tool-btn">Select</button>
-                    <button onclick="app.setTool('move')" id="tool-move" class="px-2 py-0.5 bg-gma-button hover:bg-gma-buttonHover rounded tool-btn">Move</button>
-                    <button onclick="app.setTool('rotate')" id="tool-rotate" class="px-2 py-0.5 bg-gma-button hover:bg-gma-buttonHover rounded tool-btn">Rotate</button>
-                    <button onclick="app.setTool('add')" id="tool-add" class="px-2 py-0.5 bg-emerald-800 hover:bg-emerald-700 text-white rounded font-bold">+ Fixture</button>
-                </div>
-                <div class="flex items-center space-x-1">
-                    <button onclick="app.zoomCanvas(0.1)" class="px-2 py-0.5 bg-gma-button border border-gma-border rounded">+</button>
-                    <span id="zoomLabel" class="text-gma-muted w-10 text-center">100%</span>
-                    <button onclick="app.zoomCanvas(-0.1)" class="px-2 py-0.5 bg-gma-button border border-gma-border rounded">-</button>
-                    <button onclick="app.fitStage()" class="px-2 py-0.5 bg-gma-button border border-gma-border rounded">Fit</button>
-                </div>
-            </div>
-
-            <div class="flex-1 relative cursor-crosshair w-full h-full" id="canvasContainer">
-                <canvas id="stageCanvas" class="w-full h-full block"></canvas>
-            </div>
-            
-            <div class="absolute bottom-2 left-2 pointer-events-none text-[10px] text-gma-muted bg-gma-panel/80 px-2 py-0.5 rounded border border-gma-border">
-                Selected: <span id="selectedCount" class="text-white">0</span> fixtures | FPS: <span id="fpsCounter">60</span>
-            </div>
-        </div>
-
-        <!-- RIGHT SCREEN: EXECUTORS / PLAYBACK FADERS -->
-        <div class="col-span-12 md:col-span-3 row-span-7 bg-gma-panel border border-gma-border flex flex-col rounded overflow-hidden shadow-lg">
-            <div class="bg-gma-screenBg border-b border-gma-border px-3 py-2 font-bold tracking-wider flex justify-between items-center text-gma-accent">
-                <span>EXECUTORS</span>
-                <button onclick="app.addExecutor()" class="text-white hover:underline">+ Exec</button>
-            </div>
-            <div class="flex-1 overflow-y-auto p-2 space-y-2" id="executorsContainer">
-                <!-- Executors rendered dynamically -->
-            </div>
-        </div>
-
-        <!-- LOWER SCREEN: PROGRAMMER ENCODERS & CHANNEL ATTRIBUTES -->
-        <div class="col-span-12 md:col-span-9 row-span-4 bg-gma-panel border border-gma-border flex flex-col rounded overflow-hidden shadow-lg">
-            <div class="bg-gma-screenBg border-b border-gma-border px-3 py-1.5 font-bold flex justify-between items-center">
-                <span class="text-white">PROGRAMMER / ENCODER BAR</span>
-                <span id="programmerStatus" class="text-[10px] text-gma-accent">No Selection Active</span>
-            </div>
-            <div class="flex-1 p-3 overflow-x-auto flex items-center space-x-6" id="programmerControls">
-                <div class="text-gma-muted italic m-auto">Select fixtures on stage or sidebar to control Dimmer, Position, and Color.</div>
-            </div>
-        </div>
-
-        <!-- BOTTOM-RIGHT: PRESETS QUICK ACCESS -->
-        <div class="col-span-12 md:col-span-3 row-span-4 bg-gma-panel border border-gma-border flex flex-col rounded overflow-hidden shadow-lg">
-            <div class="bg-gma-screenBg border-b border-gma-border px-3 py-1.5 font-bold flex justify-between items-center">
-                <span class="text-white">QUICK PRESETS</span>
-                <button onclick="app.recordPresetPrompt()" class="text-[10px] text-gma-accent">+ Record</button>
-            </div>
-            <div class="flex-1 p-2 grid grid-cols-3 gap-1 overflow-y-auto" id="quickPresetsContainer">
-                <!-- Presets buttons -->
-            </div>
-        </div>
-
-        <!-- COMMAND LINE BAR (grandMA3 signature bottom line) -->
-        <div class="col-span-12 row-span-1 bg-black border border-gma-border flex items-center px-3 rounded shadow-inner">
-            <span class="text-gma-accent font-bold mr-2">MA&gt;</span>
-            <input type="text" id="commandInput" placeholder="Command syntax (e.g. Fixture 1 At 100, Store Cue 1, Go)..." 
-                   class="bg-transparent flex-1 text-white focus:outline-none font-mono"
-                   onkeydown="app.handleCommandInput(event)">
-            <button onclick="app.executeCommandFromInput()" class="bg-gma-button hover:bg-gma-buttonHover px-3 py-1 rounded text-white ml-2 border border-gma-border">EXEC</button>
-        </div>
-
+<!-- Startup Screen -->
+<div id="startup-screen">
+    <div class="startup-box">
+        <h1 style="color: var(--accent); margin-top:0;">PROLIGHT ONPC</h1>
+        <p style="color: #888; font-size: 12px;">v1.0.0 - Web Console</p>
+        <button class="btn" onclick="startShow()">New Show</button>
+        <button class="btn">Load Show</button>
     </div>
+</div>
 
-    <!-- MODAL POPUP CONTAINER -->
-    <div id="modalContainer" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-        <div id="modalContent" class="bg-gma-panel border border-gma-border w-96 rounded p-4 shadow-2xl space-y-3">
-            <!-- Dynamic Form -->
+<!-- Main Workspace -->
+<div id="workspace">
+    <div class="header">
+        Show: <span style="color:white; margin-left:5px; margin-right:20px;">New Show</span>
+        State: <span id="sys-state" style="color:var(--accent); margin-left:5px;">CLEAR</span>
+    </div>
+    
+    <!-- Fixture Selection / Patch -->
+    <div class="panel" style="grid-column: 1 / 2; grid-row: 2 / 3;">
+        <div class="panel-title">Fixture Sheet</div>
+        <div id="fixture-sheet" style="padding: 10px; font-family: monospace; font-size: 12px; overflow-y: auto;">
+            <!-- Rendered by JS -->
         </div>
     </div>
-
-    <!-- APPLICATION LOGIC ENGINE -->
-    <script>
-        class LightingApp {
-            constructor() {
-                this.project = {
-                    name: "grandMA3 onPC Project",
-                    fixtures: [],
-                    groups: [],
-                    presets: [
-                        { id: 1, type: 'color', name: 'Red', data: { r: 255, g: 0, b: 0 } },
-                        { id: 2, type: 'color', name: 'Green', data: { r: 0, g: 255, b: 0 } },
-                        { id: 3, type: 'color', name: 'Blue', data: { r: 0, g: 0, b: 255 } },
-                        { id: 4, type: 'color', name: 'White', data: { r: 255, g: 255, b: 255 } },
-                        { id: 5, type: 'dimmer', name: 'Full (100%)', data: { dimmer: 100 } },
-                        { id: 6, type: 'dimmer', name: 'Blackout (0%)', data: { dimmer: 0 } }
-                    ],
-                    sequences: [
-                        { id: 1, name: 'Main Show', cues: [
-                            { number: 1, name: 'Cue 1 - Intro', fade: 2, delay: 0, state: {} }
-                        ]}
-                    ],
-                    executors: [
-                        { id: 1, name: 'MAIN SEQ', type: 'sequence', seqId: 1, fader: 1.0, activeCue: 0, playing: false }
-                    ],
-                    stageObjects: [
-                        { id: 1, type: 'stage', x: 200, y: 300, width: 400, height: 200, rotation: 0 }
-                    ],
-                    universes: { 1: new Array(512).fill(0) }
-                };
-
-                this.activeTab = 'fixtures';
-                this.activeTool = 'select';
-                this.selectedFixtureIds = [];
-                this.masterBlackout = false;
-                this.zoom = 1.0;
-                this.panOffset = { x: 0, y: 0 };
-                this.isDragging = false;
-                this.dragStart = { x: 0, y: 0 };
-
-                if (this.project.fixtures.length === 0) {
-                    this.initDefaultFixtures();
-                }
-
-                this.initCanvas();
-                this.initListeners();
-                this.render();
-                this.startEngineLoop();
-            }
-
-            initDefaultFixtures() {
-                const types = ['Moving Head', 'Spot', 'Wash', 'LED Bar', 'PAR'];
-                for (let i = 1; i <= 6; i++) {
-                    this.project.fixtures.push({
-                        id: i,
-                        name: `Fixt ${i}`,
-                        type: types[(i - 1) % types.length],
-                        universe: 1,
-                        address: (i - 1) * 16 + 1,
-                        x: 140 + (i * 75),
-                        y: 180,
-                        rotation: 0,
-                        attributes: {
-                            dimmer: 100, r: 255, g: 255, b: 255, pan: 50, tilt: 50, zoom: 50, strobe: 0
-                        }
-                    });
-                }
-            }
-
-            initCanvas() {
-                this.canvas = document.getElementById('stageCanvas');
-                this.ctx = this.canvas.getContext('2d');
-                this.resizeCanvas();
-                window.addEventListener('resize', () => this.resizeCanvas());
-
-                this.canvas.addEventListener('mousedown', (e) => this.onCanvasMouseDown(e));
-                this.canvas.addEventListener('mousemove', (e) => this.onCanvasMouseMove(e));
-                window.addEventListener('mouseup', (e) => this.onCanvasMouseUp(e));
-            }
-
-            resizeCanvas() {
-                const container = document.getElementById('canvasContainer');
-                this.canvas.width = container.clientWidth;
-                this.canvas.height = container.clientHeight;
-            }
-
-            initListeners() {
-                window.addEventListener('keydown', (e) => {
-                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
-                    if (e.code === 'Space') {
-                        e.preventDefault();
-                        this.goFirstExecutor();
-                    } else if (e.code === 'Escape') {
-                        this.selectedFixtureIds = [];
-                        this.render();
-                    } else if (e.key === 'Delete' || e.key === 'Backspace') {
-                        this.deleteSelectedFixtures();
-                    }
-                });
-            }
-
-            startEngineLoop() {
-                let frameCount = 0;
-                let lastFpsUpdate = 0;
-
-                const loop = (time) => {
-                    frameCount++;
-                    if (time - lastFpsUpdate > 1000) {
-                        document.getElementById('fpsCounter').innerText = frameCount;
-                        frameCount = 0;
-                        lastFpsUpdate = time;
-                    }
-
-                    this.updateDMXEngine();
-                    this.renderCanvas();
-                    requestAnimationFrame(loop);
-                };
-                requestAnimationFrame(loop);
-            }
-
-            updateDMXEngine() {
-                if (!this.project.universes[1]) this.project.universes[1] = new Array(512).fill(0);
-                const u1 = this.project.universes[1];
-                u1.fill(0);
-
-                this.project.fixtures.forEach(fix => {
-                    const addr = fix.address - 1;
-                    const attr = fix.attributes;
-                    const dim = this.masterBlackout ? 0 : (attr.dimmer / 100) * 255;
-
-                    u1[addr] = Math.round(dim);
-                    u1[addr + 1] = Math.round((attr.r / 255) * 255);
-                    u1[addr + 2] = Math.round((attr.g / 255) * 255);
-                    u1[addr + 3] = Math.round((attr.b / 255) * 255);
-                    u1[addr + 4] = Math.round((attr.pan / 100) * 255);
-                    u1[addr + 5] = Math.round((attr.tilt / 100) * 255);
-                });
-            }
-
-            renderCanvas() {
-                const w = this.canvas.width;
-                const h = this.canvas.height;
-                const ctx = this.ctx;
-
-                ctx.clearRect(0, 0, w, h);
-                ctx.save();
-                ctx.translate(w / 2 + this.panOffset.x, h / 2 + this.panOffset.y);
-                ctx.scale(this.zoom, this.zoom);
-
-                // Stage Objects
-                this.project.stageObjects.forEach(obj => {
-                    ctx.save();
-                    ctx.translate(obj.x, obj.y);
-                    ctx.fillStyle = '#1c1c1c';
-                    ctx.strokeStyle = '#383838';
-                    ctx.lineWidth = 2;
-                    ctx.fillRect(-obj.width / 2, -obj.height / 2, obj.width, obj.height);
-                    ctx.strokeRect(-obj.width / 2, -obj.height / 2, obj.width, obj.height);
-                    ctx.fillStyle = '#777';
-                    ctx.font = '10px monospace';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(obj.type.toUpperCase(), 0, 4);
-                    ctx.restore();
-                });
-
-                // Fixtures & Light Beams
-                this.project.fixtures.forEach(fix => {
-                    const attr = fix.attributes;
-                    const isSelected = this.selectedFixtureIds.includes(fix.id);
-                    const dimmerVal = this.masterBlackout ? 0 : (attr.dimmer / 100);
-
-                    if (dimmerVal > 0) {
-                        const colorHex = `rgb(${Math.round(attr.r * dimmerVal)}, ${Math.round(attr.g * dimmerVal)}, ${Math.round(attr.b * dimmerVal)})`;
-                        ctx.save();
-                        ctx.translate(fix.x, fix.y);
-                        const panAngle = ((attr.pan - 50) / 50) * 0.5;
-                        const beamLength = 160;
-                        
-                        const grad = ctx.createRadialGradient(0, 0, 5, 0, 0, beamLength);
-                        grad.addColorStop(0, colorHex);
-                        grad.addColorStop(1, 'rgba(0,0,0,0)');
-
-                        ctx.fillStyle = grad;
-                        ctx.beginPath();
-                        ctx.moveTo(-10, 0);
-                        ctx.lineTo(panAngle * 180 - 35, beamLength);
-                        ctx.lineTo(panAngle * 180 + 35, beamLength);
-                        ctx.closePath();
-                        ctx.fill();
-                        ctx.restore();
-                    }
-
-                    ctx.save();
-                    ctx.translate(fix.x, fix.y);
-                    ctx.fillStyle = isSelected ? '#2563eb' : '#262626';
-                    ctx.strokeStyle = isSelected ? '#60a5fa' : '#4d4d4d';
-                    ctx.lineWidth = isSelected ? 2 : 1;
-
-                    ctx.fillRect(-12, -12, 24, 24);
-                    ctx.strokeRect(-12, -12, 24, 24);
-
-                    ctx.fillStyle = `rgb(${Math.round(attr.r * dimmerVal)}, ${Math.round(attr.g * dimmerVal)}, ${Math.round(attr.b * dimmerVal)})`;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, 5, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    ctx.fillStyle = '#fff';
-                    ctx.font = '9px monospace';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(fix.name, 0, 24);
-                    ctx.restore();
-                });
-
-                ctx.restore();
-            }
-
-            onCanvasMouseDown(e) {
-                const rect = this.canvas.getBoundingClientRect();
-                const mouseX = (e.clientX - rect.left - this.canvas.width / 2 - this.panOffset.x) / this.zoom;
-                const mouseY = (e.clientY - rect.top - this.canvas.height / 2 - this.panOffset.y) / this.zoom;
-
-                if (this.activeTool === 'add') {
-                    this.addFixturePrompt(mouseX, mouseY);
-                    return;
-                }
-
-                let clickedFixture = null;
-                for (let i = this.project.fixtures.length - 1; i >= 0; i--) {
-                    const f = this.project.fixtures[i];
-                    if (Math.hypot(f.x - mouseX, f.y - mouseY) < 20) {
-                        clickedFixture = f;
-                        break;
-                    }
-                }
-
-                if (clickedFixture) {
-                    if (e.shiftKey) {
-                        if (!this.selectedFixtureIds.includes(clickedFixture.id)) this.selectedFixtureIds.push(clickedFixture.id);
-                    } else {
-                        this.selectedFixtureIds = [clickedFixture.id];
-                    }
-                    this.isDragging = true;
-                    this.dragStart = { x: mouseX, y: mouseY };
-                } else {
-                    if (!e.shiftKey) this.selectedFixtureIds = [];
-                    this.isDragging = true;
-                    this.dragStart = { x: e.clientX, y: e.clientY };
-                }
-                this.render();
-            }
-
-            onCanvasMouseMove(e) {
-                if (!this.isDragging) return;
-                const rect = this.canvas.getBoundingClientRect();
-
-                if (this.selectedFixtureIds.length > 0 && this.activeTool === 'move') {
-                    const mouseX = (e.clientX - rect.left - this.canvas.width / 2 - this.panOffset.x) / this.zoom;
-                    const mouseY = (e.clientY - rect.top - this.canvas.height / 2 - this.panOffset.y) / this.zoom;
-                    const dx = mouseX - this.dragStart.x;
-                    const dy = mouseY - this.dragStart.y;
-
-                    this.project.fixtures.forEach(f => {
-                        if (this.selectedFixtureIds.includes(f.id)) {
-                            f.x += dx;
-                            f.y += dy;
-                        }
-                    });
-                    this.dragStart = { x: mouseX, y: mouseY };
-                } else {
-                    this.panOffset.x += e.clientX - this.dragStart.x;
-                    this.panOffset.y += e.clientY - this.dragStart.y;
-                    this.dragStart = { x: e.clientX, y: e.clientY };
-                }
-                this.render();
-            }
-
-            onCanvasMouseUp() { this.isDragging = false; }
-
-            zoomCanvas(delta) {
-                this.zoom = Math.max(0.2, Math.min(3.0, this.zoom + delta));
-                document.getElementById('zoomLabel').innerText = Math.round(this.zoom * 100) + '%';
-            }
-
-            fitStage() {
-                this.zoom = 1.0;
-                this.panOffset = { x: 0, y: 0 };
-                document.getElementById('zoomLabel').innerText = '100%';
-            }
-
-            setTool(tool) {
-                this.activeTool = tool;
-                document.querySelectorAll('.tool-btn').forEach(b => {
-                    b.classList.remove('bg-gma-accent', 'text-white');
-                    b.classList.add('bg-gma-button');
-                });
-                const activeBtn = document.getElementById(`tool-${tool}`);
-                if (activeBtn) {
-                    activeBtn.classList.remove('bg-gma-button');
-                    activeBtn.classList.add('bg-gma-accent', 'text-white');
-                }
-            }
-
-            switchTab(tab) {
-                this.activeTab = tab;
-                document.querySelectorAll('.tab-btn').forEach(b => {
-                    b.classList.remove('border-gma-accent', 'text-white');
-                    b.classList.add('border-transparent', 'text-gma-muted');
-                    if (b.dataset.tab === tab) {
-                        b.classList.add('border-gma-accent', 'text-white');
-                        b.classList.remove('text-gma-muted');
-                    }
-                });
-                this.renderSidebar();
-            }
-
-            render() {
-                this.renderSidebar();
-                this.renderProgrammer();
-                this.renderExecutors();
-                this.renderQuickPresets();
-                document.getElementById('selectedCount').innerText = this.selectedFixtureIds.length;
-            }
-
-            renderSidebar() {
-                const container = document.getElementById('sidebarContent');
-                let html = '';
-
-                if (this.activeTab === 'fixtures') {
-                    html += `<div class="mb-2"><button onclick="app.addFixturePrompt()" class="w-full py-1 bg-gma-button hover:bg-gma-buttonHover text-white rounded border border-gma-border font-bold">+ Add Fixture</button></div>`;
-                    this.project.fixtures.forEach(f => {
-                        const isSel = this.selectedFixtureIds.includes(f.id);
-                        html += `<div onclick="app.selectFixture(${f.id}, event)" class="p-2 mb-1 rounded border ${isSel ? 'border-gma-accent bg-blue-950/40' : 'border-gma-border bg-gma-screenBg'} flex justify-between items-center cursor-pointer">
-                            <div>
-                                <div class="font-bold text-white">${f.name}</div>
-                                <div class="text-[10px] text-gma-muted">${f.type} | U:${f.universe} A:${f.address}</div>
-                            </div>
-                            <button onclick="event.stopPropagation(); app.deleteFixture(${f.id})" class="text-gma-muted hover:text-red-400">×</button>
-                        </div>`;
-                    });
-                } else if (this.activeTab === 'presets') {
-                    this.project.presets.forEach(p => {
-                        html += `<div class="p-2 mb-1 border border-gma-border bg-gma-screenBg rounded flex justify-between items-center">
-                            <div><span class="text-white font-bold">${p.name}</span> <span class="text-[10px] text-gma-muted">(${p.type})</span></div>
-                            <button onclick="app.applyPreset(${p.id})" class="px-2 py-0.5 bg-gma-accent text-white rounded">Apply</button>
-                        </div>`;
-                    });
-                } else if (this.activeTab === 'sequences') {
-                    html += `<button onclick="app.addSequencePrompt()" class="w-full py-1 bg-gma-button hover:bg-gma-buttonHover text-white rounded border border-gma-border mb-2">+ New Sequence</button>`;
-                    this.project.sequences.forEach(seq => {
-                        html += `<div class="border border-gma-border p-2 rounded bg-gma-screenBg space-y-1 mb-1">
-                            <div class="font-bold text-white flex justify-between"><span>${seq.name}</span><span>Cues: ${seq.cues.length}</span></div>
-                            <button onclick="app.recordCueToSequence(${seq.id})" class="w-full py-1 bg-neutral-800 hover:bg-neutral-700 text-white rounded text-[10px]">Record Current State</button>
-                        </div>`;
-                    });
-                } else {
-                    html += `<div class="text-gma-muted italic">Module view active.</div>`;
-                }
-                container.innerHTML = html;
-            }
-
-            renderProgrammer() {
-                const container = document.getElementById('programmerControls');
-                const status = document.getElementById('programmerStatus');
-
-                if (this.selectedFixtureIds.length === 0) {
-                    status.innerText = "No Selection Active";
-                    container.innerHTML = `<div class="text-gma-muted italic m-auto">Select fixtures to adjust parameters.</div>`;
-                    return;
-                }
-
-                status.innerText = `${this.selectedFixtureIds.length} Fixture(s) Selected`;
-                const attr = this.project.fixtures.find(f => f.id === this.selectedFixtureIds[0]).attributes;
-
-                container.innerHTML = `
-                    <div class="flex space-x-6 items-center">
-                        <div class="flex flex-col items-center">
-                            <span class="text-[10px] text-gma-muted mb-1">DIMMER</span>
-                            <input type="range" min="0" max="100" value="${attr.dimmer}" class="h-24 slider-vertical" oninput="app.updateAttribute('dimmer', this.value)">
-                            <span class="text-xs mt-1 text-white">${attr.dimmer}%</span>
-                        </div>
-                        <div class="flex flex-col items-center">
-                            <span class="text-[10px] text-gma-muted mb-1">PAN</span>
-                            <input type="range" min="0" max="100" value="${attr.pan}" class="h-24 slider-vertical" oninput="app.updateAttribute('pan', this.value)">
-                            <span class="text-xs mt-1 text-white">${attr.pan}%</span>
-                        </div>
-                        <div class="flex flex-col items-center">
-                            <span class="text-[10px] text-gma-muted mb-1">TILT</span>
-                            <input type="range" min="0" max="100" value="${attr.tilt}" class="h-24 slider-vertical" oninput="app.updateAttribute('tilt', this.value)">
-                            <span class="text-xs mt-1 text-white">${attr.tilt}%</span>
-                        </div>
-                        <div class="flex flex-col space-y-2 border-l border-gma-border pl-6">
-                            <span class="text-[10px] text-gma-muted">RGB COLOR MIX</span>
-                            <div class="flex items-center space-x-2">
-                                <input type="color" value="${this.rgbToHex(attr.r, attr.g, attr.b)}" onchange="app.updateColorPicker(this.value)" class="w-10 h-10 bg-transparent cursor-pointer rounded">
-                                <div class="text-[10px] text-white">R:${attr.r} G:${attr.g} B:${attr.b}</div>
-                            </div>
-                            <div class="flex space-x-1 mt-1">
-                                <button onclick="app.setRGB(255,0,0)" class="w-6 h-6 bg-red-600 rounded"></button>
-                                <button onclick="app.setRGB(0,255,0)" class="w-6 h-6 bg-green-600 rounded"></button>
-                                <button onclick="app.setRGB(0,0,255)" class="w-6 h-6 bg-blue-600 rounded"></button>
-                                <button onclick="app.setRGB(255,255,255)" class="w-6 h-6 bg-white rounded"></button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-
-            renderExecutors() {
-                const container = document.getElementById('executorsContainer');
-                let html = '';
-                this.project.executors.forEach(exec => {
-                    html += `<div class="border border-gma-border bg-gma-screenBg p-2 rounded flex flex-col space-y-2">
-                        <div class="flex justify-between items-center text-xs">
-                            <span class="font-bold text-white">EXEC 0${exec.id}</span>
-                            <span class="text-[10px] text-gma-accent">${exec.playing ? 'ACTIVE' : 'IDLE'}</span>
-                        </div>
-                        <div class="flex items-center space-x-1">
-                            <button onclick="app.goExecutor(${exec.id})" class="flex-1 py-1 bg-gma-accent hover:bg-gma-accentHover text-white rounded font-bold">GO</button>
-                            <button onclick="app.stopExecutor(${exec.id})" class="px-2 py-1 bg-gma-button hover:bg-gma-buttonHover text-white rounded">PAUSE</button>
-                        </div>
-                        <input type="range" min="0" max="100" value="${exec.fader * 100}" class="w-full accent-gma-accent" oninput="app.updateExecutorFader(${exec.id}, this.value)">
-                    </div>`;
-                });
-                container.innerHTML = html;
-            }
-
-            renderQuickPresets() {
-                const container = document.getElementById('quickPresetsContainer');
-                let html = '';
-                this.project.presets.forEach(p => {
-                    html += `<button onclick="app.applyPreset(${p.id})" class="p-2 border border-gma-border bg-gma-screenBg hover:bg-gma-buttonHover rounded text-center truncate text-white font-bold">${p.name}</button>`;
-                });
-                container.innerHTML = html;
-            }
-
-            selectFixture(id, e) {
-                if (e.shiftKey) {
-                    if (!this.selectedFixtureIds.includes(id)) this.selectedFixtureIds.push(id);
-                } else {
-                    this.selectedFixtureIds = [id];
-                }
-                this.render();
-            }
-
-            updateAttribute(attrName, val) {
-                const numVal = parseFloat(val);
-                this.project.fixtures.forEach(f => {
-                    if (this.selectedFixtureIds.includes(f.id)) f.attributes[attrName] = numVal;
-                });
-            }
-
-            setRGB(r, g, b) {
-                this.project.fixtures.forEach(f => {
-                    if (this.selectedFixtureIds.includes(f.id)) {
-                        f.attributes.r = r; f.attributes.g = g; f.attributes.b = b;
-                    }
-                });
-                this.render();
-            }
-
-            updateColorPicker(hex) {
-                const r = parseInt(hex.slice(1, 3), 16);
-                const g = parseInt(hex.slice(3, 5), 16);
-                const b = parseInt(hex.slice(5, 7), 16);
-                this.setRGB(r, g, b);
-            }
-
-            rgbToHex(r, g, b) {
-                return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-            }
-
-            addFixturePrompt(x = 150, y = 150) {
-                const modal = document.getElementById('modalContainer');
-                modal.classList.remove('hidden');
-                document.getElementById('modalContent').innerHTML = `
-                    <div class="font-bold text-white text-sm mb-2">Patch New Fixture</div>
-                    <div class="space-y-2">
-                        <div>
-                            <label class="text-gma-muted">Name</label>
-                            <input type="text" id="newFixName" value="Fixt ${this.project.fixtures.length + 1}" class="w-full bg-gma-screenBg border border-gma-border p-1.5 rounded text-white mt-1">
-                        </div>
-                        <div class="flex space-x-2">
-                            <div class="flex-1">
-                                <label class="text-gma-muted">Universe</label>
-                                <input type="number" id="newFixUniv" value="1" class="w-full bg-gma-screenBg border border-gma-border p-1.5 rounded text-white mt-1">
-                            </div>
-                            <div class="flex-1">
-                                <label class="text-gma-muted">Address</label>
-                                <input type="number" id="newFixAddr" value="${this.project.fixtures.length * 16 + 1}" class="w-full bg-gma-screenBg border border-gma-border p-1.5 rounded text-white mt-1">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex justify-end space-x-2 mt-4">
-                        <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-3 py-1 bg-gma-button rounded text-white">Cancel</button>
-                        <button onclick="app.confirmAddFixture(${x}, ${y})" class="px-3 py-1 bg-gma-accent rounded text-white font-bold">Patch</button>
-                    </div>
-                `;
-            }
-
-            confirmAddFixture(x, y) {
-                this.project.fixtures.push({
-                    id: Date.now(),
-                    name: document.getElementById('newFixName').value,
-                    type: 'Moving Head',
-                    universe: parseInt(document.getElementById('newFixUniv').value),
-                    address: parseInt(document.getElementById('newFixAddr').value),
-                    x, y, rotation: 0,
-                    attributes: { dimmer: 100, r: 255, g: 255, b: 255, pan: 50, tilt: 50, zoom: 50 }
-                });
-                document.getElementById('modalContainer').classList.add('hidden');
-                this.render();
-            }
-
-            deleteFixture(id) {
-                this.project.fixtures = this.project.fixtures.filter(f => f.id !== id);
-                this.selectedFixtureIds = this.selectedFixtureIds.filter(i => i !== id);
-                this.render();
-            }
-
-            deleteSelectedFixtures() {
-                if (this.selectedFixtureIds.length === 0) return;
-                this.project.fixtures = this.project.fixtures.filter(f => !this.selectedFixtureIds.includes(f.id));
-                this.selectedFixtureIds = [];
-                this.render();
-            }
-
-            applyPreset(id) {
-                const p = this.project.presets.find(item => item.id === id);
-                if (!p) return;
-                this.project.fixtures.forEach(f => {
-                    if (this.selectedFixtureIds.includes(f.id)) {
-                        if (p.type === 'color') { f.attributes.r = p.data.r; f.attributes.g = p.data.g; f.attributes.b = p.data.b; }
-                        else if (p.type === 'dimmer') { f.attributes.dimmer = p.data.dimmer; }
-                    }
-                });
-            }
-
-            recordPresetPrompt() {
-                const name = prompt("Preset Name:");
-                if (!name) return;
-                this.project.presets.push({ id: Date.now(), type: 'color', name, data: { r: 255, g: 150, b: 0 } });
-                this.render();
-            }
-
-            addSequencePrompt() {
-                const name = prompt("Sequence Name:");
-                if (!name) return;
-                this.project.sequences.push({ id: Date.now(), name, cues: [] });
-                this.render();
-            }
-
-            recordCueToSequence(seqId) {
-                const seq = this.project.sequences.find(s => s.id === seqId);
-                if (!seq) return;
-                const fixtureStates = {};
-                this.project.fixtures.forEach(f => { fixtureStates[f.id] = JSON.parse(JSON.stringify(f.attributes)); });
-                seq.cues.push({ number: seq.cues.length + 1, name: `Cue ${seq.cues.length + 1}`, state: fixtureStates });
-                alert(`Cue recorded successfully!`);
-            }
-
-            goExecutor(execId) {
-                const exec = this.project.executors.find(e => e.id === execId);
-                if (!exec) return;
-                exec.playing = true;
-                const seq = this.project.sequences.find(s => s.id === exec.seqId);
-                if (!seq || seq.cues.length === 0) return;
-
-                exec.activeCue = (exec.activeCue + 1) % seq.cues.length;
-                const cue = seq.cues[exec.activeCue];
-                for (let fixId in cue.state) {
-                    const fix = this.project.fixtures.find(f => f.id == fixId);
-                    if (fix) fix.attributes = JSON.parse(JSON.stringify(cue.state[fixId]));
-                }
-                this.renderExecutors();
-            }
-
-            stopExecutor(execId) {
-                const exec = this.project.executors.find(e => e.id === execId);
-                if (exec) exec.playing = false;
-                this.renderExecutors();
-            }
-
-            updateExecutorFader(execId, val) {
-                const exec = this.project.executors.find(e => e.id === execId);
-                if (exec) exec.fader = val / 100;
-            }
-
-            goFirstExecutor() {
-                if (this.project.executors.length > 0) this.goExecutor(this.project.executors[0].id);
-            }
-
-            handleCommandInput(e) { if (e.key === 'Enter') this.executeCommandFromInput(); }
-
-            executeCommandFromInput() {
-                const input = document.getElementById('commandInput');
-                const cmd = input.value.trim().toLowerCase();
-                input.value = '';
-                if (!cmd) return;
-
-                const parts = cmd.split(' ');
-                if (parts[0] === 'fixture') {
-                    const id = parseInt(parts[1]);
-                    if (!isNaN(id)) {
-                        this.selectedFixtureIds = [id];
-                        if (parts[2] === 'at') {
-                            const val = parseInt(parts[3]);
-                            if (!isNaN(val)) this.updateAttribute('dimmer', val);
-                        }
-                    }
-                } else if (parts[0] === 'go') {
-                    this.goFirstExecutor();
-                } else if (parts[0] === 'clear') {
-                    this.selectedFixtureIds = [];
-                }
-                this.render();
-            }
-
-            newProject() {
-                if (confirm("Create new project?")) {
-                    this.project = { name: "New", fixtures: [], groups: [], presets: [], sequences: [], executors: [], stageObjects: [], universes: { 1: new Array(512).fill(0) } };
-                    this.selectedFixtureIds = [];
-                    this.initDefaultFixtures();
-                    this.render();
-                }
-            }
-
-            saveProject() {
-                localStorage.setItem('ma3_project', JSON.stringify(this.project));
-                alert("Project saved to localStorage!");
-            }
-
-            loadProjectPrompt() {
-                const data = localStorage.getItem('ma3_project');
-                if (!data) { alert("No saved project found."); return; }
-                this.project = JSON.parse(data);
-                this.selectedFixtureIds = [];
-                this.render();
-                alert("Project loaded!");
-            }
-
-            exportProject() {
-                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.project, null, 2));
-                const dl = document.createElement('a');
-                dl.setAttribute("href", dataStr);
-                dl.setAttribute("download", "ma3_project.json");
-                dl.click();
-                dl.remove();
-            }
-
-            importProject(e) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    this.project = JSON.parse(event.target.result);
-                    this.selectedFixtureIds = [];
-                    this.render();
-                    alert("Imported successfully!");
-                };
-                reader.readAsText(e.target.files[0]);
-            }
-
-            undo() {}
-            redo() {}
+    
+    <!-- Stage -->
+    <div class="panel" id="stage-panel">
+        <div class="panel-title">Stage 2D Visualizer</div>
+        <canvas id="stage-canvas"></canvas>
+    </div>
+    
+    <!-- Encoders -->
+    <div class="panel" style="grid-column: 3 / 4; grid-row: 2 / 3;">
+        <div class="panel-title">Programmer / Encoders</div>
+        <div id="encoder-panel">
+            <div class="encoder">DIM</div>
+            <div class="encoder">PAN</div>
+            <div class="encoder">TILT</div>
+            <div class="encoder">ZOOM</div>
+        </div>
+    </div>
+    
+    <!-- Executors -->
+    <div class="panel" id="executor-panel">
+        <!-- Generated by JS -->
+    </div>
+    
+    <!-- Command Line -->
+    <div id="cmd-panel">
+        <div style="background: var(--accent); color: black; padding: 10px; font-weight: bold; font-family: monospace;">CMD</div>
+        <input type="text" id="cmd-input" placeholder="Fixture 1 Thru 3 At 100..." autocomplete="off">
+    </div>
+</div>
+
+<script>
+    // --- STATE MANAGEMENT ---
+    const showData = {
+        patch: [
+            { id: 1, name: "MH01", type: "Moving Head", universe: 1, address: 1, x: 200, y: 150 },
+            { id: 2, name: "MH02", type: "Moving Head", universe: 1, address: 17, x: 400, y: 150 },
+            { id: 3, name: "MH03", type: "Moving Head", universe: 1, address: 33, x: 600, y: 150 }
+        ],
+        cues: []
+    };
+    
+    const dmxUniverse = new Uint8Array(512); // Virtual DMX Engine
+    let programmerSelection = [];
+    
+    // --- UI INITIALIZATION ---
+    function startShow() {
+        document.getElementById('startup-screen').style.display = 'none';
+        document.getElementById('workspace').style.display = 'grid';
+        renderFixtureSheet();
+        buildExecutors();
+        initVisualizer();
+        document.getElementById('cmd-input').focus();
+    }
+    
+    function renderFixtureSheet() {
+        const sheet = document.getElementById('fixture-sheet');
+        sheet.innerHTML = showData.patch.map(f => 
+            `<div style="padding: 3px; border-bottom: 1px solid #333;">
+                <span style="color: yellow;">Fix ${f.id}</span> [${f.address}] ${f.name}
+            </div>`
+        ).join('');
+    }
+    
+    function buildExecutors() {
+        const execPanel = document.getElementById('executor-panel');
+        for(let i=1; i<=5; i++) {
+            execPanel.innerHTML += `
+                <div class="executor">
+                    <div style="text-align:center; font-size:10px; padding:2px; background:#000; color:#888;">EXEC ${i}</div>
+                    <div class="fader-track"><div class="fader-cap" style="height: 0%;"></div></div>
+                    <div class="exec-btn">GO</div>
+                    <div class="exec-btn" style="background:#522;">FLASH</div>
+                </div>
+            `;
         }
-
-        let app;
-        window.addEventListener('DOMContentLoaded', () => { app = new LightingApp(); });
-    </script>
+    }
+    
+    // --- COMMAND LINE PARSER ---
+    const cmdInput = document.getElementById('cmd-input');
+    cmdInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            executeCommand(this.value.trim().toLowerCase());
+            this.value = '';
+        }
+    });
+    
+    function executeCommand(cmd) {
+        // Basic Parser for: "fixture 1 thru 3 at 100" or "clear"
+        if (cmd === 'clear') {
+            programmerSelection = [];
+            dmxUniverse.fill(0); // Reset for demo
+            console.log("Programmer Cleared");
+            return;
+        }
+        
+        const fixRegex = /fixture\s+(\d+)(?:\s+thru\s+(\d+))?(?:\s+at\s+(\d+))?/;
+        const match = cmd.match(fixRegex);
+        
+        if (match) {
+            const startId = parseInt(match[1]);
+            const endId = match[2] ? parseInt(match[2]) : startId;
+            const value = match[3] ? parseInt(match[3]) : null;
+            
+            for (let i = startId; i <= endId; i++) {
+                const fix = showData.patch.find(f => f.id === i);
+                if (fix) {
+                    if (!programmerSelection.includes(i)) programmerSelection.push(i);
+                    // Map "At %" to DMX 0-255 (Dimmer is assumed to be offset + 0)
+                    if (value !== null) {
+                        const dmxVal = Math.floor((value / 100) * 255);
+                        dmxUniverse[fix.address - 1] = dmxVal;
+                    }
+                }
+            }
+        }
+    }
+    
+    // --- STAGE VISUALIZER ---
+    function initVisualizer() {
+        const canvas = document.getElementById('stage-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        function resize() {
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+        
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw Stage Grid
+            ctx.strokeStyle = '#222';
+            ctx.beginPath();
+            for(let i=0; i<canvas.width; i+=50) { ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); }
+            for(let j=0; j<canvas.height; j+=50) { ctx.moveTo(0,j); ctx.lineTo(canvas.width,j); }
+            ctx.stroke();
+            
+            // Render Fixtures based on DMX state
+            showData.patch.forEach(fix => {
+                const dimDmx = dmxUniverse[fix.address - 1]; // Assume Ch 1 is Dimmer
+                const intensity = dimDmx / 255;
+                
+                // Draw Beam
+                if (intensity > 0) {
+                    const gradient = ctx.createRadialGradient(fix.x, fix.y, 10, fix.x, fix.y, 100);
+                    gradient.addColorStop(0, `rgba(255, 255, 200, ${intensity * 0.8})`);
+                    gradient.addColorStop(1, 'rgba(255, 255, 200, 0)');
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(fix.x, fix.y, 100, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Draw Fixture Body
+                ctx.fillStyle = programmerSelection.includes(fix.id) ? '#ffcc00' : '#444';
+                ctx.fillRect(fix.x - 15, fix.y - 15, 30, 30);
+                ctx.fillStyle = '#000';
+                ctx.fillText(`F${fix.id}`, fix.x - 6, fix.y + 4);
+            });
+            
+            requestAnimationFrame(draw);
+        }
+        draw();
+    }
+</script>
 </body>
 </html>
