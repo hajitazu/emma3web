@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ProLight OnPC v7.0 - Volumetric Wing Engine & Stage Console</title>
+<title>ProLight OnPC v7.1 - Precision Wing Engine</title>
 <!-- Three.js CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
@@ -74,8 +74,9 @@
     
     /* Color Swatch */
     .color-pool-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-    .color-swatch { height: 35px; border-radius: 4px; border: 2px solid #444; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; color: #000; text-shadow: 0 0 2px #fff; transition: transform 0.1s; }
+    .color-swatch { height: 35px; border-radius: 4px; border: 2px solid #444; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; color: #000; text-shadow: 0 0 2px rgba(255,255,255,0.8); transition: transform 0.1s; }
     .color-swatch:hover { border-color: #fff; transform: scale(1.05); }
+    .color-blackout { background: #000 !important; color: #f00 !important; border-color: #f00 !important; text-shadow: none !important; }
     
     /* Wing Engine Controls */
     .wing-panel { background: #111; border: 1px solid #333; border-radius: 6px; padding: 8px; margin-bottom: 8px; }
@@ -120,8 +121,8 @@
 <!-- Startup Screen -->
 <div id="startup-screen">
     <div class="startup-box">
-        <h1 style="color: var(--accent); margin-bottom: 5px; font-size: 26px;">PROLIGHT ONPC v7.0</h1>
-        <p style="color: var(--text-dim); font-size: 11px; margin-bottom: 25px;">Volumetric Front-View Stage & Advanced Wing Engine</p>
+        <h1 style="color: var(--accent); margin-bottom: 5px; font-size: 26px;">PROLIGHT ONPC v7.1</h1>
+        <p style="color: var(--text-dim); font-size: 11px; margin-bottom: 25px;">Precision Wing Engine (90° Sweep) & Laser Zoom 5-10°</p>
         
         <div class="input-group">
             <label>Show Name</label>
@@ -160,7 +161,7 @@
         <div id="fixture-sheet"></div>
     </div>
     
-    <!-- 3D Stage Visualizer (Front View Focus) -->
+    <!-- 3D Stage Visualizer -->
     <div class="panel" id="stage-panel">
         <div class="camera-hud">
             <button class="cam-btn active" id="btn-cam-front" onclick="setCameraView('front')">FRONT AUDIENCE</button>
@@ -209,32 +210,39 @@
                     </div>
                     <div class="fader-val" id="val-tilt">0°</div>
                 </div>
-                <!-- Zoom -->
+                <!-- Zoom (5-10) -->
                 <div class="fader-control-box">
                     <div class="fader-label">Zoom</div>
                     <div class="fader-track-v" id="track-zoom" onpointerdown="initFaderPointer(event, 'zoom')">
-                        <div class="fader-thumb-v" id="thumb-zoom" style="bottom: 20%;"></div>
+                        <div class="fader-thumb-v" id="thumb-zoom" style="bottom: 0%;"></div>
                     </div>
-                    <div class="fader-val" id="val-zoom">20°</div>
+                    <div class="fader-val" id="val-zoom">5°</div>
                 </div>
             </div>
         </div>
 
-        <!-- Color Pool -->
+        <!-- Enhanced Color Pool -->
         <div id="tab-colors" class="tab-content">
             <div style="font-weight:bold; color:var(--accent); margin-bottom:8px;">Instant Color Swatches</div>
             <div class="color-pool-grid">
+                <div class="color-swatch color-blackout" onclick="applyBlackout()">BLACKOUT</div>
+                <div class="color-swatch" style="background: #ffffff;" onclick="applyColorSwatch(255, 255, 255)">WHITE</div>
+                <div class="color-swatch" style="background: #ffdbb3;" onclick="applyColorSwatch(255, 219, 179)">WARM WHT</div>
+                <div class="color-swatch" style="background: #e6f5ff;" onclick="applyColorSwatch(230, 245, 255)">COLD WHT</div>
+                
                 <div class="color-swatch" style="background: #ff0000;" onclick="applyColorSwatch(255, 0, 0)">RED</div>
                 <div class="color-swatch" style="background: #00ff00;" onclick="applyColorSwatch(0, 255, 0)">GREEN</div>
-                <div class="color-swatch" style="background: #0000ff; color: #fff;" onclick="applyColorSwatch(0, 0, 255)">BLUE</div>
+                <div class="color-swatch" style="background: #0000ff; color:#fff;" onclick="applyColorSwatch(0, 0, 255)">BLUE</div>
                 <div class="color-swatch" style="background: #ffff00;" onclick="applyColorSwatch(255, 255, 0)">YELLOW</div>
+                
                 <div class="color-swatch" style="background: #00ffff;" onclick="applyColorSwatch(0, 255, 255)">CYAN</div>
                 <div class="color-swatch" style="background: #ff00ff;" onclick="applyColorSwatch(255, 0, 255)">MAGENTA</div>
-                <div class="color-swatch" style="background: #ffffff;" onclick="applyColorSwatch(255, 255, 255)">WHITE</div>
                 <div class="color-swatch" style="background: #ff8c00;" onclick="applyColorSwatch(255, 140, 0)">AMBER</div>
-                <div class="color-swatch" style="background: #9400d3; color: #fff;" onclick="applyColorSwatch(148, 0, 211)">UV</div>
+                <div class="color-swatch" style="background: #9400d3; color:#fff;" onclick="applyColorSwatch(148, 0, 211)">UV</div>
+                
                 <div class="color-swatch" style="background: #ff1493;" onclick="applyColorSwatch(255, 20, 147)">PINK</div>
                 <div class="color-swatch" style="background: #00ff7f;" onclick="applyColorSwatch(0, 255, 127)">SPRING</div>
+                <div class="color-swatch" style="background: #000080; color:#fff;" onclick="applyColorSwatch(0, 0, 128)">DEEP BLUE</div>
                 <div class="color-swatch" style="background: #ff4500;" onclick="applyColorSwatch(255, 69, 0)">ORANGE</div>
             </div>
         </div>
@@ -270,12 +278,12 @@
                 </div>
             </div>
 
-            <input type="text" id="effect-search" class="search-box" placeholder="Search Wing Effects (e.g. Open, Fan, Sweep)..." oninput="filterEffects(this.value)">
+            <input type="text" id="effect-search" class="search-box" placeholder="Search Wing Effects (e.g. Up, Circle, Circle)..." oninput="filterEffects(this.value)">
             <div class="phaser-pool-grid" id="phaser-pool-container"></div>
         </div>
     </div>
     
-    <!-- Executors (Fully Interactive) -->
+    <!-- Executors -->
     <div class="panel" id="executor-panel"></div>
     
     <!-- Command Line -->
@@ -287,19 +295,19 @@
 </div>
 
 <script>
-    // --- SHOW DATA & 8 FIXTURE SETUP FOR PERFECT WINGS ---
+    // --- SHOW DATA & 8 FIXTURE SETUP ---
     const showData = {
-        name: "Arena Wing Tour 2026",
+        name: "Symmetric Wing Show 2026",
         patch: [
-            // 8 Fixtures arranged symmetrically on a truss (Y=6), pointed slightly down/forward.
-            { id: 1, name: "Spot 1", type: "Spot", universe: 1, address: 1, x: -7, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 20, colorR: 255, colorG: 255, colorB: 255 },
-            { id: 2, name: "Spot 2", type: "Spot", universe: 1, address: 17, x: -5, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 20, colorR: 255, colorG: 255, colorB: 255 },
-            { id: 3, name: "Spot 3", type: "Spot", universe: 1, address: 33, x: -3, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 20, colorR: 255, colorG: 255, colorB: 255 },
-            { id: 4, name: "Spot 4", type: "Spot", universe: 1, address: 49, x: -1, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 20, colorR: 255, colorG: 255, colorB: 255 },
-            { id: 5, name: "Spot 5", type: "Spot", universe: 1, address: 65, x: 1, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 20, colorR: 255, colorG: 255, colorB: 255 },
-            { id: 6, name: "Spot 6", type: "Spot", universe: 1, address: 81, x: 3, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 20, colorR: 255, colorG: 255, colorB: 255 },
-            { id: 7, name: "Spot 7", type: "Spot", universe: 1, address: 97, x: 5, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 20, colorR: 255, colorG: 255, colorB: 255 },
-            { id: 8, name: "Spot 8", type: "Spot", universe: 1, address: 113, x: 7, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 20, colorR: 255, colorG: 255, colorB: 255 }
+            // 8 Fixtures arranged symmetrically on a truss
+            { id: 1, name: "Spot 1", type: "Spot", universe: 1, address: 1, x: -7, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 5, colorR: 255, colorG: 255, colorB: 255 },
+            { id: 2, name: "Spot 2", type: "Spot", universe: 1, address: 17, x: -5, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 5, colorR: 255, colorG: 255, colorB: 255 },
+            { id: 3, name: "Spot 3", type: "Spot", universe: 1, address: 33, x: -3, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 5, colorR: 255, colorG: 255, colorB: 255 },
+            { id: 4, name: "Spot 4", type: "Spot", universe: 1, address: 49, x: -1, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 5, colorR: 255, colorG: 255, colorB: 255 },
+            { id: 5, name: "Spot 5", type: "Spot", universe: 1, address: 65, x: 1, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 5, colorR: 255, colorG: 255, colorB: 255 },
+            { id: 6, name: "Spot 6", type: "Spot", universe: 1, address: 81, x: 3, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 5, colorR: 255, colorG: 255, colorB: 255 },
+            { id: 7, name: "Spot 7", type: "Spot", universe: 1, address: 97, x: 5, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 5, colorR: 255, colorG: 255, colorB: 255 },
+            { id: 8, name: "Spot 8", type: "Spot", universe: 1, address: 113, x: 7, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 5, colorR: 255, colorG: 255, colorB: 255 }
         ]
     };
 
@@ -309,17 +317,18 @@
     let activeWingFX = null;
     let engineTime = 0;
 
-    // --- MASSIVE WING EFFECT LIBRARY ---
+    // --- REFINED WING EFFECT LIBRARY ---
     const wingLibrary = [
         { id: 'wing_open', name: 'Wing Open', attr: 'pan', type: 'open_close', direction: 1, desc: 'Beams open from center to outside.' },
         { id: 'wing_close', name: 'Wing Close', attr: 'pan', type: 'open_close', direction: -1, desc: 'Beams close from outside to center.' },
-        { id: 'wing_up', name: 'Wing Up', attr: 'tilt', type: 'sine', direction: 1, desc: 'Entire wing formation moves Up.' },
-        { id: 'wing_down', name: 'Wing Down', attr: 'tilt', type: 'sine', direction: -1, desc: 'Entire wing formation moves Down.' },
-        { id: 'wing_sweep', name: 'Wing Sweep', attr: 'pan', type: 'sine', direction: 1, desc: 'Continuous horizontal sweeping.' },
+        { id: 'wing_up', name: 'Wing Up', attr: 'tilt', type: 'ramp_down', direction: 1, desc: 'Linear Tilt sweep: 90° to -90°.' },
+        { id: 'wing_down', name: 'Wing Down', attr: 'tilt', type: 'ramp_up', direction: 1, desc: 'Linear Tilt sweep: -90° to 90°.' },
+        { id: 'wing_sweep', name: 'Wing Sweep', attr: 'pan', type: 'sine', direction: 1, desc: 'Continuous horizontal sine sweeping.' },
+        { id: 'wing_circle', name: 'Wing Circle', attr: 'position', type: 'circle', direction: 1, desc: 'Smooth Pan & Tilt circular laser movement.' },
+        { id: 'wing_fig8', name: 'Wing Figure 8', attr: 'position', type: 'figure8', direction: 1, desc: 'Infinity / Figure 8 beam movement.' },
         { id: 'wing_fan', name: 'Wing Fan Out', attr: 'pan', type: 'fan', direction: 1, desc: 'Static outward fan distribution.' },
         { id: 'wing_pulse', name: 'Wing Pulse', attr: 'dimmer', type: 'pulse', direction: 1, desc: 'Sync dimmer pulsing to BPM.' },
-        { id: 'wing_rainbow', name: 'Wing Rainbow', attr: 'color', type: 'rainbow', direction: 1, desc: 'Color cycle synced to movement.' },
-        { id: 'wing_zoom', name: 'Wing Zoom Pulse', attr: 'zoom', type: 'sine', direction: 1, desc: 'Beam angle expands and contracts.' },
+        { id: 'wing_zoom', name: 'Wing Zoom Pulse', attr: 'zoom', type: 'sine', direction: 1, desc: 'Laser beam angle pulses (5° - 10°).' },
         { id: 'strobe_wing', name: 'Strobe Wing', attr: 'strobe', type: 'random', direction: 1, desc: 'Flashing strobe over the wing.' }
     ];
 
@@ -341,7 +350,7 @@
         const newX = (newId - 4.5) * 2;
         showData.patch.push({
             id: newId, name: "Spot " + newId, type: "Spot", universe: 1, address: (newId - 1) * 16 + 1,
-            x: newX, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 20, colorR: 255, colorG: 255, colorB: 255
+            x: newX, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 5, colorR: 255, colorG: 255, colorB: 255
         });
         renderFixtureSheet();
         init3DVisualizer();
@@ -370,7 +379,7 @@
     function updateCameraPosition() {
         if(!camera) return;
         if (currentCameraView === 'front') {
-            camera.position.set(0, 2, 28); // Audience view, looking straight at the stage
+            camera.position.set(0, 2, 28); 
             camera.lookAt(0, 2, 0);
         } else if (currentCameraView === 'top') {
             camera.position.set(0, 25, 5);
@@ -393,16 +402,13 @@
 
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
         renderer.setSize(container.clientWidth, container.clientHeight);
-        // Important for additive blending beams
         renderer.setClearColor(0x050505, 1);
         container.appendChild(renderer.domElement);
 
-        // Stage Floor
         const grid = new THREE.GridHelper(30, 30, 0x333333, 0x111111);
         grid.position.y = 0;
         scene.add(grid);
 
-        // Truss
         const trussGeo = new THREE.CylinderGeometry(0.1, 0.1, 20, 8);
         const trussMat = new THREE.MeshBasicMaterial({ color: 0x333333 });
         const truss = new THREE.Mesh(trussGeo, trussMat);
@@ -412,39 +418,34 @@
 
         fixtureMeshes = [];
 
-        // Build Realistic Moving Head Hierarchy
         showData.patch.forEach(fix => {
             const baseGroup = new THREE.Group();
             baseGroup.position.set(fix.x, fix.y, fix.z);
 
-            // Fixture Base (Static)
             const bodyGeo = new THREE.BoxGeometry(0.6, 0.4, 0.6);
             const bodyMat = new THREE.MeshBasicMaterial({ color: 0x222222 });
             const body = new THREE.Mesh(bodyGeo, bodyMat);
             baseGroup.add(body);
 
-            // Yoke (Rotates Pan on Y-axis)
             const yokeGroup = new THREE.Group();
             yokeGroup.position.y = -0.3;
             baseGroup.add(yokeGroup);
 
-            // Head (Rotates Tilt on X-axis)
             const headGroup = new THREE.Group();
             headGroup.position.y = -0.3;
             yokeGroup.add(headGroup);
 
-            // Head Mesh (Lens area)
             const lensGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.4, 16);
             const lensMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
             const lens = new THREE.Mesh(lensGeo, lensMat);
             lens.rotation.x = Math.PI / 2;
             headGroup.add(lens);
 
-            // VOLUMETRIC BEAM (Cone with Additive Blending)
-            const beamLength = 15;
+            // VOLUMETRIC BEAM 
+            const beamLength = 18;
             const beamGeo = new THREE.ConeGeometry(1, beamLength, 32, 1, true);
-            beamGeo.translate(0, -beamLength/2, 0); // Pivot at top
-            beamGeo.rotateX(-Math.PI / 2); // Point forward relative to head
+            beamGeo.translate(0, -beamLength/2, 0); 
+            beamGeo.rotateX(-Math.PI / 2); 
             
             const beamMat = new THREE.MeshBasicMaterial({ 
                 color: 0xffffff, 
@@ -480,69 +481,69 @@
         animate3D();
     }
 
-    // --- WING MATHEMATICAL ENGINE ---
+    // --- WING MATHEMATICAL ENGINE (UPDATED TILT & ZOOM) ---
     function animate3D() {
         requestAnimationFrame(animate3D);
         
-        // Calculate Engine Time based on BPM (120 BPM = 2 beats per sec)
         const bps = wingConfig.bpm / 60;
-        engineTime += 0.016 * bps * Math.PI; // Assuming 60fps delta
+        engineTime += 0.016 * bps * Math.PI; 
 
         const totalFix = showData.patch.length;
         const centerIdx = (totalFix - 1) / 2;
 
         showData.patch.forEach((fix, idx) => {
-            // Wing Symmetry Math
             let distance = idx - centerIdx;
             let sideSign = Math.sign(distance) || 1; 
             
-            // Phase Calculation
             let phaseOffset = 0;
             if (wingConfig.spread > 0) {
-                if (wingConfig.mode === 'mirror') {
-                    phaseOffset = Math.abs(distance) * THREE.MathUtils.degToRad(wingConfig.spread);
-                } else {
-                    phaseOffset = idx * THREE.MathUtils.degToRad(wingConfig.spread);
-                }
+                if (wingConfig.mode === 'mirror') phaseOffset = Math.abs(distance) * THREE.MathUtils.degToRad(wingConfig.spread);
+                else phaseOffset = idx * THREE.MathUtils.degToRad(wingConfig.spread);
             }
 
-            if (wingConfig.mode === 'alternate') {
-                if (idx % 2 !== 0) phaseOffset += Math.PI; // 180 deg out of phase
-            }
+            if (wingConfig.mode === 'alternate' && idx % 2 !== 0) phaseOffset += Math.PI; 
 
             let t = engineTime + phaseOffset;
+            let fraction = (t % (Math.PI * 2)) / (Math.PI * 2);
+            if (fraction < 0) fraction += 1;
 
-            // Apply Active Wing FX
             if (activeWingFX) {
                 let amp = wingConfig.amplitude / 100;
                 
+                // Tilt Engine Update (90 to -90 and vice versa)
+                if (activeWingFX.attr === 'tilt' || activeWingFX.attr === 'position') {
+                    if (activeWingFX.type === 'ramp_down') {
+                        // 90 to -90
+                        fix.tilt = (90 - (180 * fraction)) * amp;
+                    } else if (activeWingFX.type === 'ramp_up') {
+                        // -90 to 90
+                        fix.tilt = (-90 + (180 * fraction)) * amp;
+                    } else if (activeWingFX.type === 'circle') {
+                        fix.tilt = Math.cos(t) * 45 * amp;
+                    } else if (activeWingFX.type === 'figure8') {
+                        fix.tilt = Math.sin(t * 2) * 45 * amp;
+                    } else if (activeWingFX.type === 'sine') {
+                        fix.tilt = 30 + (Math.sin(t) * 45 * amp * activeWingFX.direction);
+                    }
+                }
+
+                // Pan Engine
                 if (activeWingFX.attr === 'pan' || activeWingFX.attr === 'position') {
                     let panEffect = 0;
                     if (activeWingFX.type === 'open_close') {
-                        // Open: center to outside. Sine absolute value.
                         let wave = Math.abs(Math.sin(t)) * 90 * amp;
-                        if (activeWingFX.direction < 0) wave = 90 - wave; // Close
+                        if (activeWingFX.direction < 0) wave = 90 - wave; 
                         panEffect = wave;
-                    } else if (activeWingFX.type === 'sine') {
+                    } else if (activeWingFX.type === 'sine' || activeWingFX.type === 'figure8') {
+                        panEffect = Math.sin(t) * 90 * amp;
+                    } else if (activeWingFX.type === 'circle') {
                         panEffect = Math.sin(t) * 90 * amp;
                     } else if (activeWingFX.type === 'fan') {
                         panEffect = Math.abs(distance) * 15 * amp; 
                     }
 
-                    // Apply Symmetry to Pan
-                    if (wingConfig.mode === 'mirror') {
-                        fix.pan = panEffect * sideSign; // Left pans left, right pans right
-                    } else {
-                        fix.pan = panEffect; // All pan same way
-                    }
-                }
-
-                if (activeWingFX.attr === 'tilt') {
-                    let tiltEffect = 0;
-                    if (activeWingFX.type === 'sine') {
-                        tiltEffect = Math.sin(t) * 45 * amp;
-                    }
-                    fix.tilt = 30 + (tiltEffect * activeWingFX.direction); // Base tilt is 30
+                    if (wingConfig.mode === 'mirror') fix.pan = panEffect * sideSign; 
+                    else fix.pan = panEffect; 
                 }
 
                 if (activeWingFX.attr === 'dimmer' || activeWingFX.attr === 'strobe') {
@@ -551,16 +552,9 @@
                     fix.dimmer = Math.floor(dimVal * amp);
                 }
 
-                if (activeWingFX.attr === 'color') {
-                    const hue = (t * 50) % 360;
-                    const rgb = hslToRgb(hue / 360, 1, 0.5);
-                    fix.colorR = Math.floor(rgb[0] * 255);
-                    fix.colorG = Math.floor(rgb[1] * 255);
-                    fix.colorB = Math.floor(rgb[2] * 255);
-                }
-                
+                // Zoom Effect Engine (5 to 10 degrees)
                 if (activeWingFX.attr === 'zoom') {
-                    fix.zoom = 20 + (Math.sin(t) + 1) * 15 * amp; // Fluctuate zoom 20-50
+                    fix.zoom = 5 + (((Math.sin(t) + 1) / 2) * 5 * amp); 
                 }
             }
 
@@ -568,48 +562,25 @@
             const meshObj = fixtureMeshes.find(m => m.id === fix.id);
             if (!meshObj) return;
 
-            // Pan rotates around Y
             meshObj.yoke.rotation.y = THREE.MathUtils.degToRad(-fix.pan);
-            // Tilt rotates around X
             meshObj.head.rotation.x = THREE.MathUtils.degToRad(fix.tilt);
 
-            // Beam Rendering (Opacity based on Dimmer, Color based on RGB)
             const intensity = fix.dimmer / 255;
             const col = new THREE.Color(fix.colorR / 255, fix.colorG / 255, fix.colorB / 255);
             
             meshObj.lens.material.color = intensity > 0 ? col : new THREE.Color(0x222222);
             meshObj.mat.color = col;
-            meshObj.mat.opacity = intensity * 0.7; // Max opacity 0.7 for nice additive effect
+            meshObj.mat.opacity = intensity * 0.7; 
 
-            // Zoom adjusts cone radius (scale X and Z)
-            const zoomScale = Math.tan(THREE.MathUtils.degToRad(fix.zoom / 2)) * 15; // 15 is beam length
+            // Laser Zoom Rendering logic based on 5-10 range
+            const zoomScale = Math.tan(THREE.MathUtils.degToRad(fix.zoom / 2)) * 18; 
             meshObj.beam.scale.set(Math.max(0.5, zoomScale), 1, Math.max(0.5, zoomScale));
             
-            // Selection highlight
             const isSelected = selectedFixtures.includes(fix.id);
             meshObj.base.children[0].material.color.setHex(isSelected ? 0xffb700 : 0x222222);
         });
 
         renderer.render(scene, camera);
-    }
-
-    function hslToRgb(h, s, l) {
-        let r, g, b;
-        if (s === 0) r = g = b = l;
-        else {
-            const hue2rgb = (p, q, t) => {
-                if (t < 0) t += 1;
-                if (t > 1) t -= 1;
-                if (t < 1/6) return p + (q - p) * 6 * t;
-                if (t < 1/2) return q;
-                if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-                return p;
-            };
-            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-            const p = 2 * l - q;
-            r = hue2rgb(p, q, h + 1/3); g = hue2rgb(p, q, h); b = hue2rgb(p, q, h - 1/3);
-        }
-        return [r, g, b];
     }
 
     // --- UI & LIBRARY LOGIC ---
@@ -678,11 +649,20 @@
         });
     }
 
+    function applyBlackout() {
+        if(selectedFixtures.length === 0) return;
+        selectedFixtures.forEach(id => {
+            const fix = showData.patch.find(f => f.id === id);
+            if(fix) { fix.dimmer = 0; fix.colorR = 0; fix.colorG = 0; fix.colorB = 0; }
+        });
+        updateProgrammerUI();
+    }
+
     // --- FULLY INTERACTIVE REALTIME FADER ENGINE ---
     let activeFader = null;
 
     function initFaderPointer(e, attr) {
-        if(selectedFixtures.length === 0 && attr !== 'dimmer') return; // Allow dimmer for all if none selected for now
+        if(selectedFixtures.length === 0 && attr !== 'dimmer') return; 
         const track = document.getElementById('track-' + attr);
         setupFaderInteraction(e, { type: 'programmer', attr: attr }, track);
     }
@@ -723,7 +703,9 @@
 
     function onFaderDoubleClick(e) {
         if(!activeFader) return;
-        setFaderValue(activeFader.attr === 'tilt' ? 50 : 0); // Default tilt to middle (30 deg mapped to 50%)
+        if(activeFader.attr === 'tilt') setFaderValue(50); 
+        else if(activeFader.attr === 'zoom') setFaderValue(0); // Reset zoom to 5 (0%)
+        else setFaderValue(0);
     }
 
     function cleanupFaderListeners() {
@@ -747,7 +729,7 @@
         if(!activeFader) return;
         if(activeFader.type === 'programmer') {
             const attr = activeFader.attr;
-            const targetFixtures = selectedFixtures.length > 0 ? selectedFixtures : showData.patch.map(f=>f.id); // If none selected, apply to all for demo
+            const targetFixtures = selectedFixtures.length > 0 ? selectedFixtures : showData.patch.map(f=>f.id); 
             
             targetFixtures.forEach(fixId => {
                 const fix = showData.patch.find(f => f.id === fixId);
@@ -756,13 +738,13 @@
                 if(attr === 'dimmer') fix.dimmer = Math.round((val / 100) * 255);
                 else if(attr === 'pan') fix.pan = Math.round(((val / 100) * 360) - 180);
                 else if(attr === 'tilt') fix.tilt = Math.round(((val / 100) * 180) - 90);
-                else if(attr === 'zoom') fix.zoom = Math.round(5 + (val / 100) * 45); // Zoom 5 to 50
+                else if(attr === 'zoom') fix.zoom = Math.max(5, Math.min(10, Math.round(5 + (val / 100) * 5))); // Range 5-10
             });
             updateProgrammerUI();
         } else if(activeFader.type === 'executor') {
             const thumb = document.getElementById('exec-thumb-' + activeFader.id);
             thumb.style.bottom = val + '%';
-            if(activeFader.id === 1) { // Exec 1 maps to Grand Master Dimmer
+            if(activeFader.id === 1) { 
                 showData.patch.forEach(f => f.dimmer = Math.round((val / 100) * 255));
                 updateProgrammerUI();
             }
@@ -776,6 +758,7 @@
             if(activeFader.attr === 'dimmer') currentPct = Math.round((fix.dimmer / 255) * 100);
             else if(activeFader.attr === 'pan') currentPct = Math.round(((fix.pan + 180) / 360) * 100);
             else if(activeFader.attr === 'tilt') currentPct = Math.round(((fix.tilt + 90) / 180) * 100);
+            else if(activeFader.attr === 'zoom') currentPct = Math.round(((fix.zoom - 5) / 5) * 100);
             
             let newPct = Math.max(0, Math.min(100, currentPct + delta));
             setFaderValue(newPct);
@@ -801,7 +784,8 @@
         document.getElementById('val-tilt').innerText = Math.round(sourceFix.tilt) + '°';
         document.getElementById('thumb-tilt').style.bottom = tiltPct + '%';
         
-        const zoomPct = Math.round(((sourceFix.zoom - 5) / 45) * 100);
+        // Zoom update range 5-10 maps to 0-100%
+        const zoomPct = Math.round(((sourceFix.zoom - 5) / 5) * 100);
         document.getElementById('val-zoom').innerText = Math.round(sourceFix.zoom) + '°';
         document.getElementById('thumb-zoom').style.bottom = zoomPct + '%';
     }
@@ -843,7 +827,7 @@
     }
 
     function triggerExec(num, action) {
-        if(num === 1) { // Grand Master Go/Flash
+        if(num === 1) { 
             showData.patch.forEach(f => f.dimmer = action === 'GO' ? 255 : 0);
             document.getElementById('exec-thumb-1').style.bottom = action === 'GO' ? '100%' : '0%';
             updateProgrammerUI();
