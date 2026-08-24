@@ -61,9 +61,9 @@
     
     /* Rotary Dial Encoders */
     .encoder-knob { width: 56px; height: 56px; background: radial-gradient(circle, #2a2a2a 0%, #151515 100%); border: 2px solid var(--accent); border-radius: 50%; margin: 6px auto; position: relative; display: flex; align-items: center; justify-content: center; cursor: ns-resize; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-    .encoder-indicator { position: absolute; top: 4px; width: 4px; height: 16px; background: var(--accent); border-radius: 2px; transform-origin: 50% 24px; transition: transform 0.05s linear; pointer-events: none; }
-    .encoder-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; font-weight: bold; }
-    .encoder-val { font-size: 12px; font-weight: bold; color: #fff; margin-top: 2px; font-family: monospace; }
+    .encoder-indicator { position: absolute; top: 4px; width: 4px; height: 16px; background: var(--accent); border-radius: 2px; transform-origin: 50% 24px; pointer-events: none; }
+    .encoder-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; font-weight: bold; pointer-events: none; }
+    .encoder-val { font-size: 12px; font-weight: bold; color: #fff; margin-top: 2px; font-family: monospace; pointer-events: none; }
     
     /* Executors Panel */
     #executor-panel { grid-column: 1 / -1; grid-row: 3 / 4; display: flex; padding: 6px; gap: 6px; background: #161616; border-top: 1px solid var(--border); }
@@ -98,7 +98,7 @@
 <div id="startup-screen">
     <div class="startup-box">
         <h1 style="color: var(--accent); margin-bottom: 5px; font-size: 22px;">PROLIGHT ONPC</h1>
-        <p style="color: var(--text-dim); font-size: 11px; margin-bottom: 25px;">Professional Lighting Console v1.7</p>
+        <p style="color: var(--text-dim); font-size: 11px; margin-bottom: 25px;">Professional Lighting Console v1.8</p>
         
         <div class="input-group">
             <label>Show Name</label>
@@ -514,34 +514,35 @@
         }
     }
 
-    // --- ROTARY ENCODER DRAG INTERACTION (PUTAR/DRAG) ---
+    // --- ROTARY ENCODER DRAG INTERACTION (FIXED & FULLY FUNCTIONAL) ---
     let activeEncoder = null;
     let startY = 0;
 
-    document.querySelectorAll('.encoder-knob').forEach(knob => {
-        knob.addEventListener('mousedown', (e) => {
-            activeEncoder = knob.getAttribute('data-attr');
+    document.addEventListener('mousedown', (e) => {
+        const knobBox = e.target.closest('.encoder-knob');
+        if (knobBox) {
+            activeEncoder = knobBox.getAttribute('data-attr');
             startY = e.clientY;
             e.preventDefault();
-        });
+        }
     });
 
     window.addEventListener('mousemove', (e) => {
-        if(!activeEncoder || selectedFixtures.length === 0) return;
+        if (!activeEncoder || selectedFixtures.length === 0) return;
         const delta = startY - e.clientY;
-        startY = e.clientY;
+        startY = e.clientY; // reset baseline
 
         selectedFixtures.forEach(fixId => {
             const fix = showData.patch.find(f => f.id === fixId);
-            if(!fix) return;
+            if (!fix) return;
 
-            if(activeEncoder === 'dimmer') {
+            if (activeEncoder === 'dimmer') {
                 fix.dimmer = Math.max(0, Math.min(255, fix.dimmer + (delta * 2)));
-            } else if(activeEncoder === 'pan') {
+            } else if (activeEncoder === 'pan') {
                 fix.pan = Math.max(-180, Math.min(180, fix.pan + delta));
-            } else if(activeEncoder === 'tilt') {
+            } else if (activeEncoder === 'tilt') {
                 fix.tilt = Math.max(-90, Math.min(90, fix.tilt + delta));
-            } else if(activeEncoder === 'colorR') {
+            } else if (activeEncoder === 'colorR') {
                 fix.colorR = Math.max(0, Math.min(255, fix.colorR + (delta * 2)));
             }
         });
