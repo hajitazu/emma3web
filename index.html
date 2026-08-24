@@ -3,862 +3,718 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ProLight OnPC v7.1 - Precision Wing Engine</title>
-<!-- Three.js CDN -->
+<title>ProLight OnPC v8.0 - Professional Lighting Console & 3D Stage</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
     :root { 
-        --bg-dark: #0a0a0a; 
-        --panel-bg: #151515; 
-        --panel-header: #202020; 
-        --accent: #ff9d00; 
-        --accent-hover: #ffb300;
-        --text: #e0e0e0; 
-        --text-dim: #777;
-        --border: #333; 
-        --selected: #0066cc;
+        --bg: #090909; --panel: #141414; --header: #1d1d1d; 
+        --accent: #ff9d00; --accent-hover: #ffb300;
+        --text: #ddd; --dim: #777; --border: #2a2a2a; --sel: #0066cc;
     }
-    
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: var(--bg-dark); color: var(--text); font-family: 'Segoe UI', Tahoma, sans-serif; overflow: hidden; user-select: none; width: 100vw; height: 100vh; }
-    
-    /* Startup */
-    #startup-screen { position: absolute; inset: 0; background: #050505; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; }
-    .startup-box { background: var(--panel-bg); padding: 40px; border-radius: 8px; border: 1px solid var(--border); text-align: center; width: 480px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); }
-    .btn { background: #222; color: var(--accent); border: 1px solid var(--accent); padding: 12px 24px; margin: 8px 0; width: 100%; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 13px; border-radius: 4px; transition: 0.2s; }
-    .btn:hover { background: var(--accent); color: #000; }
-    .btn-secondary { background: transparent; border-color: #555; color: #aaa; }
-    .btn-secondary:hover { background: #444; color: #fff; }
-    .input-group { margin-bottom: 15px; text-align: left; }
-    .input-group label { display: block; font-size: 11px; color: var(--text-dim); margin-bottom: 5px; text-transform: uppercase; }
-    .input-group input { width: 100%; background: #000; border: 1px solid var(--border); color: #fff; padding: 10px; font-size: 14px; border-radius: 4px; outline: none; }
-    .input-group input:focus { border-color: var(--accent); }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', Tahoma, sans-serif; overflow: hidden; width: 100vw; height: 100vh; }
     
     /* Layout */
-    #workspace { display: none; width: 100vw; height: 100vh; grid-template-rows: 35px 1fr 240px 40px; grid-template-columns: 280px 1fr 420px; }
+    #app { display: grid; grid-template-rows: 35px 1fr 260px; grid-template-columns: 300px 1fr 450px; width: 100%; height: 100%; }
+    .header { grid-column: 1 / -1; background: #000; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 15px; font-size: 11px; font-weight: bold; }
+    .panel { border: 1px solid var(--border); background: var(--panel); display: flex; flex-direction: column; overflow: hidden; }
+    .p-title { background: var(--header); color: var(--accent); padding: 5px 10px; font-size: 10px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
     
-    .header { grid-column: 1 / -1; background: #000; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 15px; font-size: 12px; color: var(--text-dim); }
-    .header-left, .header-right { display: flex; align-items: center; gap: 15px; }
+    /* UI Elements */
+    .btn { background: #222; color: #fff; border: 1px solid #444; padding: 4px 8px; font-size: 9px; cursor: pointer; border-radius: 3px; font-weight: bold; text-transform: uppercase; }
+    .btn:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+    .btn.active { background: var(--accent); color: #000; }
+    input[type="number"], select, input[type="text"] { background: #000; color: #fff; border: 1px solid #333; padding: 3px 5px; font-size: 10px; border-radius: 2px; outline: none; }
+    input[type="range"] { accent-color: var(--accent); }
     
-    .panel { border: 1px solid var(--border); background: var(--panel-bg); display: flex; flex-direction: column; overflow: hidden; }
-    .panel-title { background: var(--panel-header); color: var(--accent); padding: 6px 10px; font-size: 11px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-    
-    #fixture-panel { grid-column: 1 / 2; grid-row: 2 / 3; }
-    #fixture-sheet { padding: 5px; font-family: monospace; font-size: 11px; overflow-y: auto; flex: 1; }
-    .fix-row { display: flex; justify-content: space-between; padding: 6px 8px; border-bottom: 1px solid #222; cursor: pointer; }
-    .fix-row:hover { background: #2a2a2a; }
-    .fix-row.selected { background: var(--selected); color: #fff; }
+    /* Patch & Transform */
+    #fixture-sheet { overflow-y: auto; flex: 1; padding: 5px; font-size: 10px; }
+    .fix-row { display: grid; grid-template-columns: 20px 1fr 35px 35px 35px; gap: 4px; padding: 4px; border-bottom: 1px solid #222; cursor: pointer; align-items: center; }
+    .fix-row:hover { background: #1a1a1a; }
+    .fix-row.selected { background: var(--sel); color: #fff; }
     
     /* 3D Visualizer */
     #stage-panel { grid-column: 2 / 3; grid-row: 2 / 3; position: relative; background: #000; }
-    #three-canvas-container { width: 100%; height: 100%; }
-    .camera-hud { position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 10; }
-    .cam-btn { background: rgba(30,30,30,0.8); color: #ccc; border: 1px solid #555; padding: 4px 8px; font-size: 9px; cursor: pointer; border-radius: 4px; font-weight: bold; backdrop-filter: blur(4px); }
-    .cam-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+    #three-canvas { width: 100%; height: 100%; }
+    .cam-hud { position: absolute; top: 10px; left: 10px; display: flex; gap: 4px; z-index: 10; flex-wrap: wrap; max-width: 80%; }
+    .overlay-help { position: absolute; bottom: 10px; left: 10px; color: rgba(255,255,255,0.4); font-size: 10px; pointer-events: none; }
     
-    /* Programmer & Wing Engine */
+    /* Programmer & FX */
     #programmer-panel { grid-column: 3 / 4; grid-row: 2 / 3; display: flex; flex-direction: column; }
-    .sub-tabs { display: flex; background: #111; border-bottom: 1px solid var(--border); }
-    .sub-tab { flex: 1; padding: 8px; text-align: center; font-size: 10px; cursor: pointer; color: var(--text-dim); font-weight: bold; text-transform: uppercase; }
-    .sub-tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); background: #1a1a1a; }
-    .tab-content { display: none; padding: 8px; font-size: 11px; overflow-y: auto; flex: 1; }
+    .tabs { display: flex; background: #0a0a0a; border-bottom: 1px solid var(--border); }
+    .tab { flex: 1; padding: 6px; text-align: center; font-size: 9px; cursor: pointer; color: var(--dim); font-weight: bold; text-transform: uppercase; }
+    .tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); background: #161616; }
+    .tab-content { display: none; padding: 8px; overflow-y: auto; flex: 1; }
     .tab-content.active { display: block; }
     
     /* Faders */
     .fader-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-    .fader-control-box { background: #111; border: 1px solid var(--border); border-radius: 6px; padding: 6px; text-align: center; display: flex; flex-direction: column; align-items: center; }
-    .fader-track-v { width: 16px; height: 130px; background: #000; border-radius: 8px; position: relative; margin: 8px 0; cursor: pointer; border: 1px solid #333; touch-action: none; }
-    .fader-thumb-v { width: 36px; height: 20px; background: #333; border: 1px solid #888; border-radius: 4px; border-top: 3px solid var(--accent); position: absolute; left: -11px; bottom: 0%; cursor: ns-resize; touch-action: none; box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
-    .fader-label { font-size: 9px; color: var(--text-dim); text-transform: uppercase; font-weight: bold; }
-    .fader-val { font-size: 11px; font-weight: bold; color: #fff; margin-top: 2px; font-family: monospace; }
+    .fader-box { background: #0a0a0a; border: 1px solid #222; border-radius: 4px; padding: 6px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+    .f-track { width: 14px; height: 110px; background: #000; border-radius: 4px; position: relative; margin: 8px 0; cursor: pointer; border: 1px solid #333; touch-action: none; }
+    .f-thumb { width: 32px; height: 16px; background: #333; border: 1px solid #666; border-radius: 2px; border-top: 3px solid var(--accent); position: absolute; left: -10px; bottom: 0%; cursor: ns-resize; touch-action: none; }
+    .f-lbl { font-size: 9px; color: var(--dim); font-weight: bold; }
+    .f-val { font-size: 10px; color: #fff; font-family: monospace; }
     
-    /* Color Swatch */
-    .color-pool-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-    .color-swatch { height: 35px; border-radius: 4px; border: 2px solid #444; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; color: #000; text-shadow: 0 0 2px rgba(255,255,255,0.8); transition: transform 0.1s; }
-    .color-swatch:hover { border-color: #fff; transform: scale(1.05); }
-    .color-blackout { background: #000 !important; color: #f00 !important; border-color: #f00 !important; text-shadow: none !important; }
+    /* Effect Engine */
+    .param-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+    .p-row { background: #0a0a0a; padding: 4px; border-radius: 3px; border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; font-size: 9px; }
+    .p-row select, .p-row input { width: 70px; }
     
-    /* Wing Engine Controls */
-    .wing-panel { background: #111; border: 1px solid #333; border-radius: 6px; padding: 8px; margin-bottom: 8px; }
-    .param-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 10px; }
-    .param-row select { background: #000; color: #fff; border: 1px solid var(--border); padding: 4px; border-radius: 3px; font-size: 10px; width: 120px; outline: none; }
-    .param-row select:focus { border-color: var(--accent); }
-    .param-row input[type="range"] { width: 120px; accent-color: var(--accent); }
+    .fx-list { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; max-height: 200px; overflow-y: auto; }
+    .fx-item { background: #111; border: 1px solid #333; padding: 5px; font-size: 9px; cursor: pointer; border-radius: 3px; }
+    .fx-item:hover { border-color: var(--accent); }
+    .fx-item.active { background: #332400; border-color: var(--accent); color: var(--accent); font-weight: bold; }
+    .fx-head { grid-column: 1 / -1; font-size: 9px; color: var(--accent); margin-top: 6px; border-bottom: 1px solid #333; }
     
-    /* Effect Library */
-    .search-box { width: 100%; background: #000; border: 1px solid var(--border); color: #fff; padding: 8px 10px; border-radius: 4px; font-size: 11px; margin-bottom: 8px; outline: none; }
-    .phaser-pool-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; max-height: 250px; overflow-y: auto; padding-right: 4px; }
-    .phaser-pool-grid::-webkit-scrollbar { width: 6px; }
-    .phaser-pool-grid::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
-    .phaser-card { background: #1a1a1a; border: 1px solid var(--border); border-radius: 4px; padding: 8px; cursor: pointer; transition: 0.1s; }
-    .phaser-card:hover { border-color: var(--accent); background: #222; }
-    .phaser-card.active { border-color: var(--accent); background: #332400; }
-    .phaser-name { font-weight: bold; color: #fff; font-size: 10px; margin-bottom: 3px; }
-    .phaser-desc { font-size: 8px; color: var(--text-dim); line-height: 1.2; }
+    /* Bottom Executors */
+    #bottom-panel { grid-column: 1 / -1; grid-row: 3 / 4; display: flex; padding: 8px; gap: 8px; background: #0d0d0d; border-top: 1px solid var(--border); }
+    .exec { flex: 1; background: #141414; border: 1px solid #222; border-radius: 4px; display: flex; flex-direction: column; padding: 4px; }
+    .exec-h { text-align: center; font-size: 9px; color: var(--accent); padding: 3px; background: #050505; border-radius: 2px; margin-bottom: 4px; }
+    .exec-track { flex: 1; width: 10px; background: #000; position: relative; margin: 0 auto; border-radius: 4px; border: 1px solid #333; touch-action: none; }
+    .exec-btns { display: flex; gap: 2px; margin-top: 4px; }
     
-    /* Executors */
-    #executor-panel { grid-column: 1 / -1; grid-row: 3 / 4; display: flex; padding: 8px; gap: 8px; background: #111; border-top: 1px solid var(--border); }
-    .executor { flex: 1; background: #181818; border: 1px solid var(--border); border-radius: 4px; display: flex; flex-direction: column; padding: 6px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
-    .exec-header { text-align: center; font-size: 10px; color: var(--accent); padding: 4px; background: #050505; border-radius: 3px; margin-bottom: 6px; font-weight: bold; }
-    .fader-area { flex: 1; display: flex; justify-content: center; position: relative; margin: 5px 0; background: #080808; border-radius: 4px; padding: 10px 0; }
-    .exec-track { width: 12px; height: 100%; background: #000; position: relative; border-radius: 6px; border: 1px solid #222; }
-    .exec-cap { width: 34px; height: 18px; background: #333; border: 1px solid #777; position: absolute; left: -12px; bottom: 0%; cursor: pointer; border-radius: 4px; border-top: 3px solid var(--accent); touch-action: none; box-shadow: 0 5px 10px rgba(0,0,0,0.8); }
-    .exec-btns { display: flex; gap: 4px; margin-top: 6px; }
-    .exec-btn { flex: 1; background: #222; border: 1px solid #444; color: white; padding: 8px 2px; text-align: center; font-size: 9px; font-weight: bold; cursor: pointer; border-radius: 3px; }
-    .exec-btn:active { background: var(--accent); color: black; }
-    .exec-btn.flash { background: #411; border-color: #622; }
-    .exec-btn.flash:active { background: #f33; }
-    
-    /* Command Line */
-    #cmd-panel { grid-column: 1 / -1; grid-row: 4 / 5; display: flex; background: #000; border-top: 1px solid var(--border); align-items: center; position: relative; }
-    .cmd-badge { background: var(--accent); color: black; padding: 0 15px; height: 100%; display: flex; align-items: center; font-weight: bold; font-size: 13px; font-family: monospace; cursor: pointer; text-transform: uppercase; }
-    #cmd-input { flex: 1; background: transparent; border: none; color: var(--accent); font-family: monospace; font-size: 16px; padding: 0 15px; outline: none; }
-    .cmd-help { color: var(--text-dim); font-size: 11px; padding-right: 15px; font-family: monospace; }
 </style>
 </head>
 <body>
 
-<!-- Startup Screen -->
-<div id="startup-screen">
-    <div class="startup-box">
-        <h1 style="color: var(--accent); margin-bottom: 5px; font-size: 26px;">PROLIGHT ONPC v7.1</h1>
-        <p style="color: var(--text-dim); font-size: 11px; margin-bottom: 25px;">Precision Wing Engine (90° Sweep) & Laser Zoom 5-10°</p>
-        
-        <div class="input-group">
-            <label>Show Name</label>
-            <input type="text" id="show-name-input" value="Symmetric Wing Show 2026">
-        </div>
-        
-        <button class="btn" onclick="startShow()">New Show / Launch Console</button>
-        <button class="btn btn-secondary" onclick="toggleFullScreen()">Toggle Full Screen Mode</button>
-        <button class="btn btn-secondary" style="margin-top: 4px;" onclick="loadDemoShow()">Load Demo Show (8 Fixtures)</button>
-    </div>
-</div>
-
-<!-- Main Desktop Workspace -->
-<div id="workspace">
+<div id="app">
     <!-- Header -->
     <div class="header">
-        <div class="header-left">
-            <span>Show: <strong id="lbl-showname" style="color:#fff;">New Show</strong></span>
-            <span>Wing Engine: <strong id="lbl-active-phaser" style="color:var(--accent);">OFF</strong></span>
-        </div>
-        <div class="header-right">
-            <button class="btn-secondary" style="padding: 2px 8px; font-size:10px; cursor:pointer;" onclick="saveShow()">Save Show</button>
-            <button class="btn-secondary" style="padding: 2px 8px; font-size:10px; cursor:pointer;" onclick="toggleFullScreen()">Full Screen</button>
+        <div>PROLIGHT ONPC v8.0 | SHOW: <span id="lbl-show" style="color:var(--accent);">Massive Wing Show</span></div>
+        <div>
+            <button class="btn" onclick="initShow()">New Show</button>
+            <button class="btn" onclick="toggleFS()">Full Screen</button>
         </div>
     </div>
     
-    <!-- Fixture Sheet -->
+    <!-- Left: Fixture Patch & Transform -->
     <div class="panel" id="fixture-panel">
-        <div class="panel-title">
-            <span>Fixture Patch</span>
-            <div style="display:flex; gap:4px;">
-                <button class="btn" style="margin:0; padding:1px 6px; font-size:9px; width:auto;" onclick="addNewFixture()">+ Add</button>
-                <button class="btn" style="margin:0; padding:1px 6px; font-size:9px; width:auto; background:#411; border-color:#f55;" onclick="deleteSelectedFixture()">Del</button>
+        <div class="p-title">
+            <span>Fixtures & Target Aim</span>
+            <button class="btn" onclick="addFixture()">+ ADD</button>
+        </div>
+        <div style="padding:4px; background:#0a0a0a; border-bottom:1px solid #222; font-size:9px;">
+            <div style="display:flex; gap:4px; margin-bottom:4px;">
+                <button class="btn" style="flex:1;" onclick="setAimMode(false)" id="btn-mode-move">MOVE (Drag)</button>
+                <button class="btn" style="flex:1;" onclick="setAimMode(true)" id="btn-mode-aim">AIM TARGET</button>
             </div>
+            Target X: <input type="number" id="in-tgt-x" step="0.5" value="0" style="width:40px" onchange="updateTargetUI()">
+            Y: <input type="number" id="in-tgt-y" step="0.5" value="0" style="width:40px" onchange="updateTargetUI()">
+            Z: <input type="number" id="in-tgt-z" step="0.5" value="5" style="width:40px" onchange="updateTargetUI()">
+        </div>
+        <div class="fix-row" style="background:#000; font-weight:bold; cursor:default;">
+            <span>ID</span><span>Name</span><span>X</span><span>Y</span><span>Z</span>
         </div>
         <div id="fixture-sheet"></div>
     </div>
     
-    <!-- 3D Stage Visualizer -->
+    <!-- Center: 3D Visualizer -->
     <div class="panel" id="stage-panel">
-        <div class="camera-hud">
-            <button class="cam-btn active" id="btn-cam-front" onclick="setCameraView('front')">FRONT AUDIENCE</button>
-            <button class="cam-btn" id="btn-cam-top" onclick="setCameraView('top')">TOP RIG</button>
-            <button class="cam-btn" id="btn-cam-persp" onclick="setCameraView('perspective')">3D ISO</button>
+        <div class="cam-hud">
+            <button class="btn cam-btn active" onclick="setCam('FRONT')">AUDIENCE / FRONT</button>
+            <button class="btn cam-btn" onclick="setCam('BACK')">BACK</button>
+            <button class="btn cam-btn" onclick="setCam('LEFT')">LEFT</button>
+            <button class="btn cam-btn" onclick="setCam('RIGHT')">RIGHT</button>
+            <button class="btn cam-btn" onclick="setCam('TOP')">TOP</button>
+            <button class="btn cam-btn" onclick="setCam('SIDE')">SIDE</button>
+            <button class="btn cam-btn" onclick="setCam('STAGE')">ON STAGE</button>
         </div>
-        <div id="three-canvas-container"></div>
+        <div class="overlay-help">
+            CAMERA: [W,A,S,D] + [Arrows] Move | [Q/E] Up/Down | [Right-Click Drag] Rotate | [Scroll] Zoom<br>
+            FIXTURE: [Left-Click Drag] Move Fixture (Move Mode) / Set Target (Aim Mode)
+        </div>
+        <div id="three-canvas"></div>
     </div>
     
-    <!-- Programmer & Control Panels -->
+    <!-- Right: Programmer & Effect Engine -->
     <div class="panel" id="programmer-panel">
-        <div class="sub-tabs">
-            <div class="sub-tab active" onclick="switchTab('faders')">Attributes</div>
-            <div class="sub-tab" onclick="switchTab('colors')">Colors</div>
-            <div class="sub-tab" onclick="switchTab('wingfx')">Wing Engine FX</div>
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('faders')">Attributes</div>
+            <div class="tab" onclick="switchTab('engine')">FX & Wing Engine</div>
+            <div class="tab" onclick="switchTab('forms')">Forms</div>
         </div>
         
-        <!-- Interactive Attribute Faders -->
+        <!-- Tab: Faders -->
         <div id="tab-faders" class="tab-content active">
-            <div style="font-size: 10px; color: var(--text-dim); margin-bottom: 4px; display:flex; justify-content:space-between;">
-                <span>Sel: <strong id="lbl-selection" style="color:var(--accent);">None</strong></span>
-                <button class="btn" style="margin:0; padding:2px 8px; font-size:9px; width:auto; border-color:#555;" onclick="clearProgrammer()">CLEAR (ESC)</button>
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                <span style="font-size:10px;">Sel: <b id="lbl-sel" style="color:var(--accent);">None</b></span>
+                <button class="btn" style="background:#411; border-color:#f33;" onclick="clearProg()">CLEAR</button>
             </div>
             <div class="fader-grid">
-                <!-- Dimmer -->
-                <div class="fader-control-box">
-                    <div class="fader-label">Dim</div>
-                    <div class="fader-track-v" id="track-dimmer" onpointerdown="initFaderPointer(event, 'dimmer')">
-                        <div class="fader-thumb-v" id="thumb-dimmer" style="bottom: 0%;"></div>
-                    </div>
-                    <div class="fader-val" id="val-dimmer">0%</div>
-                </div>
-                <!-- Pan -->
-                <div class="fader-control-box">
-                    <div class="fader-label">Pan</div>
-                    <div class="fader-track-v" id="track-pan" onpointerdown="initFaderPointer(event, 'pan')">
-                        <div class="fader-thumb-v" id="thumb-pan" style="bottom: 50%;"></div>
-                    </div>
-                    <div class="fader-val" id="val-pan">0°</div>
-                </div>
-                <!-- Tilt -->
-                <div class="fader-control-box">
-                    <div class="fader-label">Tilt</div>
-                    <div class="fader-track-v" id="track-tilt" onpointerdown="initFaderPointer(event, 'tilt')">
-                        <div class="fader-thumb-v" id="thumb-tilt" style="bottom: 50%;"></div>
-                    </div>
-                    <div class="fader-val" id="val-tilt">0°</div>
-                </div>
-                <!-- Zoom (5-10) -->
-                <div class="fader-control-box">
-                    <div class="fader-label">Zoom</div>
-                    <div class="fader-track-v" id="track-zoom" onpointerdown="initFaderPointer(event, 'zoom')">
-                        <div class="fader-thumb-v" id="thumb-zoom" style="bottom: 0%;"></div>
-                    </div>
-                    <div class="fader-val" id="val-zoom">5°</div>
-                </div>
+                <div class="fader-box"><div class="f-lbl">DIM</div><div class="f-track" onpointerdown="initFader(event,'dimmer')"><div class="f-thumb" id="th-dimmer"></div></div><div class="f-val" id="val-dimmer">0%</div></div>
+                <div class="fader-box"><div class="f-lbl">PAN</div><div class="f-track" onpointerdown="initFader(event,'pan')"><div class="f-thumb" id="th-pan" style="bottom:50%"></div></div><div class="f-val" id="val-pan">0°</div></div>
+                <div class="fader-box"><div class="f-lbl">TILT</div><div class="f-track" onpointerdown="initFader(event,'tilt')"><div class="f-thumb" id="th-tilt" style="bottom:50%"></div></div><div class="f-val" id="val-tilt">0°</div></div>
+                <div class="fader-box"><div class="f-lbl">ZOOM</div><div class="f-track" onpointerdown="initFader(event,'zoom')"><div class="f-thumb" id="th-zoom"></div></div><div class="f-val" id="val-zoom">5°</div></div>
+            </div>
+            <div style="font-size:9px; color:var(--accent); margin-top:10px; font-weight:bold;">COLORS</div>
+            <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:4px; margin-top:4px;">
+                <div class="btn" style="background:#f00; color:#000;" onclick="col(255,0,0)">R</div>
+                <div class="btn" style="background:#0f0; color:#000;" onclick="col(0,255,0)">G</div>
+                <div class="btn" style="background:#00f; color:#fff;" onclick="col(0,0,255)">B</div>
+                <div class="btn" style="background:#fff; color:#000;" onclick="col(255,255,255)">W</div>
+                <div class="btn" style="background:#000; color:#f00; border-color:#f00;" onclick="col(0,0,0); setDim(0)">BLK</div>
             </div>
         </div>
-
-        <!-- Enhanced Color Pool -->
-        <div id="tab-colors" class="tab-content">
-            <div style="font-weight:bold; color:var(--accent); margin-bottom:8px;">Instant Color Swatches</div>
-            <div class="color-pool-grid">
-                <div class="color-swatch color-blackout" onclick="applyBlackout()">BLACKOUT</div>
-                <div class="color-swatch" style="background: #ffffff;" onclick="applyColorSwatch(255, 255, 255)">WHITE</div>
-                <div class="color-swatch" style="background: #ffdbb3;" onclick="applyColorSwatch(255, 219, 179)">WARM WHT</div>
-                <div class="color-swatch" style="background: #e6f5ff;" onclick="applyColorSwatch(230, 245, 255)">COLD WHT</div>
-                
-                <div class="color-swatch" style="background: #ff0000;" onclick="applyColorSwatch(255, 0, 0)">RED</div>
-                <div class="color-swatch" style="background: #00ff00;" onclick="applyColorSwatch(0, 255, 0)">GREEN</div>
-                <div class="color-swatch" style="background: #0000ff; color:#fff;" onclick="applyColorSwatch(0, 0, 255)">BLUE</div>
-                <div class="color-swatch" style="background: #ffff00;" onclick="applyColorSwatch(255, 255, 0)">YELLOW</div>
-                
-                <div class="color-swatch" style="background: #00ffff;" onclick="applyColorSwatch(0, 255, 255)">CYAN</div>
-                <div class="color-swatch" style="background: #ff00ff;" onclick="applyColorSwatch(255, 0, 255)">MAGENTA</div>
-                <div class="color-swatch" style="background: #ff8c00;" onclick="applyColorSwatch(255, 140, 0)">AMBER</div>
-                <div class="color-swatch" style="background: #9400d3; color:#fff;" onclick="applyColorSwatch(148, 0, 211)">UV</div>
-                
-                <div class="color-swatch" style="background: #ff1493;" onclick="applyColorSwatch(255, 20, 147)">PINK</div>
-                <div class="color-swatch" style="background: #00ff7f;" onclick="applyColorSwatch(0, 255, 127)">SPRING</div>
-                <div class="color-swatch" style="background: #000080; color:#fff;" onclick="applyColorSwatch(0, 0, 128)">DEEP BLUE</div>
-                <div class="color-swatch" style="background: #ff4500;" onclick="applyColorSwatch(255, 69, 0)">ORANGE</div>
-            </div>
-        </div>
-
-        <!-- Advanced Wing Engine & Effect Library -->
-        <div id="tab-wingfx" class="tab-content">
-            <div style="display:flex; justify-content:space-between; margin-bottom:6px; align-items:center;">
-                <span style="font-weight:bold; color:var(--accent);">Symmetry & Movement Engine</span>
-                <button class="btn" style="margin:0; padding:2px 8px; font-size:9px; width:auto; background:#411; border-color:#f33;" onclick="stopWingEngine()">STOP FX</button>
-            </div>
-            
-            <!-- Wing Controls -->
-            <div class="wing-panel">
-                <div class="param-row">
-                    <span>Wing Symmetry Mode:</span>
-                    <select id="wing-mode" onchange="wingConfig.mode = this.value">
-                        <option value="mirror" selected>Symmetrical (Mirror)</option>
-                        <option value="alternate">Alternating (180°)</option>
-                        <option value="normal">Normal (Left to Right)</option>
+        
+        <!-- Tab: FX Engine -->
+        <div id="tab-engine" class="tab-content">
+            <div class="param-grid">
+                <div class="p-row">BPM/Speed: <input type="number" id="fx-bpm" value="120" onchange="fx.bpm=this.value"></div>
+                <div class="p-row">Amplitude %: <input type="number" id="fx-amp" value="100" max="100" onchange="fx.amp=this.value/100"></div>
+                <div class="p-row">Phase Spread °: <input type="number" id="fx-spread" value="0" onchange="fx.spread=this.value"></div>
+                <div class="p-row">Phase Offset °: <input type="number" id="fx-offset" value="0" onchange="fx.offset=this.value"></div>
+                <div class="p-row">Wing Mode:
+                    <select id="fx-wing" onchange="fx.wingMode=this.value">
+                        <option value="none">None</option>
+                        <option value="mirror" selected>Mirror Wing</option>
+                        <option value="alternate">Alternating Wing</option>
+                        <option value="sym">Symmetrical</option>
                     </select>
                 </div>
-                <div class="param-row">
-                    <span>Wing Speed (BPM): <strong id="lbl-bpm">120</strong></span>
-                    <input type="range" id="param-speed" min="10" max="300" step="5" value="120" oninput="document.getElementById('lbl-bpm').innerText=this.value; wingConfig.bpm=parseInt(this.value)">
-                </div>
-                <div class="param-row">
-                    <span>Amplitude/Size (%): <strong id="lbl-amp">100</strong></span>
-                    <input type="range" id="param-amp" min="10" max="100" step="5" value="100" oninput="document.getElementById('lbl-amp').innerText=this.value; wingConfig.amplitude=parseInt(this.value)">
-                </div>
-                <div class="param-row">
-                    <span>Phase Spread (°): <strong id="lbl-spread">0</strong></span>
-                    <input type="range" id="param-spread" min="0" max="360" step="15" value="0" oninput="document.getElementById('lbl-spread').innerText=this.value; wingConfig.spread=parseInt(this.value)">
-                </div>
+                <div class="p-row"><button class="btn" style="width:100%; background:#411; border-color:#f00;" onclick="stopFX()">STOP ALL FX</button></div>
             </div>
-
-            <input type="text" id="effect-search" class="search-box" placeholder="Search Wing Effects (e.g. Up, Circle, Circle)..." oninput="filterEffects(this.value)">
-            <div class="phaser-pool-grid" id="phaser-pool-container"></div>
+            <input type="text" placeholder="Search Effects..." class="btn" style="width:100%; background:#000; text-align:left; text-transform:none;" oninput="renderFXList(this.value)">
+            <div class="fx-list" id="fx-library"></div>
+        </div>
+        
+        <!-- Tab: Forms -->
+        <div id="tab-forms" class="tab-content">
+            <div style="font-size:9px; color:var(--dim); margin-bottom:5px;">Form Engine Reference (Applied via Effects)</div>
+            <div class="fx-list" id="form-library"></div>
         </div>
     </div>
     
-    <!-- Executors -->
-    <div class="panel" id="executor-panel"></div>
-    
-    <!-- Command Line -->
-    <div id="cmd-panel">
-        <div class="cmd-badge" onclick="alert('Try: Fix 1 thru 8 | At 100 | Clear')" title="Command Help">CMD &gt;</div>
-        <input type="text" id="cmd-input" placeholder="Type command (e.g. Fix 1 thru 8 At 100, Clear)..." autocomplete="off">
-        <div class="cmd-help">Press ENTER</div>
-    </div>
+    <!-- Bottom: Executors -->
+    <div id="bottom-panel"></div>
 </div>
 
 <script>
-    // --- SHOW DATA & 8 FIXTURE SETUP ---
-    const showData = {
-        name: "Symmetric Wing Show 2026",
-        patch: [
-            // 8 Fixtures arranged symmetrically on a truss
-            { id: 1, name: "Spot 1", type: "Spot", universe: 1, address: 1, x: -7, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 5, colorR: 255, colorG: 255, colorB: 255 },
-            { id: 2, name: "Spot 2", type: "Spot", universe: 1, address: 17, x: -5, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 5, colorR: 255, colorG: 255, colorB: 255 },
-            { id: 3, name: "Spot 3", type: "Spot", universe: 1, address: 33, x: -3, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 5, colorR: 255, colorG: 255, colorB: 255 },
-            { id: 4, name: "Spot 4", type: "Spot", universe: 1, address: 49, x: -1, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 5, colorR: 255, colorG: 255, colorB: 255 },
-            { id: 5, name: "Spot 5", type: "Spot", universe: 1, address: 65, x: 1, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 5, colorR: 255, colorG: 255, colorB: 255 },
-            { id: 6, name: "Spot 6", type: "Spot", universe: 1, address: 81, x: 3, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 5, colorR: 255, colorG: 255, colorB: 255 },
-            { id: 7, name: "Spot 7", type: "Spot", universe: 1, address: 97, x: 5, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 5, colorR: 255, colorG: 255, colorB: 255 },
-            { id: 8, name: "Spot 8", type: "Spot", universe: 1, address: 113, x: 7, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 5, colorR: 255, colorG: 255, colorB: 255 }
-        ]
+    /* =========================================
+       CORE DATA & INITIALIZATION
+    ========================================= */
+    const patch = [];
+    let selected = [];
+    let aimMode = false;
+    let targetPos = new THREE.Vector3(0, 0, 5);
+
+    // FX Engine State
+    const fx = { active: null, bpm: 120, amp: 1.0, spread: 0, offset: 0, wingMode: 'mirror', time: 0 };
+    
+    // Forms Math Library
+    const forms = {
+        'stomp': () => 0, 'release': () => 0,
+        'sin': (t) => Math.sin(t),
+        'cos': (t) => Math.cos(t),
+        'pwm': (t) => (t % (Math.PI*2) < Math.PI) ? 1 : -1,
+        'chase': (t, steps=4) => Math.floor((t % (Math.PI*2))/(Math.PI*2)*steps)/steps * 2 - 1,
+        'ramp': (t) => ((t % (Math.PI*2)) / Math.PI) - 1,
+        'ramp_plus': (t) => ((t % (Math.PI*2)) / (Math.PI*2)),
+        'ramp_minus': (t) => 1 - ((t % (Math.PI*2)) / (Math.PI*2)),
+        'random': (t) => Math.random() * 2 - 1,
+        'flat_high': () => 1, 'flat_low': () => -1,
+        'bump': (t) => (t % (Math.PI*2) < 0.2) ? 1 : -1,
+        'swing': (t) => Math.sin(t) * 0.5 + Math.sin(t*2)*0.25
     };
 
-    let selectedFixtures = [];
-    // Wing Engine Global State
-    let wingConfig = { mode: 'mirror', bpm: 120, amplitude: 100, spread: 0 };
-    let activeWingFX = null;
-    let engineTime = 0;
-
-    // --- REFINED WING EFFECT LIBRARY ---
-    const wingLibrary = [
-        { id: 'wing_open', name: 'Wing Open', attr: 'pan', type: 'open_close', direction: 1, desc: 'Beams open from center to outside.' },
-        { id: 'wing_close', name: 'Wing Close', attr: 'pan', type: 'open_close', direction: -1, desc: 'Beams close from outside to center.' },
-        { id: 'wing_up', name: 'Wing Up', attr: 'tilt', type: 'ramp_down', direction: 1, desc: 'Linear Tilt sweep: 90° to -90°.' },
-        { id: 'wing_down', name: 'Wing Down', attr: 'tilt', type: 'ramp_up', direction: 1, desc: 'Linear Tilt sweep: -90° to 90°.' },
-        { id: 'wing_sweep', name: 'Wing Sweep', attr: 'pan', type: 'sine', direction: 1, desc: 'Continuous horizontal sine sweeping.' },
-        { id: 'wing_circle', name: 'Wing Circle', attr: 'position', type: 'circle', direction: 1, desc: 'Smooth Pan & Tilt circular laser movement.' },
-        { id: 'wing_fig8', name: 'Wing Figure 8', attr: 'position', type: 'figure8', direction: 1, desc: 'Infinity / Figure 8 beam movement.' },
-        { id: 'wing_fan', name: 'Wing Fan Out', attr: 'pan', type: 'fan', direction: 1, desc: 'Static outward fan distribution.' },
-        { id: 'wing_pulse', name: 'Wing Pulse', attr: 'dimmer', type: 'pulse', direction: 1, desc: 'Sync dimmer pulsing to BPM.' },
-        { id: 'wing_zoom', name: 'Wing Zoom Pulse', attr: 'zoom', type: 'sine', direction: 1, desc: 'Laser beam angle pulses (5° - 10°).' },
-        { id: 'strobe_wing', name: 'Strobe Wing', attr: 'strobe', type: 'random', direction: 1, desc: 'Flashing strobe over the wing.' }
+    // Massive FX Library
+    const fxLibrary = [
+        { c: 'DIMMER', n: 'Dimmer Sin', a: 'dim', f: 'sin' },
+        { c: 'DIMMER', n: 'Dimmer Chase', a: 'dim', f: 'chase' },
+        { c: 'DIMMER', n: 'Dimmer PWM', a: 'dim', f: 'pwm' },
+        { c: 'DIMMER', n: 'Dimmer Random', a: 'dim', f: 'random' },
+        
+        { c: 'SHUTTER', n: 'Shutter PWM', a: 'strobe', f: 'pwm' },
+        
+        { c: 'COLOR', n: 'RGB Rainbow', a: 'color', f: 'rainbow' },
+        { c: 'COLOR', n: '=RGB Rainbow', a: 'color', f: 'rainbow_sync' },
+        { c: 'COLOR', n: 'RGB Chase', a: 'color', f: 'chase_col' },
+        { c: 'COLOR', n: 'RGB Random', a: 'color', f: 'rand_col' },
+        
+        { c: 'MOVEMENT', n: 'Tilt Sin', a: 'tilt', f: 'sin', base: 30, scale: 45 },
+        { c: 'MOVEMENT', n: 'Pan Sin', a: 'pan', f: 'sin', base: 0, scale: 90 },
+        { c: 'MOVEMENT', n: 'P/T Circle', a: 'pos', f: 'circle', base: 30, scale: 45 },
+        { c: 'MOVEMENT', n: 'P/T Wave', a: 'pos', f: 'wave', base: 30, scale: 45 },
+        { c: 'MOVEMENT', n: 'Dim/Tilt Flyout', a: 'flyout', f: 'flyout' },
+        
+        { c: 'WING SHOW (FRONT)', n: 'Wing Open', a: 'pan', f: 'wing_open' },
+        { c: 'WING SHOW (FRONT)', n: 'Wing Close', a: 'pan', f: 'wing_close' },
+        { c: 'WING SHOW (FRONT)', n: 'Wing Up', a: 'tilt', f: 'ramp_minus', base: 0, scale: 90 },
+        { c: 'WING SHOW (FRONT)', n: 'Wing Down', a: 'tilt', f: 'ramp_plus', base: 0, scale: 90 },
+        { c: 'WING SHOW (FRONT)', n: 'Wing Fan Out', a: 'pan', f: 'fan_out' },
+        { c: 'WING SHOW (FRONT)', n: 'Wing Sweep', a: 'pan', f: 'sin', base: 0, scale: 90 },
+        { c: 'WING SHOW (FRONT)', n: 'Wing Bounce', a: 'pan', f: 'swing', base: 0, scale: 90 }
     ];
 
-    function toggleFullScreen() {
-        if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e => console.error(e));
-        else if (document.exitFullscreen) document.exitFullscreen();
-    }
-
-    function switchTab(tabName) {
-        document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        event.currentTarget.classList.add('active');
-        document.getElementById('tab-' + tabName).classList.add('active');
-    }
-
-    // --- FIXTURE PATCH MANAGER ---
-    function addNewFixture() {
-        const newId = showData.patch.length > 0 ? Math.max(...showData.patch.map(f => f.id)) + 1 : 1;
-        const newX = (newId - 4.5) * 2;
-        showData.patch.push({
-            id: newId, name: "Spot " + newId, type: "Spot", universe: 1, address: (newId - 1) * 16 + 1,
-            x: newX, y: 6, z: 0, dimmer: 0, pan: 0, tilt: 30, zoom: 5, colorR: 255, colorG: 255, colorB: 255
-        });
-        renderFixtureSheet();
-        init3DVisualizer();
-    }
-
-    function deleteSelectedFixture() {
-        if (selectedFixtures.length === 0) return;
-        showData.patch = showData.patch.filter(f => !selectedFixtures.includes(f.id));
-        selectedFixtures = [];
-        renderFixtureSheet();
-        updateProgrammerUI();
-        init3DVisualizer();
-    }
-
-    // --- VOLUMETRIC THREE.JS STAGE VISUALIZER ---
-    let scene, camera, renderer, fixtureMeshes = [];
-    let currentCameraView = 'front';
-
-    function setCameraView(view) {
-        currentCameraView = view;
-        document.querySelectorAll('.cam-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('btn-cam-' + (view === 'perspective' ? 'persp' : view)).classList.add('active');
-        updateCameraPosition();
-    }
-
-    function updateCameraPosition() {
-        if(!camera) return;
-        if (currentCameraView === 'front') {
-            camera.position.set(0, 2, 28); 
-            camera.lookAt(0, 2, 0);
-        } else if (currentCameraView === 'top') {
-            camera.position.set(0, 25, 5);
-            camera.lookAt(0, 0, 0);
-        } else if (currentCameraView === 'perspective') {
-            camera.position.set(-15, 10, 20);
-            camera.lookAt(0, 2, 0);
+    function initShow() {
+        patch.length = 0;
+        // Symmetric Rig: 8 Fixtures
+        for(let i=1; i<=8; i++) {
+            patch.push({
+                id: i, n: "Spot "+i, x: (i-4.5)*2, y: 6, z: 0,
+                dim: 0, pan: 0, tilt: 30, zoom: 5, r: 255, g: 255, b: 255,
+                tgtX: 0, tgtY: 0, tgtZ: 5
+            });
         }
+        selected = [];
+        stopFX();
+        buildUI();
+        init3D();
     }
 
-    function init3DVisualizer() {
-        const container = document.getElementById('three-canvas-container');
-        container.innerHTML = ''; 
+    /* =========================================
+       THREE.JS ENGINE & VOLUMETRIC VISUALIZER
+    ========================================= */
+    let scene, camera, renderer, meshes = [];
+    let floor, targetMarker;
+    
+    // Camera state
+    const camCtrl = { w:0, a:0, s:0, d:0, q:0, e:0, up:0, down:0, left:0, right:0, speed: 0.2 };
+    let isCamDrag = false, prevMx = 0, prevMy = 0;
+    
+    // Fixture Drag state
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    let dragMesh = null;
 
+    function init3D() {
+        const cont = document.getElementById('three-canvas');
+        cont.innerHTML = '';
+        
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0x050505);
-
-        camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
-        updateCameraPosition();
-
+        scene.fog = new THREE.FogExp2(0x050505, 0.015);
+        
+        camera = new THREE.PerspectiveCamera(50, cont.clientWidth/cont.clientHeight, 0.1, 1000);
+        setCam('FRONT');
+        
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setSize(cont.clientWidth, cont.clientHeight);
         renderer.setClearColor(0x050505, 1);
-        container.appendChild(renderer.domElement);
-
-        const grid = new THREE.GridHelper(30, 30, 0x333333, 0x111111);
-        grid.position.y = 0;
+        cont.appendChild(renderer.domElement);
+        
+        // Environment
+        const grid = new THREE.GridHelper(40, 40, 0x333333, 0x111111);
         scene.add(grid);
-
-        const trussGeo = new THREE.CylinderGeometry(0.1, 0.1, 20, 8);
-        const trussMat = new THREE.MeshBasicMaterial({ color: 0x333333 });
-        const truss = new THREE.Mesh(trussGeo, trussMat);
-        truss.rotation.z = Math.PI / 2;
-        truss.position.y = 6;
+        
+        floor = new THREE.Mesh(new THREE.PlaneGeometry(40,40), new THREE.MeshBasicMaterial({visible:false}));
+        floor.rotation.x = -Math.PI/2;
+        scene.add(floor);
+        
+        const truss = new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,20,8), new THREE.MeshBasicMaterial({color:0x333}));
+        truss.rotation.z = Math.PI/2; truss.position.y = 6;
         scene.add(truss);
+        
+        // LED Screen Back
+        const led = new THREE.Mesh(new THREE.PlaneGeometry(20, 8), new THREE.MeshBasicMaterial({color:0x111, transparent:true, opacity:0.5}));
+        led.position.set(0, 4, -4);
+        scene.add(led);
 
-        fixtureMeshes = [];
+        // Target Marker
+        targetMarker = new THREE.Mesh(new THREE.SphereGeometry(0.2), new THREE.MeshBasicMaterial({color:0xff0000, wireframe:true}));
+        scene.add(targetMarker);
+        targetMarker.visible = aimMode;
 
-        showData.patch.forEach(fix => {
-            const baseGroup = new THREE.Group();
-            baseGroup.position.set(fix.x, fix.y, fix.z);
-
-            const bodyGeo = new THREE.BoxGeometry(0.6, 0.4, 0.6);
-            const bodyMat = new THREE.MeshBasicMaterial({ color: 0x222222 });
-            const body = new THREE.Mesh(bodyGeo, bodyMat);
-            baseGroup.add(body);
-
-            const yokeGroup = new THREE.Group();
-            yokeGroup.position.y = -0.3;
-            baseGroup.add(yokeGroup);
-
-            const headGroup = new THREE.Group();
-            headGroup.position.y = -0.3;
-            yokeGroup.add(headGroup);
-
-            const lensGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.4, 16);
-            const lensMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-            const lens = new THREE.Mesh(lensGeo, lensMat);
-            lens.rotation.x = Math.PI / 2;
-            headGroup.add(lens);
-
-            // VOLUMETRIC BEAM 
-            const beamLength = 18;
-            const beamGeo = new THREE.ConeGeometry(1, beamLength, 32, 1, true);
-            beamGeo.translate(0, -beamLength/2, 0); 
-            beamGeo.rotateX(-Math.PI / 2); 
+        // Build Fixtures
+        meshes = [];
+        patch.forEach(f => {
+            const base = new THREE.Group();
+            base.position.set(f.x, f.y, f.z);
             
-            const beamMat = new THREE.MeshBasicMaterial({ 
-                color: 0xffffff, 
-                transparent: true, 
-                opacity: 0.0, 
-                blending: THREE.AdditiveBlending,
-                depthWrite: false,
-                side: THREE.DoubleSide
-            });
-            const beam = new THREE.Mesh(beamGeo, beamMat);
-            headGroup.add(beam);
-
-            scene.add(baseGroup);
-
-            fixtureMeshes.push({
-                id: fix.id,
-                base: baseGroup,
-                yoke: yokeGroup,
-                head: headGroup,
-                lens: lens,
-                beam: beam,
-                mat: beamMat
-            });
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.4,0.5), new THREE.MeshBasicMaterial({color:0x222}));
+            base.add(body);
+            
+            const yoke = new THREE.Group(); yoke.position.y = -0.3; base.add(yoke);
+            const head = new THREE.Group(); head.position.y = -0.3; yoke.add(head);
+            
+            const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,0.4,16), new THREE.MeshBasicMaterial({color:0xffffff}));
+            lens.rotation.x = Math.PI/2; head.add(lens);
+            
+            // Volumetric Beam
+            const bGeo = new THREE.ConeGeometry(1, 20, 32, 1, true);
+            bGeo.translate(0, -10, 0); bGeo.rotateX(-Math.PI/2);
+            const bMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide });
+            const beam = new THREE.Mesh(bGeo, bMat);
+            head.add(beam);
+            
+            scene.add(base);
+            meshes.push({ id: f.id, base, yoke, head, lens, beam, mat: bMat, body });
         });
-
-        window.addEventListener('resize', () => {
-            if(!container) return;
-            camera.aspect = container.clientWidth / container.clientHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(container.clientWidth, container.clientHeight);
-        });
-
-        animate3D();
+        
+        setupInput(cont);
+        animate();
     }
 
-    // --- WING MATHEMATICAL ENGINE (UPDATED TILT & ZOOM) ---
-    function animate3D() {
-        requestAnimationFrame(animate3D);
+    /* =========================================
+       ENGINE LOOP (PHYSICS, FX, WING, CAMERA)
+    ========================================= */
+    function animate() {
+        requestAnimationFrame(animate);
         
-        const bps = wingConfig.bpm / 60;
-        engineTime += 0.016 * bps * Math.PI; 
+        // 1. Camera Update (WASD Smooth)
+        const dir = new THREE.Vector3();
+        camera.getWorldDirection(dir);
+        const right = new THREE.Vector3().crossVectors(dir, camera.up).normalize();
+        
+        if(camCtrl.w || camCtrl.up) camera.position.addScaledVector(dir, camCtrl.speed);
+        if(camCtrl.s || camCtrl.down) camera.position.addScaledVector(dir, -camCtrl.speed);
+        if(camCtrl.a || camCtrl.left) camera.position.addScaledVector(right, -camCtrl.speed);
+        if(camCtrl.d || camCtrl.right) camera.position.addScaledVector(right, camCtrl.speed);
+        if(camCtrl.e) camera.position.y += camCtrl.speed;
+        if(camCtrl.q) camera.position.y -= camCtrl.speed;
 
-        const totalFix = showData.patch.length;
-        const centerIdx = (totalFix - 1) / 2;
+        // 2. Phaser & Wing Engine
+        fx.time += 0.016 * (fx.bpm/60) * Math.PI;
+        const cIdx = (patch.length - 1) / 2;
 
-        showData.patch.forEach((fix, idx) => {
-            let distance = idx - centerIdx;
-            let sideSign = Math.sign(distance) || 1; 
+        patch.forEach((f, i) => {
+            let dist = i - cIdx;
+            let phase = fx.offset * (Math.PI/180);
             
-            let phaseOffset = 0;
-            if (wingConfig.spread > 0) {
-                if (wingConfig.mode === 'mirror') phaseOffset = Math.abs(distance) * THREE.MathUtils.degToRad(wingConfig.spread);
-                else phaseOffset = idx * THREE.MathUtils.degToRad(wingConfig.spread);
+            if(fx.spread > 0) {
+                if(fx.wingMode === 'mirror' || fx.wingMode === 'sym') phase += Math.abs(dist) * (fx.spread*Math.PI/180);
+                else phase += i * (fx.spread*Math.PI/180);
+            }
+            if(fx.wingMode === 'alternate' && i%2!==0) phase += Math.PI;
+            
+            let t = fx.time + phase;
+            let eff = fx.active;
+
+            if(eff) {
+                let val = 0;
+                // Complex effects mapping
+                if(eff.a === 'dim') {
+                    val = forms[eff.f](t) * fx.amp;
+                    f.dim = Math.max(0, Math.min(255, 127.5 + val * 127.5));
+                }
+                else if(eff.a === 'pan' || eff.a === 'tilt') {
+                    if(eff.f === 'wing_open') val = Math.abs(Math.sin(t));
+                    else if(eff.f === 'wing_close') val = 1 - Math.abs(Math.sin(t));
+                    else if(eff.f === 'fan_out') val = Math.abs(dist) * 0.2;
+                    else val = forms[eff.f] ? forms[eff.f](t) : 0;
+                    
+                    val *= fx.amp * (eff.scale || 90);
+                    if(fx.wingMode === 'mirror' && eff.a === 'pan') val *= Math.sign(dist)||1;
+                    
+                    if(eff.a === 'pan') f.pan = (eff.base||0) + val;
+                    if(eff.a === 'tilt') f.tilt = (eff.base||30) + val;
+                }
+                else if(eff.a === 'pos') {
+                    if(eff.f === 'circle') {
+                        let px = Math.cos(t) * (eff.scale||45) * fx.amp;
+                        let py = Math.sin(t) * (eff.scale||45) * fx.amp;
+                        if(fx.wingMode === 'mirror') px *= Math.sign(dist)||1;
+                        f.pan = px; f.tilt = (eff.base||30) + py;
+                    }
+                }
+                else if(eff.a === 'color') {
+                    if(eff.f.includes('rainbow')) {
+                        let h = (t * 50) % 360;
+                        if(eff.f === 'rainbow_sync') h = (fx.time * 50) % 360;
+                        let rgb = hsl2rgb(h/360, 1, 0.5);
+                        f.r = rgb[0]*255; f.g = rgb[1]*255; f.b = rgb[2]*255;
+                    }
+                }
+                else if(eff.a === 'flyout') {
+                    f.dim = (forms.ramp_plus(t) > 0.1) ? 255 : 0;
+                    f.tilt = -90 + forms.ramp_plus(t) * 180;
+                }
             }
 
-            if (wingConfig.mode === 'alternate' && idx % 2 !== 0) phaseOffset += Math.PI; 
+            // 3. Target Aiming Math (Overrides P/T if Aim Mode active for selected)
+            if(aimMode && selected.includes(f.id)) {
+                let dx = f.tgtX - f.x;
+                let dy = f.tgtY - f.y;
+                let dz = f.tgtZ - f.z;
+                f.pan = -Math.atan2(dx, dz) * (180/Math.PI);
+                let distXZ = Math.sqrt(dx*dx + dz*dz);
+                f.tilt = -Math.atan2(dy, distXZ) * (180/Math.PI) - 90; // -90 offset for fixture default down
+            }
 
-            let t = engineTime + phaseOffset;
-            let fraction = (t % (Math.PI * 2)) / (Math.PI * 2);
-            if (fraction < 0) fraction += 1;
-
-            if (activeWingFX) {
-                let amp = wingConfig.amplitude / 100;
+            // 4. Update 3D Meshes
+            const m = meshes.find(x => x.id === f.id);
+            if(m) {
+                m.base.position.set(f.x, f.y, f.z);
+                m.yoke.rotation.y = f.pan * (Math.PI/180);
+                m.head.rotation.x = f.tilt * (Math.PI/180);
                 
-                // Tilt Engine Update (90 to -90 and vice versa)
-                if (activeWingFX.attr === 'tilt' || activeWingFX.attr === 'position') {
-                    if (activeWingFX.type === 'ramp_down') {
-                        // 90 to -90
-                        fix.tilt = (90 - (180 * fraction)) * amp;
-                    } else if (activeWingFX.type === 'ramp_up') {
-                        // -90 to 90
-                        fix.tilt = (-90 + (180 * fraction)) * amp;
-                    } else if (activeWingFX.type === 'circle') {
-                        fix.tilt = Math.cos(t) * 45 * amp;
-                    } else if (activeWingFX.type === 'figure8') {
-                        fix.tilt = Math.sin(t * 2) * 45 * amp;
-                    } else if (activeWingFX.type === 'sine') {
-                        fix.tilt = 30 + (Math.sin(t) * 45 * amp * activeWingFX.direction);
-                    }
-                }
-
-                // Pan Engine
-                if (activeWingFX.attr === 'pan' || activeWingFX.attr === 'position') {
-                    let panEffect = 0;
-                    if (activeWingFX.type === 'open_close') {
-                        let wave = Math.abs(Math.sin(t)) * 90 * amp;
-                        if (activeWingFX.direction < 0) wave = 90 - wave; 
-                        panEffect = wave;
-                    } else if (activeWingFX.type === 'sine' || activeWingFX.type === 'figure8') {
-                        panEffect = Math.sin(t) * 90 * amp;
-                    } else if (activeWingFX.type === 'circle') {
-                        panEffect = Math.sin(t) * 90 * amp;
-                    } else if (activeWingFX.type === 'fan') {
-                        panEffect = Math.abs(distance) * 15 * amp; 
-                    }
-
-                    if (wingConfig.mode === 'mirror') fix.pan = panEffect * sideSign; 
-                    else fix.pan = panEffect; 
-                }
-
-                if (activeWingFX.attr === 'dimmer' || activeWingFX.attr === 'strobe') {
-                    let dimVal = (Math.sin(t) + 1) * 127.5;
-                    if(activeWingFX.type === 'random') dimVal = Math.random() > 0.8 ? 255 : 0;
-                    fix.dimmer = Math.floor(dimVal * amp);
-                }
-
-                // Zoom Effect Engine (5 to 10 degrees)
-                if (activeWingFX.attr === 'zoom') {
-                    fix.zoom = 5 + (((Math.sin(t) + 1) / 2) * 5 * amp); 
-                }
+                let int = f.dim / 255;
+                let col = new THREE.Color(f.r/255, f.g/255, f.b/255);
+                m.lens.material.color = int > 0 ? col : new THREE.Color(0x222);
+                m.mat.color = col;
+                m.mat.opacity = int * 0.8;
+                
+                let zs = Math.tan((f.zoom/2)*(Math.PI/180)) * 20;
+                m.beam.scale.set(zs, 1, zs);
+                
+                m.body.material.color.setHex(selected.includes(f.id) ? 0xffb700 : 0x222);
             }
-
-            // Sync Data to 3D Meshes
-            const meshObj = fixtureMeshes.find(m => m.id === fix.id);
-            if (!meshObj) return;
-
-            meshObj.yoke.rotation.y = THREE.MathUtils.degToRad(-fix.pan);
-            meshObj.head.rotation.x = THREE.MathUtils.degToRad(fix.tilt);
-
-            const intensity = fix.dimmer / 255;
-            const col = new THREE.Color(fix.colorR / 255, fix.colorG / 255, fix.colorB / 255);
-            
-            meshObj.lens.material.color = intensity > 0 ? col : new THREE.Color(0x222222);
-            meshObj.mat.color = col;
-            meshObj.mat.opacity = intensity * 0.7; 
-
-            // Laser Zoom Rendering logic based on 5-10 range
-            const zoomScale = Math.tan(THREE.MathUtils.degToRad(fix.zoom / 2)) * 18; 
-            meshObj.beam.scale.set(Math.max(0.5, zoomScale), 1, Math.max(0.5, zoomScale));
-            
-            const isSelected = selectedFixtures.includes(fix.id);
-            meshObj.base.children[0].material.color.setHex(isSelected ? 0xffb700 : 0x222222);
         });
-
+        
+        targetMarker.position.copy(targetPos);
+        targetMarker.visible = aimMode;
+        
         renderer.render(scene, camera);
     }
 
-    // --- UI & LIBRARY LOGIC ---
-    function startShow() {
-        const customName = document.getElementById('show-name-input').value;
-        if(customName) showData.name = customName;
-        document.getElementById('lbl-showname').innerText = showData.name;
-        
-        document.getElementById('startup-screen').style.display = 'none';
-        document.getElementById('workspace').style.display = 'grid';
-
-        renderFixtureSheet();
-        renderEffectLibrary(wingLibrary);
-        buildExecutors();
-        init3DVisualizer();
-        document.getElementById('cmd-input').focus();
-    }
-
-    function loadDemoShow() { startShow(); }
-
-    function renderFixtureSheet() {
-        const sheet = document.getElementById('fixture-sheet');
-        sheet.innerHTML = showData.patch.map(f => `
-            <div class="fix-row ${selectedFixtures.includes(f.id) ? 'selected' : ''}" onclick="toggleSelectFixture(${f.id})">
-                <span><strong>F${f.id}</strong> - ${f.name}</span>
-                <span style="color:var(--text-dim);">DMX ${f.address}</span>
-            </div>
-        `).join('');
-    }
-
-    function renderEffectLibrary(list) {
-        const container = document.getElementById('phaser-pool-container');
-        container.innerHTML = list.map(p => `
-            <div class="phaser-card ${activeWingFX && activeWingFX.id === p.id ? 'active' : ''}" onclick="applyEffect('${p.id}')">
-                <div class="phaser-name">${p.name}</div>
-                <div class="phaser-desc">${p.desc}</div>
-            </div>
-        `).join('');
-    }
-
-    function filterEffects(query) {
-        const q = query.toLowerCase();
-        const filtered = wingLibrary.filter(p => p.name.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q));
-        renderEffectLibrary(filtered);
-    }
-
-    function applyEffect(id) {
-        const p = wingLibrary.find(item => item.id === id);
-        if(!p) return;
-        activeWingFX = { ...p };
-        document.getElementById('lbl-active-phaser').innerText = p.name;
-        renderEffectLibrary(wingLibrary);
-    }
-
-    function stopWingEngine() {
-        activeWingFX = null;
-        document.getElementById('lbl-active-phaser').innerText = "OFF";
-        renderEffectLibrary(wingLibrary);
-    }
-
-    function applyColorSwatch(r, g, b) {
-        if(selectedFixtures.length === 0) return;
-        selectedFixtures.forEach(id => {
-            const fix = showData.patch.find(f => f.id === id);
-            if(fix) { fix.colorR = r; fix.colorG = g; fix.colorB = b; }
+    /* =========================================
+       INPUT & CONTROLS (CAM & DRAG)
+    ========================================= */
+    function setupInput(c) {
+        window.addEventListener('keydown', e => {
+            const k = e.key.toLowerCase();
+            if(camCtrl.hasOwnProperty(k)) camCtrl[k] = 1;
+            if(e.key.startsWith('Arrow')) camCtrl[e.key.replace('Arrow','').toLowerCase()] = 1;
         });
-    }
-
-    function applyBlackout() {
-        if(selectedFixtures.length === 0) return;
-        selectedFixtures.forEach(id => {
-            const fix = showData.patch.find(f => f.id === id);
-            if(fix) { fix.dimmer = 0; fix.colorR = 0; fix.colorG = 0; fix.colorB = 0; }
+        window.addEventListener('keyup', e => {
+            const k = e.key.toLowerCase();
+            if(camCtrl.hasOwnProperty(k)) camCtrl[k] = 0;
+            if(e.key.startsWith('Arrow')) camCtrl[e.key.replace('Arrow','').toLowerCase()] = 0;
         });
-        updateProgrammerUI();
-    }
-
-    // --- FULLY INTERACTIVE REALTIME FADER ENGINE ---
-    let activeFader = null;
-
-    function initFaderPointer(e, attr) {
-        if(selectedFixtures.length === 0 && attr !== 'dimmer') return; 
-        const track = document.getElementById('track-' + attr);
-        setupFaderInteraction(e, { type: 'programmer', attr: attr }, track);
-    }
-
-    function initExecutorPointer(e, execId) {
-        const track = document.getElementById('exec-track-' + execId);
-        setupFaderInteraction(e, { type: 'executor', id: execId }, track);
-    }
-
-    function setupFaderInteraction(e, faderMeta, trackElement) {
-        activeFader = faderMeta;
-        activeFader.track = trackElement;
-        activeFader.rect = trackElement.getBoundingClientRect();
         
-        trackElement.setPointerCapture(e.pointerId);
-        updateFaderFromEvent(e);
-
-        trackElement.addEventListener('pointermove', onFaderPointerMove);
-        trackElement.addEventListener('pointerup', onFaderPointerUp);
-        trackElement.addEventListener('wheel', onFaderWheel);
-        trackElement.addEventListener('dblclick', onFaderDoubleClick);
-    }
-
-    function onFaderPointerMove(e) { if(activeFader) updateFaderFromEvent(e); }
-
-    function onFaderPointerUp(e) {
-        if(!activeFader) return;
-        activeFader.track.releasePointerCapture(e.pointerId);
-        cleanupFaderListeners();
-    }
-
-    function onFaderWheel(e) {
-        e.preventDefault();
-        if(!activeFader) return;
-        let delta = e.deltaY < 0 ? 5 : -5;
-        applyFaderDelta(delta);
-    }
-
-    function onFaderDoubleClick(e) {
-        if(!activeFader) return;
-        if(activeFader.attr === 'tilt') setFaderValue(50); 
-        else if(activeFader.attr === 'zoom') setFaderValue(0); // Reset zoom to 5 (0%)
-        else setFaderValue(0);
-    }
-
-    function cleanupFaderListeners() {
-        if(!activeFader) return;
-        activeFader.track.removeEventListener('pointermove', onFaderPointerMove);
-        activeFader.track.removeEventListener('pointerup', onFaderPointerUp);
-        activeFader.track.removeEventListener('wheel', onFaderWheel);
-        activeFader.track.removeEventListener('dblclick', onFaderDoubleClick);
-        activeFader = null;
-    }
-
-    function updateFaderFromEvent(e) {
-        const rect = activeFader.rect;
-        let offsetY = rect.bottom - e.clientY;
-        let percentage = Math.max(0, Math.min(1, offsetY / rect.height));
-        let val = Math.round(percentage * 100);
-        setFaderValue(val);
-    }
-
-    function setFaderValue(val) {
-        if(!activeFader) return;
-        if(activeFader.type === 'programmer') {
-            const attr = activeFader.attr;
-            const targetFixtures = selectedFixtures.length > 0 ? selectedFixtures : showData.patch.map(f=>f.id); 
-            
-            targetFixtures.forEach(fixId => {
-                const fix = showData.patch.find(f => f.id === fixId);
-                if(!fix) return;
-                
-                if(attr === 'dimmer') fix.dimmer = Math.round((val / 100) * 255);
-                else if(attr === 'pan') fix.pan = Math.round(((val / 100) * 360) - 180);
-                else if(attr === 'tilt') fix.tilt = Math.round(((val / 100) * 180) - 90);
-                else if(attr === 'zoom') fix.zoom = Math.max(5, Math.min(10, Math.round(5 + (val / 100) * 5))); // Range 5-10
-            });
-            updateProgrammerUI();
-        } else if(activeFader.type === 'executor') {
-            const thumb = document.getElementById('exec-thumb-' + activeFader.id);
-            thumb.style.bottom = val + '%';
-            if(activeFader.id === 1) { 
-                showData.patch.forEach(f => f.dimmer = Math.round((val / 100) * 255));
-                updateProgrammerUI();
-            }
-        }
-    }
-
-    function applyFaderDelta(delta) {
-        if(activeFader.type === 'programmer' && selectedFixtures.length > 0) {
-            const fix = showData.patch.find(f => f.id === selectedFixtures[0]);
-            let currentPct = 0;
-            if(activeFader.attr === 'dimmer') currentPct = Math.round((fix.dimmer / 255) * 100);
-            else if(activeFader.attr === 'pan') currentPct = Math.round(((fix.pan + 180) / 360) * 100);
-            else if(activeFader.attr === 'tilt') currentPct = Math.round(((fix.tilt + 90) / 180) * 100);
-            else if(activeFader.attr === 'zoom') currentPct = Math.round(((fix.zoom - 5) / 5) * 100);
-            
-            let newPct = Math.max(0, Math.min(100, currentPct + delta));
-            setFaderValue(newPct);
-        }
-    }
-
-    function updateProgrammerUI() {
-        const lbl = document.getElementById('lbl-selection');
-        lbl.innerText = selectedFixtures.length === 0 ? "All/None" : "Fix " + selectedFixtures.join(',');
-        
-        const sourceFix = selectedFixtures.length > 0 ? showData.patch.find(f => f.id === selectedFixtures[0]) : showData.patch[0];
-        if(!sourceFix) return;
-
-        const dimPct = Math.round((sourceFix.dimmer / 255) * 100);
-        document.getElementById('val-dimmer').innerText = dimPct + '%';
-        document.getElementById('thumb-dimmer').style.bottom = dimPct + '%';
-
-        const panPct = Math.round(((sourceFix.pan + 180) / 360) * 100);
-        document.getElementById('val-pan').innerText = Math.round(sourceFix.pan) + '°';
-        document.getElementById('thumb-pan').style.bottom = panPct + '%';
-
-        const tiltPct = Math.round(((sourceFix.tilt + 90) / 180) * 100);
-        document.getElementById('val-tilt').innerText = Math.round(sourceFix.tilt) + '°';
-        document.getElementById('thumb-tilt').style.bottom = tiltPct + '%';
-        
-        // Zoom update range 5-10 maps to 0-100%
-        const zoomPct = Math.round(((sourceFix.zoom - 5) / 5) * 100);
-        document.getElementById('val-zoom').innerText = Math.round(sourceFix.zoom) + '°';
-        document.getElementById('thumb-zoom').style.bottom = zoomPct + '%';
-    }
-
-    function toggleSelectFixture(id) {
-        const idx = selectedFixtures.indexOf(id);
-        if(idx > -1) selectedFixtures.splice(idx, 1);
-        else selectedFixtures.push(id);
-        renderFixtureSheet();
-        updateProgrammerUI();
-    }
-
-    function clearProgrammer() {
-        selectedFixtures = [];
-        stopWingEngine();
-        renderFixtureSheet();
-        updateProgrammerUI();
-    }
-
-    function buildExecutors() {
-        const panel = document.getElementById('executor-panel');
-        panel.innerHTML = '';
-        for(let i=1; i<=6; i++) {
-            panel.innerHTML += `
-                <div class="executor">
-                    <div class="exec-header">EXEC ${i}</div>
-                    <div class="fader-area">
-                        <div class="exec-track" id="exec-track-${i}" onpointerdown="initExecutorPointer(event, ${i})">
-                            <div class="exec-cap" id="exec-thumb-${i}" style="bottom: ${i === 1 ? '70%' : '0%'};"></div>
-                        </div>
-                    </div>
-                    <div class="exec-btns">
-                        <div class="exec-btn" onclick="triggerExec(${i}, 'GO')">GO</div>
-                        <div class="exec-btn flash" onclick="triggerExec(${i}, 'FLASH')">FL</div>
-                    </div>
-                </div>
-            `;
-        }
-    }
-
-    function triggerExec(num, action) {
-        if(num === 1) { 
-            showData.patch.forEach(f => f.dimmer = action === 'GO' ? 255 : 0);
-            document.getElementById('exec-thumb-1').style.bottom = action === 'GO' ? '100%' : '0%';
-            updateProgrammerUI();
-        }
-    }
-
-    // --- COMMAND LINE ---
-    const cmdInput = document.getElementById('cmd-input');
-    cmdInput.addEventListener('keydown', function(e) {
-        if(e.key === 'Enter') {
-            const lower = this.value.trim().toLowerCase();
-            this.value = '';
-            if(lower === 'clear') { clearProgrammer(); return; }
-            const match = lower.match(/(?:fixture|fix)\s+(\d+)(?:\s+thru\s+(\d+))?(?:\s+at\s+(\d+))?/i);
-            if(match) {
-                const start = parseInt(match[1]);
-                const end = match[2] ? parseInt(match[2]) : start;
-                const valPercent = match[3] ? parseInt(match[3]) : null;
-                selectedFixtures = [];
-                for(let i=start; i<=end; i++) {
-                    if(showData.patch.find(f => f.id === i)) {
-                        selectedFixtures.push(i);
-                        if(valPercent !== null) showData.patch.find(f => f.id === i).dimmer = Math.round((valPercent/100)*255);
-                    }
+        c.addEventListener('contextmenu', e => e.preventDefault());
+        c.addEventListener('mousedown', e => {
+            if(e.button === 2) { isCamDrag = true; prevMx = e.clientX; prevMy = e.clientY; }
+            else if(e.button === 0) handle3DClick(e, c);
+        });
+        window.addEventListener('mouseup', () => { isCamDrag = false; dragMesh = null; });
+        window.addEventListener('mousemove', e => {
+            if(isCamDrag) {
+                let dx = e.clientX - prevMx; let dy = e.clientY - prevMy;
+                camera.rotation.y -= dx * 0.005; camera.rotation.x -= dy * 0.005;
+                prevMx = e.clientX; prevMy = e.clientY;
+            } else if(dragMesh && !aimMode) {
+                // Drag Fixture
+                mouse.x = (e.clientX / c.clientWidth)*2-1; mouse.y = -(e.clientY / c.clientHeight)*2+1;
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObject(floor);
+                if(intersects.length > 0) {
+                    let f = patch.find(x => x.id === dragMesh);
+                    if(f) { f.x = intersects[0].point.x; f.z = intersects[0].point.z; buildPatchUI(); }
                 }
-                renderFixtureSheet();
-                updateProgrammerUI();
+            } else if(dragMesh && aimMode) {
+                // Drag Target
+                mouse.x = (e.clientX / c.clientWidth)*2-1; mouse.y = -(e.clientY / c.clientHeight)*2+1;
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObject(floor);
+                if(intersects.length > 0) {
+                    targetPos.copy(intersects[0].point);
+                    selected.forEach(id => {
+                        let f = patch.find(x => x.id === id);
+                        if(f) { f.tgtX = targetPos.x; f.tgtY = targetPos.y; f.tgtZ = targetPos.z; }
+                    });
+                    document.getElementById('in-tgt-x').value = targetPos.x.toFixed(1);
+                    document.getElementById('in-tgt-z').value = targetPos.z.toFixed(1);
+                }
+            }
+        });
+        c.addEventListener('wheel', e => { camera.translateZ(e.deltaY > 0 ? 1 : -1); });
+    }
+
+    function handle3DClick(e, c) {
+        mouse.x = (e.clientX / c.clientWidth)*2-1;
+        mouse.y = -(e.clientY / c.clientHeight)*2+1;
+        raycaster.setFromCamera(mouse, camera);
+        
+        if(!aimMode) {
+            // Select/Drag Fixture Base
+            const bases = meshes.map(m => m.base.children[0]);
+            const hits = raycaster.intersectObjects(bases);
+            if(hits.length > 0) {
+                let m = meshes.find(x => x.base.children[0] === hits[0].object);
+                if(m) { 
+                    if(!e.shiftKey) selected = [m.id];
+                    else if(!selected.includes(m.id)) selected.push(m.id);
+                    dragMesh = m.id;
+                    buildPatchUI(); updFaders();
+                }
+            }
+        } else {
+            // Set Target
+            const hits = raycaster.intersectObject(floor);
+            if(hits.length > 0 && selected.length > 0) {
+                targetPos.copy(hits[0].point);
+                dragMesh = 'target'; // flag to drag target
+                selected.forEach(id => {
+                    let f = patch.find(x => x.id === id);
+                    if(f) { f.tgtX = targetPos.x; f.tgtY = targetPos.y; f.tgtZ = targetPos.z; }
+                });
+                document.getElementById('in-tgt-x').value = targetPos.x.toFixed(1);
+                document.getElementById('in-tgt-z').value = targetPos.z.toFixed(1);
             }
         }
-    });
+    }
 
+    function setCam(view) {
+        document.querySelectorAll('.cam-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+        if(view === 'FRONT' || view === 'AUDIENCE') { camera.position.set(0, 3, 25); camera.rotation.set(0,0,0); }
+        if(view === 'TOP') { camera.position.set(0, 30, 0); camera.rotation.set(-Math.PI/2,0,0); }
+        if(view === 'SIDE') { camera.position.set(25, 3, 0); camera.rotation.set(0, Math.PI/2,0); }
+        if(view === 'BACK') { camera.position.set(0, 3, -20); camera.rotation.set(0, Math.PI, 0); }
+        if(view === 'LEFT') { camera.position.set(-25, 3, 0); camera.rotation.set(0, -Math.PI/2, 0); }
+        if(view === 'RIGHT') { camera.position.set(25, 3, 0); camera.rotation.set(0, Math.PI/2, 0); }
+        if(view === 'STAGE') { camera.position.set(0, 1.5, 0); camera.rotation.set(0,0,0); }
+    }
+
+    /* =========================================
+       UI & LOGIC
+    ========================================= */
+    function buildUI() {
+        buildPatchUI();
+        buildExec();
+        renderFXList('');
+        
+        let fHTML = '';
+        Object.keys(forms).forEach(k => { fHTML += `<div class="fx-item">${k.toUpperCase()} - Form</div>`; });
+        document.getElementById('form-library').innerHTML = fHTML;
+    }
+
+    function buildPatchUI() {
+        const s = document.getElementById('fixture-sheet');
+        s.innerHTML = patch.map(f => `
+            <div class="fix-row ${selected.includes(f.id)?'selected':''}" onclick="selFix(${f.id}, event)">
+                <b>${f.id}</b> <span>${f.n}</span>
+                <input type="number" step="0.5" value="${f.x.toFixed(1)}" onchange="updateF(${f.id},'x',this.value)">
+                <input type="number" step="0.5" value="${f.y.toFixed(1)}" onchange="updateF(${f.id},'y',this.value)">
+                <input type="number" step="0.5" value="${f.z.toFixed(1)}" onchange="updateF(${f.id},'z',this.value)">
+            </div>
+        `).join('');
+    }
+
+    function selFix(id, e) {
+        if(e && e.shiftKey) { if(selected.includes(id)) selected = selected.filter(x=>x!==id); else selected.push(id); }
+        else selected = [id];
+        buildPatchUI(); updFaders();
+    }
+    
+    function updateF(id, p, v) { let f = patch.find(x=>x.id===id); if(f) f[p] = parseFloat(v); }
+    function addFixture() {
+        let id = patch.length > 0 ? Math.max(...patch.map(x=>x.id))+1 : 1;
+        patch.push({id, n:"Spot "+id, x:0, y:6, z:0, dim:0, pan:0, tilt:30, zoom:5, r:255, g:255, b:255, tgtX:0, tgtY:0, tgtZ:5});
+        buildPatchUI(); init3D();
+    }
+    
+    function setAimMode(v) { 
+        aimMode = v; 
+        document.getElementById('btn-mode-aim').classList.toggle('active', v);
+        document.getElementById('btn-mode-move').classList.toggle('active', !v);
+    }
+    function updateTargetUI() {
+        targetPos.x = parseFloat(document.getElementById('in-tgt-x').value);
+        targetPos.y = parseFloat(document.getElementById('in-tgt-y').value);
+        targetPos.z = parseFloat(document.getElementById('in-tgt-z').value);
+        selected.forEach(id => { let f = patch.find(x => x.id === id); if(f) { f.tgtX = targetPos.x; f.tgtY = targetPos.y; f.tgtZ = targetPos.z; } });
+    }
+
+    function switchTab(t) {
+        document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+        event.target.classList.add('active'); document.getElementById('tab-'+t).classList.add('active');
+    }
+    function toggleFS() { if(!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
+
+    /* =========================================
+       EFFECT LIBRARY LOGIC
+    ========================================= */
+    function renderFXList(q) {
+        const list = document.getElementById('fx-library');
+        let html = '';
+        let cats = [...new Set(fxLibrary.map(x=>x.c))];
+        cats.forEach(c => {
+            let items = fxLibrary.filter(x => x.c === c && x.n.toLowerCase().includes(q.toLowerCase()));
+            if(items.length > 0) {
+                html += `<div class="fx-head">${c}</div>`;
+                items.forEach(i => {
+                    let act = fx.active && fx.active.n === i.n ? 'active' : '';
+                    html += `<div class="fx-item ${act}" onclick="applyFX('${i.n}')">${i.n}</div>`;
+                });
+            }
+        });
+        list.innerHTML = html;
+    }
+    
+    function applyFX(n) { fx.active = fxLibrary.find(x=>x.n===n); renderFXList(''); }
+    function stopFX() { fx.active = null; renderFXList(''); }
+
+    /* =========================================
+       FADER / EXECUTOR ENGINE
+    ========================================= */
+    let actFader = null;
+
+    function initFader(e, type, id=null) {
+        let el = e.currentTarget;
+        actFader = { type, id, el, rect: el.getBoundingClientRect() };
+        el.setPointerCapture(e.pointerId);
+        
+        let move = ev => {
+            let pct = Math.max(0, Math.min(1, (actFader.rect.bottom - ev.clientY)/actFader.rect.height));
+            let val = Math.round(pct * 100);
+            
+            if(actFader.type === 'exec') {
+                el.children[0].style.bottom = val+'%';
+                if(actFader.id === 1) patch.forEach(f => f.dim = (val/100)*255);
+            } else {
+                el.children[0].style.bottom = val+'%';
+                let tgts = selected.length > 0 ? selected : patch.map(x=>x.id);
+                tgts.forEach(fid => {
+                    let f = patch.find(x=>x.id===fid);
+                    if(!f) return;
+                    if(actFader.type === 'dimmer') { f.dim = (val/100)*255; document.getElementById('val-dimmer').innerText = val+'%'; }
+                    if(actFader.type === 'pan') { f.pan = (val/100)*360-180; document.getElementById('val-pan').innerText = Math.round(f.pan)+'°'; }
+                    if(actFader.type === 'tilt') { f.tilt = (val/100)*180-90; document.getElementById('val-tilt').innerText = Math.round(f.tilt)+'°'; }
+                    if(actFader.type === 'zoom') { f.zoom = 5 + (val/100)*15; document.getElementById('val-zoom').innerText = Math.round(f.zoom)+'°'; }
+                });
+            }
+        };
+        
+        let up = ev => { el.releasePointerCapture(ev.pointerId); el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); actFader = null; };
+        el.addEventListener('pointermove', move); el.addEventListener('pointerup', up);
+        move(e);
+    }
+    
+    function updFaders() {
+        let f = selected.length > 0 ? patch.find(x=>x.id===selected[0]) : patch[0];
+        if(!f) return;
+        document.getElementById('th-dimmer').style.bottom = (f.dim/255*100)+'%'; document.getElementById('val-dimmer').innerText = Math.round(f.dim/255*100)+'%';
+        document.getElementById('th-pan').style.bottom = ((f.pan+180)/360*100)+'%'; document.getElementById('val-pan').innerText = Math.round(f.pan)+'°';
+        document.getElementById('th-tilt').style.bottom = ((f.tilt+90)/180*100)+'%'; document.getElementById('val-tilt').innerText = Math.round(f.tilt)+'°';
+        document.getElementById('th-zoom').style.bottom = ((f.zoom-5)/15*100)+'%'; document.getElementById('val-zoom').innerText = Math.round(f.zoom)+'°';
+    }
+
+    function col(r,g,b) {
+        let tgts = selected.length > 0 ? selected : patch.map(x=>x.id);
+        tgts.forEach(id => { let f = patch.find(x=>x.id===id); if(f) { f.r = r; f.g = g; f.b = b; }});
+    }
+    function setDim(v) { 
+        let tgts = selected.length > 0 ? selected : patch.map(x=>x.id);
+        tgts.forEach(id => { let f = patch.find(x=>x.id===id); if(f) f.dim = v; }); updFaders(); 
+    }
+    function clearProg() { selected = []; stopFX(); updFaders(); buildPatchUI(); }
+
+    function buildExec() {
+        let html = '';
+        for(let i=1; i<=8; i++) {
+            html += `<div class="exec"><div class="exec-h">EXEC ${i}</div>
+            <div class="exec-track" onpointerdown="initFader(event,'exec',${i})"><div class="f-thumb" style="bottom:${i===1?'100%':'0%'}"></div></div>
+            <div class="exec-btns"><button class="btn" onclick="runExec(${i},'go')">GO</button><button class="btn flash" onclick="runExec(${i},'fl')">FL</button></div></div>`;
+        }
+        document.getElementById('bottom-panel').innerHTML = html;
+    }
+    
+    function runExec(id, t) {
+        if(id===1) patch.forEach(f => f.dim = t==='go'?255:0);
+    }
+    
+    function hsl2rgb(h, s, l) {
+        let r, g, b; if (s === 0) r = g = b = l; else {
+            const h2r = (p, q, t) => { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1/6) return p + (q - p) * 6 * t; if (t < 1/2) return q; if (t < 2/3) return p + (q - p) * (2/3 - t) * 6; return p; };
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s; const p = 2 * l - q;
+            r = h2r(p, q, h + 1/3); g = h2r(p, q, h); b = h2r(p, q, h - 1/3);
+        } return [r, g, b];
+    }
+
+    // Start
+    window.onload = initShow;
 </script>
 </body>
 </html>
