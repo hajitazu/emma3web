@@ -1,645 +1,864 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Lighting Console - grandMA Workflow Edition</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <style>
-        :root {
-            --bg-base: #0a0b0d;
-            --bg-panel: #14171d;
-            --bg-header: #1e222b;
-            --border-color: #2a303c;
-            --accent-color: #00d2ff;
-            --accent-active: #ff9900;
-            --text-main: #d0d6e0;
-            --text-dim: #606b7d;
-            --fader-track: #090a0c;
-            --fader-knob: #3a4150;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AetherLX - Professional Lighting Console & 3D Visualizer</title>
+  <!-- Three.js & OrbitControls via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  
+  <style>
+    :root {
+      --bg-dark: #0f1115;
+      --panel-bg: #181c24;
+      --panel-border: #2a313d;
+      --accent: #00d2ff;
+      --accent-hover: #0099cc;
+      --text-main: #e1e6ed;
+      --text-muted: #788596;
+      --fader-bg: #10141b;
+      --fader-thumb: #3a4556;
+      --active: #ff9900;
+    }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; font-family: 'Consolas', 'Fira Code', 'Segoe UI', monospace; }
-        body, html { width: 100vw; height: 100vh; background-color: var(--bg-base); color: var(--text-main); overflow: hidden; display: flex; flex-direction: column; }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body, html { width: 100vw; height: 100vh; overflow: hidden; font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-dark); color: var(--text-main); font-size: 12px; }
 
-        /* Top Bar Navigation */
-        #top-bar { height: 32px; background: var(--bg-header); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 11px; }
-        .top-title { font-weight: bold; color: var(--accent-color); letter-spacing: 1px; }
-        .top-info span { margin-left: 12px; color: var(--text-dim); }
-        .top-info span b { color: var(--accent-active); }
+    /* LAYOUT STRUCTURE */
+    #app-container { display: flex; flex-direction: column; width: 100vw; height: 100vh; }
+    
+    /* TOP BAR */
+    #top-bar { height: 38px; background: #12151c; border-bottom: 1px solid var(--panel-border); display: flex; align-items: center; justify-content: space-between; padding: 0 12px; }
+    .brand { font-weight: bold; color: var(--accent); font-size: 14px; letter-spacing: 1px; }
+    .top-controls { display: flex; gap: 8px; align-items: center; }
+    .top-btn { background: #222936; border: 1px solid var(--panel-border); color: var(--text-main); padding: 4px 10px; border-radius: 3px; cursor: pointer; font-size: 11px; }
+    .top-btn:hover { background: var(--accent); color: #000; }
 
-        /* Main Workspace: Left 3D Visualizer, Right Console Panel */
-        #main-workspace { flex: 1; display: grid; grid-template-columns: 45vw 1fr; height: calc(100vh - 64px); gap: 2px; background: var(--border-color); }
-        .panel { background: var(--bg-panel); display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .panel-header { height: 24px; background: var(--bg-header); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 0 8px; font-size: 10px; font-weight: bold; text-transform: uppercase; color: var(--text-dim); }
+    /* MAIN WORKSPACE */
+    #main-workspace { flex: 1; display: grid; grid-template-columns: 280px 1fr 260px; grid-template-rows: 1fr 240px; gap: 4px; padding: 4px; background: #0a0c0e; height: calc(100vh - 76px); }
+    
+    .panel { background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 4px; display: flex; flex-direction: column; overflow: hidden; }
+    .panel-header { height: 26px; background: #202632; border-bottom: 1px solid var(--panel-border); display: flex; align-items: center; justify-content: space-between; padding: 0 8px; font-weight: 600; color: #a0acbd; font-size: 11px; }
 
-        /* 3D Visualizer Viewport */
-        #stage-panel { grid-column: 1; position: relative; }
-        #canvas-3d { width: 100%; height: 100%; display: block; }
-        .camera-overlay { position: absolute; top: 30px; left: 8px; display: flex; gap: 4px; z-index: 10; }
-        .cam-btn { background: rgba(0,0,0,0.7); border: 1px solid var(--border-color); color: #fff; padding: 3px 6px; font-size: 9px; border-radius: 2px; cursor: pointer; }
-        .cam-btn:hover { border-color: var(--accent-color); }
+    /* LEFT PANEL: FIXTURES & GROUPS */
+    #fixture-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 8px; overflow-y: auto; }
+    .fix-btn { background: #232a36; border: 1px solid #343f52; border-radius: 3px; height: 45px; color: var(--text-main); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: 0.1s; }
+    .fix-btn.selected { background: #005580; border-color: var(--accent); box-shadow: 0 0 8px rgba(0, 210, 255, 0.4); }
+    .fix-btn .id { font-weight: bold; font-size: 12px; }
+    .fix-btn .type { font-size: 9px; color: var(--text-muted); }
 
-        /* Right Side Console Workspace Grid */
-        #console-workspace { grid-column: 2; display: grid; grid-template-rows: 1fr 220px; grid-template-columns: 200px 1fr; gap: 2px; background: var(--border-color); }
+    /* CENTER PANEL: 3D STAGE */
+    #stage-container { position: relative; width: 100%; height: 100%; background: #000; }
+    #canvas3d { width: 100%; height: 100%; display: block; }
+    .cam-overlay { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; }
+    .cam-btn { background: rgba(0,0,0,0.6); border: 1px solid var(--panel-border); color: #fff; padding: 3px 6px; border-radius: 2px; font-size: 10px; cursor: pointer; }
+    .cam-btn:hover { background: var(--accent); color: #000; }
 
-        /* Fixture List Panel */
-        #fixture-panel { grid-column: 1; grid-row: 1; }
-        .fixture-list { flex: 1; overflow-y: auto; padding: 4px; }
-        .fixture-item { display: flex; justify-content: space-between; padding: 5px; border: 1px solid var(--border-color); margin-bottom: 3px; border-radius: 2px; font-size: 10px; cursor: pointer; background: #0f1115; }
-        .fixture-item.selected { border-color: var(--accent-color); background: rgba(0,210,255,0.15); }
+    /* RIGHT PANEL: EXECUTORS */
+    #executor-panel { display: flex; gap: 8px; padding: 8px; overflow-x: auto; height: 100%; }
+    .exec-strip { flex: 1; min-width: 65px; background: #12161f; border: 1px solid var(--panel-border); border-radius: 4px; display: flex; flex-direction: column; align-items: center; padding: 6px 2px; }
+    .fader-track { flex: 1; width: 24px; background: var(--fader-bg); border-radius: 12px; position: relative; margin: 8px 0; touch-action: none; cursor: pointer; border: 1px solid #283243; }
+    .fader-thumb { width: 34px; height: 18px; background: linear-gradient(180deg, #4f5d73, #2a3342); border: 1px solid #000; border-radius: 3px; position: absolute; left: -5px; bottom: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+    .exec-btn { width: 90%; height: 24px; background: #263040; border: 1px solid #3a475c; color: #fff; border-radius: 2px; font-size: 10px; font-weight: bold; cursor: pointer; margin-top: 2px; }
+    .exec-btn.flash:active, .exec-btn.go:active { background: var(--accent); color: #000; }
 
-        /* Effect Pool Grid Panel */
-        #effect-panel { grid-column: 2; grid-row: 1; }
-        .effect-pool { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; padding: 6px; overflow-y: auto; flex: 1; }
-        .effect-card { background: #101217; border: 1px solid var(--border-color); color: var(--text-main); border-radius: 2px; padding: 6px 4px; font-size: 9px; text-align: center; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; flex-direction: column; justify-content: center; }
-        .effect-card:hover { border-color: var(--accent-color); background: #1a1e27; }
-        .effect-card.active { border-color: var(--accent-active); background: rgba(255,153,0,0.15); color: var(--accent-active); }
-        .effect-card .cat { font-size: 7px; color: var(--text-dim); margin-bottom: 2px; text-transform: uppercase; }
+    /* BOTTOM CONTROLS & ENCODERS */
+    #bottom-workspace { grid-column: span 3; display: grid; grid-template-columns: 280px 1fr 300px; gap: 4px; }
 
-        /* Bottom Controls: Encoders & Executors */
-        #controls-bottom { grid-column: 1 / span 2; grid-row: 2; display: grid; grid-template-columns: 240px 1fr; gap: 2px; background: var(--border-color); }
-        .encoder-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 6px; }
-        .encoder-wheel { background: #0f1115; border: 1px solid var(--border-color); border-radius: 4px; padding: 4px; text-align: center; display: flex; flex-direction: column; align-items: center; }
-        .knob-graphic { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--text-dim); border-top-color: var(--accent-color); margin: 3px 0; position: relative; cursor: ns-resize; }
-        .knob-graphic::after { content: ''; position: absolute; top: 3px; left: 15px; width: 2px; height: 10px; background: var(--accent-color); }
+    /* MANUAL ENCODERS / ATTRIBUTES */
+    .fader-group { display: flex; gap: 12px; justify-content: space-around; align-items: center; height: 100%; padding: 0 10px; }
+    .vertical-fader { display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: space-between; padding: 4px 0; }
+    .v-track { width: 16px; flex: 1; background: #11151c; border-radius: 8px; position: relative; margin: 6px 0; border: 1px solid #283140; touch-action: none; cursor: pointer; }
+    .v-thumb { width: 26px; height: 14px; background: var(--accent); border-radius: 2px; position: absolute; left: -5px; bottom: 0; }
 
-        /* Executor Faders */
-        .fader-bank { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; padding: 6px; overflow-x: auto; flex: 1; }
-        .fader-strip { background: #0f1115; border: 1px solid var(--border-color); border-radius: 3px; padding: 4px 2px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
-        .fader-track { width: 10px; flex: 1; background: var(--fader-track); margin: 4px 0; border-radius: 5px; position: relative; cursor: pointer; touch-action: none; }
-        .fader-knob { width: 20px; height: 12px; background: var(--fader-knob); border: 1px solid var(--accent-color); border-radius: 2px; position: absolute; left: -5px; bottom: 0; cursor: grab; }
-        .exec-btn { width: 100%; height: 20px; background: var(--bg-header); border: 1px solid var(--border-color); color: var(--text-main); font-size: 8px; font-weight: bold; border-radius: 2px; cursor: pointer; }
-        .exec-btn.active { background: var(--accent-active); color: #000; }
+    /* COLOR PICKER & PRESETS */
+    .color-panel { display: flex; flex-direction: column; gap: 6px; padding: 8px; justify-content: center; }
+    .preset-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
+    .color-btn { height: 22px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; }
 
-        /* Command Line Interface (CLI) */
-        #cli-panel { height: 32px; background: #08090b; display: flex; align-items: center; padding: 0 10px; border-top: 1px solid var(--border-color); font-size: 11px; }
-        .cli-prompt { color: var(--accent-color); font-weight: bold; margin-right: 8px; }
-        #cli-input { flex: 1; background: transparent; border: none; outline: none; color: #fff; font-family: inherit; font-size: 12px; }
-        .cli-output { position: absolute; bottom: 32px; left: 0; right: 0; background: rgba(8, 9, 11, 0.95); border-top: 1px solid var(--border-color); max-height: 100px; overflow-y: auto; padding: 6px 12px; font-size: 10px; color: var(--text-dim); display: none; z-index: 50; }
-        .cli-output .err { color: #e63946; }
-        .cli-output .info { color: var(--accent-color); }
-    </style>
+    /* EFFECT / WING ENGINE UI */
+    .engine-tab-content { padding: 8px; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; height: 100%; }
+    .ctrl-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+    .ctrl-row label { font-size: 10px; color: var(--text-muted); width: 65px; }
+    .ctrl-row select, .ctrl-row input[type=range] { flex: 1; background: #12161f; border: 1px solid var(--panel-border); color: #fff; padding: 2px; border-radius: 2px; }
+
+    /* COMMAND LINE & STATUS */
+    #command-bar { height: 38px; background: #12151c; border-top: 1px solid var(--panel-border); display: flex; align-items: center; padding: 0 8px; gap: 8px; }
+    #cmd-input { flex: 1; background: #090b0e; border: 1px solid #2a3342; color: var(--accent); padding: 5px 10px; font-family: monospace; font-size: 13px; border-radius: 3px; outline: none; }
+    #dmx-mon { width: 140px; font-family: monospace; font-size: 10px; color: #8a99ad; text-align: right; white-space: nowrap; overflow: hidden; }
+
+    /* MODAL HELP */
+    #help-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999; justify-content: center; align-items: center; }
+    .modal-content { background: var(--panel-bg); border: 1px solid var(--panel-border); width: 600px; max-height: 80vh; border-radius: 6px; display: flex; flex-direction: column; overflow: hidden; }
+    .modal-body { padding: 16px; overflow-y: auto; font-family: monospace; font-size: 12px; line-height: 1.6; color: #c4d1e0; }
+  </style>
 </head>
 <body>
 
-    <!-- Top Bar Navigation -->
-    <div id="top-bar">
-        <div class="top-title">MA CONSOLE 3D <span>v3.5 - FULL EFFECT ENGINE</span></div>
-        <div class="top-info">
-            ACTIVE FX: <b id="fx-count-disp">0 Active</b>
-            SEL FIX: <b id="sel-count-disp">0</b>
-            BPM: <b id="bpm-disp">120</b>
-            FPS: <b id="fps-disp">60</b>
-        </div>
-        <div>
-            <button class="cam-btn" onclick="app.clearEffects()">CLEAR FX</button>
-            <button class="cam-btn" onclick="app.saveShow()">SAVE</button>
-        </div>
+<div id="app-container">
+  <!-- TOP BAR -->
+  <div id="top-bar">
+    <div class="brand">AETHER<span style="color:#fff;">LX</span> <span style="font-size:9px; color:var(--text-muted); border:1px solid #333; padding:1px 4px; border-radius:2px;">v2.5 PRO CONSOLE</span></div>
+    <div class="top-controls">
+      <button class="top-btn" onclick="app.clearProgrammer()">CLEAR ALL (FF)</button>
+      <button class="top-btn" onclick="app.storeCue()">STORE CUE</button>
+      <button class="top-btn" onclick="app.saveShow()">SAVE SHOW</button>
+      <button class="top-btn" onclick="app.loadShow()">LOAD SHOW</button>
+      <button class="top-btn" onclick="app.toggleHelp()">HELP (F1)</button>
+      <div id="clock" style="font-family:monospace; font-weight:bold; color:var(--accent); margin-left:12px;">00:00:00</div>
+    </div>
+  </div>
+
+  <!-- MAIN WORKSPACE -->
+  <div id="main-workspace">
+    <!-- FIXTURE SELECTOR -->
+    <div class="panel">
+      <div class="panel-header">
+        <span>FIXTURES / GROUPS</span>
+        <span id="fix-count-label" style="color:var(--accent);">0 Selected</span>
+      </div>
+      <div id="fixture-grid"></div>
     </div>
 
-    <!-- Main Workspace -->
-    <div id="main-workspace">
-        
-        <!-- Left: Unobstructed 3D Stage Visualizer -->
-        <div class="panel" id="stage-panel">
-            <div class="panel-header">
-                <span>3D Stage Visualizer Viewport</span>
-                <span id="cam-mode-disp">CAM: PERSPECTIVE</span>
-            </div>
-            <div class="camera-overlay">
-                <button class="cam-btn" onclick="app.setCameraPreset('front')">FRONT</button>
-                <button class="cam-btn" onclick="app.setCameraPreset('top')">TOP</button>
-                <button class="cam-btn" onclick="app.setCameraPreset('side')">SIDE</button>
-                <button class="cam-btn" onclick="app.setCameraPreset('audience')">AUDIENCE</button>
-            </div>
-            <canvas id="canvas-3d"></canvas>
+    <!-- 3D STAGE VISUALIZER -->
+    <div class="panel" style="position:relative;">
+      <div class="panel-header">
+        <span>3D STAGE VISUALIZER (REALTIME VOLUMETRIC BEAMS)</span>
+        <span id="fps-counter" style="color:#00ff88; font-family:monospace;">60 FPS</span>
+      </div>
+      <div id="stage-container">
+        <canvas id="canvas3d"></canvas>
+        <div class="cam-overlay">
+          <button class="cam-btn" onclick="app.setCam('front')">Front</button>
+          <button class="cam-btn" onclick="app.setCam('audience')">Audience</button>
+          <button class="cam-btn" onclick="app.setCam('top')">Top</button>
+          <button class="cam-btn" onclick="app.setCam('side')">Side</button>
         </div>
-
-        <!-- Right: Console Workspace & Effect Pool -->
-        <div id="console-workspace">
-            
-            <!-- Fixture Selection Panel -->
-            <div class="panel" id="fixture-panel">
-                <div class="panel-header">
-                    <span>Fixtures</span>
-                    <button class="cam-btn" onclick="app.selectAllFixtures()">ALL</button>
-                </div>
-                <div class="fixture-list" id="fixture-list-container"></div>
-            </div>
-
-            <!-- Effect Pool Panel (Contains all 54 requested effects) -->
-            <div class="panel" id="effect-panel">
-                <div class="panel-header">
-                    <span>Effect Pool Library (54 Presets)</span>
-                    <button class="cam-btn" onclick="app.clearEffects()">STOP ALL</button>
-                </div>
-                <div class="effect-pool" id="effect-pool-container"></div>
-            </div>
-
-            <!-- Bottom Console Controls (Encoders + Executors) -->
-            <div id="controls-bottom">
-                
-                <!-- Encoder Deck -->
-                <div class="panel" style="border-right: 1px solid var(--border-color);">
-                    <div class="panel-header">Encoders</div>
-                    <div class="encoder-grid">
-                        <div class="encoder-wheel">
-                            <span style="font-size: 9px; color: var(--text-dim);">PAN</span>
-                            <div class="knob-graphic" onwheel="app.handleEncoderWheel(event, 'pan')"></div>
-                            <span id="val-pan" style="font-size: 10px; font-weight: bold;">0°</span>
-                        </div>
-                        <div class="encoder-wheel">
-                            <span style="font-size: 9px; color: var(--text-dim);">TILT</span>
-                            <div class="knob-graphic" onwheel="app.handleEncoderWheel(event, 'tilt')"></div>
-                            <span id="val-tilt" style="font-size: 10px; font-weight: bold;">0°</span>
-                        </div>
-                        <div class="encoder-wheel">
-                            <span style="font-size: 9px; color: var(--text-dim);">DIMMER</span>
-                            <div class="knob-graphic" onwheel="app.handleEncoderWheel(event, 'dimmer')"></div>
-                            <span id="val-dimmer" style="font-size: 10px; font-weight: bold;">100%</span>
-                        </div>
-                        <div class="encoder-wheel">
-                            <span style="font-size: 9px; color: var(--text-dim);">ZOOM</span>
-                            <div class="knob-graphic" onwheel="app.handleEncoderWheel(event, 'zoom')"></div>
-                            <span id="val-zoom" style="font-size: 10px; font-weight: bold;">20°</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Executor Playback Faders -->
-                <div class="panel">
-                    <div class="panel-header">Executor Playbacks</div>
-                    <div class="fader-bank" id="fader-bank-container"></div>
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
 
-    <!-- Command Line Interface (CLI) -->
-    <div id="cli-panel">
-        <div class="cli-output" id="cli-output"></div>
-        <span class="cli-prompt">MA-CLI&gt;</span>
-        <input type="text" id="cli-input" placeholder="Type command... (e.g., 'Fixture 1 Thru 8', 'Effect Sine', 'At 100', 'Clear')" autocomplete="off" />
+    <!-- EXECUTORS -->
+    <div class="panel">
+      <div class="panel-header">PLAYBACK EXECUTORS</div>
+      <div id="executor-panel"></div>
     </div>
 
-    <script>
-        /**
-         * PROFESSIONAL LIGHTING CONSOLE ENGINE
-         * Realtime 3D Visualizer, Full Mathematical Phaser Effect Library, and Console Workflow.
-         */
-        class LightingConsoleApp {
-            constructor() {
-                this.fixtures = [];
-                this.selectedFixtureIds = new Set();
-                this.executors = Array(8).fill(null).map((_, i) => ({ id: i + 1, level: 100, active: true }));
-                this.activeEffects = new Map();
+    <!-- BOTTOM WORKSPACE -->
+    <div id="bottom-workspace">
+      <!-- FADERS & ENCODERS -->
+      <div class="panel">
+        <div class="panel-header">MANUAL ATTRIBUTES</div>
+        <div class="fader-group">
+          <div class="vertical-fader">
+            <span style="font-size:10px;">DIM</span>
+            <div class="v-track" id="tr-dimmer"><div class="v-thumb" id="th-dimmer"></div></div>
+            <span id="val-dimmer" style="font-family:monospace; font-size:10px;">100%</span>
+          </div>
+          <div class="vertical-fader">
+            <span style="font-size:10px;">PAN</span>
+            <div class="v-track" id="tr-pan"><div class="v-thumb" id="th-pan"></div></div>
+            <span id="val-pan" style="font-family:monospace; font-size:10px;">0°</span>
+          </div>
+          <div class="vertical-fader">
+            <span style="font-size:10px;">TILT</span>
+            <div class="v-track" id="tr-tilt"><div class="v-thumb" id="th-tilt"></div></div>
+            <span id="val-tilt" style="font-family:monospace; font-size:10px;">0°</span>
+          </div>
+          <div class="vertical-fader">
+            <span style="font-size:10px;">ZOOM</span>
+            <div class="v-track" id="tr-zoom"><div class="v-thumb" id="th-zoom"></div></div>
+            <span id="val-zoom" style="font-family:monospace; font-size:10px;">30%</span>
+          </div>
+        </div>
+      </div>
 
-                // Complete 54 Effect Definitions
-                this.effectLibrary = [
-                    // DIMMER EFFECTS
-                    { id: "dim_sin", name: "Dimmer Sin", cat: "Dimmer", fn: (t, idx) => Math.sin(t * 3 + idx * 0.5) * 50 + 50 },
-                    { id: "dim_chase", name: "Dimmer Chase", cat: "Dimmer", fn: (t, idx) => ((Math.floor(t * 4) % 8) === idx ? 100 : 0) },
-                    { id: "dim_pwm", name: "Dimmer PWM", cat: "Dimmer", fn: (t) => (Math.sin(t * 8) > 0 ? 100 : 0) },
-                    { id: "dim_rnd", name: "Dimmer Random", cat: "Dimmer", fn: (t, idx) => Math.abs(Math.sin(Math.floor(t * 5) * 99 + idx)) * 100 },
-                    { id: "dim_eo", name: "Dimmer Even/Odd", cat: "Dimmer", fn: (t, idx) => (idx % 2 === Math.floor(t * 2) % 2 ? 100 : 0) },
+      <!-- EFFECT & WING ENGINE -->
+      <div class="panel">
+        <div class="panel-header">EFFECT & WING PHASER ENGINE</div>
+        <div class="engine-tab-content">
+          <div class="ctrl-row">
+            <label>Effect Type</label>
+            <select id="fx-type" onchange="app.updateFxParams()">
+              <option value="none">OFF / Static</option>
+              <option value="pan_sin">Pan Sinusoid</option>
+              <option value="tilt_sin">Tilt Sinusoid</option>
+              <option value="pt_circle">P/T Circle</option>
+              <option value="pt_wave">P/T Wave</option>
+              <option value="dim_sin">Dimmer Pulse</option>
+              <option value="rgb_rainbow">RGB Rainbow</option>
+            </select>
+            <label>Wing Mode</label>
+            <select id="wing-mode" onchange="app.updateFxParams()">
+              <option value="none">None (Linear)</option>
+              <option value="open">Wing Open (Center out)</option>
+              <option value="close">Wing Close (Inward)</option>
+              <option value="symm">Symmetrical Mirror</option>
+              <option value="alt">Alternating Phase (180°)</option>
+            </select>
+          </div>
+          <div class="ctrl-row">
+            <label>Speed (BPM)</label>
+            <input type="range" id="fx-speed" min="1" max="240" value="60" oninput="app.updateFxParams()">
+            <label>Size / Amp</label>
+            <input type="range" id="fx-size" min="0" max="100" value="50" oninput="app.updateFxParams()">
+          </div>
+          <div class="ctrl-row">
+            <label>Phase Spread</label>
+            <input type="range" id="fx-phase" min="0" max="360" value="180" oninput="app.updateFxParams()">
+            <label>Strobe Rate</label>
+            <input type="range" id="fx-strobe" min="0" max="20" value="0" oninput="app.updateFxParams()">
+          </div>
+        </div>
+      </div>
 
-                    // SHUTTER EFFECTS
-                    { id: "shut_pwm", name: "Shutter PWM", cat: "Shutter", fn: (t) => (Math.sin(t * 15) > 0 ? 100 : 0) },
+      <!-- COLOR CONTROL -->
+      <div class="panel">
+        <div class="panel-header">COLOR PRESETS & RGB</div>
+        <div class="color-panel">
+          <div class="ctrl-row">
+            <input type="color" id="native-color" value="#00d2ff" style="width:100%; height:26px; border:none; background:none; cursor:pointer;" onchange="app.setRGBFromPicker(this.value)">
+          </div>
+          <div class="preset-grid">
+            <div class="color-btn" style="background:#ffffff;" onclick="app.setHexColor('#ffffff')"></div>
+            <div class="color-btn" style="background:#ff0000;" onclick="app.setHexColor('#ff0000')"></div>
+            <div class="color-btn" style="background:#00ff00;" onclick="app.setHexColor('#00ff00')"></div>
+            <div class="color-btn" style="background:#0055ff;" onclick="app.setHexColor('#0055ff')"></div>
+            <div class="color-btn" style="background:#00ffff;" onclick="app.setHexColor('#00ffff')"></div>
+            <div class="color-btn" style="background:#ff00ff;" onclick="app.setHexColor('#ff00ff')"></div>
+            <div class="color-btn" style="background:#ffff00;" onclick="app.setHexColor('#ffff00')"></div>
+            <div class="color-btn" style="background:#ff6600;" onclick="app.setHexColor('#ff6600')"></div>
+            <div class="color-btn" style="background:#9900ff;" onclick="app.setHexColor('#9900ff')"></div>
+            <div class="color-btn" style="background:#ff007f;" onclick="app.setHexColor('#ff007f')"></div>
+            <div class="color-btn" style="background:#ffaa33;" onclick="app.setHexColor('#ffaa33')"></div>
+            <div class="color-btn" style="background:#aaddff;" onclick="app.setHexColor('#aaddff')"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-                    // COLOR / RGB / CMY EFFECTS
-                    { id: "rgb_rb", name: "RGB Rainbow", cat: "Color", fn_col: (t, idx) => `hsl(${(t * 40 + idx * 30) % 360}, 100%, 50%)` },
-                    { id: "rgb_rb_inv", name: "=RGB Rainbow", cat: "Color", fn_col: (t, idx) => `hsl(${(360 - (t * 40 + idx * 30)) % 360}, 100%, 50%)` },
-                    { id: "rgb_chase", name: "RGB Chase", cat: "Color", fn_col: (t, idx) => ((Math.floor(t * 4) % 8) === idx ? "#00d2ff" : "#111122") },
-                    { id: "rgb_bw", name: "RGB Blue White", cat: "Color", fn_col: (t, idx) => (Math.sin(t * 4 + idx) > 0 ? "#0066ff" : "#ffffff") },
-                    { id: "rgb_eo", name: "RGB Even/Odd", cat: "Color", fn_col: (t, idx) => (idx % 2 === Math.floor(t * 2) % 2 ? "#ff0055" : "#00d2ff") },
-                    { id: "rgb_rnd", name: "RGB Random", cat: "Color", fn_col: (t, idx) => `hsl(${(Math.floor(t * 3) * 137 + idx * 50) % 360}, 100%, 50%)` },
-                    { id: "cto_sin", name: "CTO Sin", cat: "Color", fn_col: (t) => `hsl(35, 100%, ${Math.sin(t * 3) * 20 + 60}%)` },
-                    { id: "col1_ramp", name: "Color 1 Ramp", cat: "Color", fn_col: (t) => `hsl(${((t * 30) % 120)}, 100%, 50%)` },
-                    { id: "col2_ramp", name: "Color 2 Ramp", cat: "Color", fn_col: (t) => `hsl(${(((t * 30) + 120) % 240)}, 100%, 50%)` },
-                    { id: "col3_ramp", name: "Color 3 Ramp", cat: "Color", fn_col: (t) => `hsl(${(((t * 30) + 240) % 360)}, 100%, 50%)` },
+  <!-- COMMAND LINE -->
+  <div id="command-bar">
+    <span style="color:var(--accent); font-weight:bold; font-family:monospace;">MA3&gt;</span>
+    <input type="text" id="cmd-input" placeholder="Enter CLI command (e.g. 'Fixture 1 Thru 6', 'Dimmer 100', 'Color Red', 'Go', 'Help')..." />
+    <div id="dmx-mon">U1: [001:255] [002:128]</div>
+  </div>
+</div>
 
-                    // MOVEMENT EFFECTS
-                    { id: "pt_ballyhoo", name: "Dim/P/T Ballyhoo", cat: "Movement", fn_pt: (t, idx) => ({ pan: Math.sin(t * 4 + idx) * 45, tilt: Math.cos(t * 5 + idx) * 30 }) },
-                    { id: "pt_flyout", name: "Dim/Tilt Flyout", cat: "Movement", fn_pt: (t, idx) => ({ pan: 0, tilt: ((t * 2 + idx * 0.2) % 1) * -60 }) },
-                    { id: "tilt_sin", name: "Tilt Sin", cat: "Movement", fn_pt: (t, idx) => ({ pan: 0, tilt: Math.sin(t * 3 + idx * 0.4) * 40 }) },
-                    { id: "pan_sin", name: "Pan Sin", cat: "Movement", fn_pt: (t, idx) => ({ pan: Math.sin(t * 3 + idx * 0.4) * 60, tilt: 0 }) },
-                    { id: "tilt_sin_p_stomp", name: "Tilt Sin Pan Stomp", cat: "Movement", fn_pt: (t, idx) => ({ pan: (Math.floor(t * 2 + idx) % 2) * 40 - 20, tilt: Math.sin(t * 4) * 30 }) },
-                    { id: "pan_sin_t_stomp", name: "Pan Sin Tilt Stomp", cat: "Movement", fn_pt: (t, idx) => ({ pan: Math.sin(t * 4) * 50, tilt: (Math.floor(t * 2 + idx) % 2) * 30 - 15 }) },
-                    { id: "pt_circle", name: "P/T Circle", cat: "Movement", fn_pt: (t, idx) => ({ pan: Math.cos(t * 3 + idx * 0.5) * 35, tilt: Math.sin(t * 3 + idx * 0.5) * 25 }) },
-                    { id: "pt_wave", name: "P/T Wave", cat: "Movement", fn_pt: (t, idx) => ({ pan: Math.sin(t * 2 + idx * 0.8) * 40, tilt: Math.cos(t * 2 + idx * 0.8) * 20 }) },
-                    { id: "pt_cross", name: "P/T Cross", cat: "Movement", fn_pt: (t, idx) => ({ pan: (idx % 2 === 0 ? 1 : -1) * Math.sin(t * 3) * 40, tilt: Math.cos(t * 3) * 20 }) },
+<!-- HELP MODAL -->
+<div id="help-modal">
+  <div class="modal-content">
+    <div class="panel-header">
+      <span>COMMAND LINE HELP & KEYBOARD SHORTCUTS</span>
+      <button onclick="app.toggleHelp()" style="background:none; border:none; color:#fff; cursor:pointer;">✕</button>
+    </div>
+    <div class="modal-body">
+      <strong>KEYBOARD NAVIGATION (3D STAGE):</strong><br>
+      • W/A/S/D or Arrow Keys : Move Camera Position<br>
+      • Q / E : Camera Down / Up<br>
+      • Mouse Drag : Orbit / Rotate Stage View<br>
+      • Mouse Scroll : Zoom In / Out<br><br>
+      
+      <strong>CLI COMMAND SYNTAX EXAMPLES:</strong><br>
+      • <code>Fixture 1</code> or <code>Fix 1</code> : Select Fixture 1<br>
+      • <code>Fixture 1 Thru 8</code> : Multi-select Fixtures 1 to 8<br>
+      • <code>Dimmer 100</code> / <code>Dim 50</code> : Set Intensity<br>
+      • <code>Pan 45</code> / <code>Tilt -30</code> : Set Direct Angles<br>
+      • <code>Color Red</code> / <code>Color Blue</code> / <code>Color White</code> : Quick Preset Color<br>
+      • <code>Clear</code> / <code>FF</code> : Clear selection & programmer<br>
+      • <code>Go</code> : Trigger active Cue sequence<br>
+      • <code>Store Cue 1</code> : Store current programmer buffer to Cue
+    </div>
+  </div>
+</div>
 
-                    // BMP MODULATION
-                    { id: "bmp_pos_x", name: "BMP Pos X", cat: "BMP", fn_pt: (t, idx) => ({ pan: Math.sin(t * 6 + idx) * 30, tilt: 0 }) },
-                    { id: "bmp_pos_y", name: "BMP Pos Y", cat: "BMP", fn_pt: (t, idx) => ({ pan: 0, tilt: Math.cos(t * 6 + idx) * 20 }) },
-                    { id: "bmp_rot_z", name: "BMP Rot Z CW", cat: "BMP", fn_pt: (t, idx) => ({ pan: Math.cos(t * 4 + idx) * 40, tilt: Math.sin(t * 4 + idx) * 40 }) },
-                    { id: "bmp_scale_in", name: "BMP Scale In", cat: "BMP", fn: (t) => ((t * 2) % 1) * 100 },
-                    { id: "bmp_circle", name: "BMP Circle", cat: "BMP", fn_pt: (t, idx) => ({ pan: Math.sin(t * 5 + idx) * 30, tilt: Math.cos(t * 5 + idx) * 30 }) },
-                    { id: "bmp_hue", name: "BMP Rainbow Hue", cat: "BMP", fn_col: (t, idx) => `hsl(${(t * 120 + idx * 20) % 360}, 100%, 50%)` },
+<script>
+/**
+ * AETHER-LX PROFESSIONAL LIGHTING CONSOLE ENGINE
+ * Single-file Architectural Core (3D Stage + Phaser FX Engine + Fixture Patch + Playbacks)
+ */
 
-                    // FORM / PHASER PATTERNS
-                    { id: "form_stomp", name: "Stomp — Form", cat: "Form", fn: () => 0 },
-                    { id: "form_release", name: "Release — Form", cat: "Form", fn: () => 0 },
-                    { id: "form_random", name: "Random — Form", cat: "Form", fn: (t, idx) => Math.sin(Math.floor(t * 6) * 12 + idx) * 50 + 50 },
-                    { id: "form_pwm", name: "PWM — Form", cat: "Form", fn: (t) => (t % 1 > 0.5 ? 100 : 0) },
-                    { id: "form_chase", name: "Chase — Form", cat: "Form", fn: (t, idx) => ((Math.floor(t * 5) % 8) === idx ? 100 : 20) },
-                    { id: "form_flat_h", name: "Flat High — Form", cat: "Form", fn: () => 100 },
-                    { id: "form_flat_l", name: "Flat Low — Form", cat: "Form", fn: () => 0 },
-                    { id: "form_sin", name: "Sin — Form", cat: "Form", fn: (t, idx) => Math.sin(t * 3 + idx * 0.5) * 50 + 50 },
-                    { id: "form_cos", name: "Cos — Form", cat: "Form", fn: (t, idx) => Math.cos(t * 3 + idx * 0.5) * 50 + 50 },
-                    { id: "form_ramp_p", name: "Ramp Plus — Form", cat: "Form", fn: (t, idx) => ((t + idx * 0.1) % 1) * 100 },
-                    { id: "form_ramp_m", name: "Ramp Minus — Form", cat: "Form", fn: (t, idx) => (1 - ((t + idx * 0.1) % 1)) * 100 },
-                    { id: "form_ramp", name: "Ramp — Form", cat: "Form", fn: (t, idx) => ((t + idx * 0.1) % 1) * 100 },
-                    { id: "form_phase1", name: "Phase 1 — Form", cat: "Form", fn: (t, idx) => Math.sin(t * 4 + idx * 0.2) * 50 + 50 },
-                    { id: "form_phase2", name: "Phase 2 — Form", cat: "Form", fn: (t, idx) => Math.sin(t * 4 + idx * 0.6) * 50 + 50 },
-                    { id: "form_phase3", name: "Phase 3 — Form", cat: "Form", fn: (t, idx) => Math.sin(t * 4 + idx * 1.2) * 50 + 50 },
-                    { id: "form_bump", name: "Bump — Form", cat: "Form", fn: (t, idx) => Math.pow(Math.sin(t * 3 + idx * 0.3), 8) * 100 },
-                    { id: "form_swing", name: "Swing — Form", cat: "Form", fn_pt: (t, idx) => ({ pan: Math.sin(t * 2 + idx * 0.3) * 45, tilt: 0 }) },
-                    { id: "form_ramp50", name: "Ramp 50 — Form", cat: "Form", fn: (t) => ((t * 2) % 1 < 0.5 ? ((t * 4) % 1) * 100 : 0) },
-                    { id: "form_circle", name: "Circle — Form", cat: "Form", fn_pt: (t, idx) => ({ pan: Math.cos(t * 3 + idx) * 30, tilt: Math.sin(t * 3 + idx) * 30 }) },
-                    { id: "form_sound", name: "Sound — Form", cat: "Form", fn: (t) => Math.random() * 100 },
-                    { id: "form_flyout", name: "Flyout — Form", cat: "Form", fn_pt: (t, idx) => ({ pan: 0, tilt: ((t * 2 + idx * 0.1) % 1) * -50 }) },
-                    { id: "form_wave", name: "Wave — Form", cat: "Form", fn: (t, idx) => Math.sin(t * 4 + idx * 0.5) * 50 + 50 },
-                    { id: "form_cross", name: "Cross — Form", cat: "Form", fn_pt: (t, idx) => ({ pan: (idx % 2 === 0 ? 30 : -30), tilt: Math.sin(t * 3) * 20 }) }
-                ];
+class LightingConsole {
+  constructor() {
+    this.fixtures = [];
+    this.selectedFixtureIds = new Set();
+    this.executors = Array(8).fill(null).map((_, i) => ({ id: i + 1, val: 0, cue: null }));
+    this.cues = [];
+    this.currentCueIndex = 0;
+    
+    // Command Line History
+    this.cmdInput = document.getElementById('cmd-input');
+    
+    // Engine State
+    this.fxParams = { type: 'none', wing: 'none', speed: 60, size: 50, phase: 180, strobe: 0 };
+    this.dmxBuffer = new Uint8Array(512);
 
-                // 3D Scene Controls
-                this.scene = null;
-                this.camera = null;
-                this.renderer = null;
-                this.fixtureMeshes = new Map();
-                this.beamMeshes = new Map();
-                this.camState = { pos: { x: 0, y: 10, z: 24 } };
+    this.initFixtures();
+    this.init3D();
+    this.initUI();
+    this.initEvents();
+    this.animate(0);
+  }
 
-                this.clock = new THREE.Clock();
-                this.fpsCounter = 0;
-                this.lastTime = performance.now();
+  // --- 1. FIXTURE PATCH & INITIALIZATION ---
+  initFixtures() {
+    const count = 12;
+    const spacing = 2.2;
+    const startX = -((count - 1) * spacing) / 2;
 
-                this.init();
-            }
+    for (let i = 1; i <= count; i++) {
+      this.fixtures.push({
+        id: i,
+        type: i % 2 === 0 ? 'Spot' : 'Beam',
+        dmxStart: (i - 1) * 10 + 1,
+        pos: { x: startX + (i - 1) * spacing, y: 5.5, z: 0 },
+        // Live attributes
+        dimmer: 1.0,
+        pan: 0,   // degrees
+        tilt: 0,  // degrees
+        color: new THREE.Color(0x00d2ff),
+        zoom: 15, // degrees beam angle
+        strobe: 0,
+        // Three.js 3D Object Refs
+        meshGroup: null,
+        headMesh: null,
+        beamMesh: null,
+        lightTarget: null
+      });
+    }
+  }
 
-            init() {
-                this.setup3DScene();
-                this.setupDefaultPatch();
-                this.renderFixtureList();
-                this.renderEffectPool();
-                this.renderExecutors();
-                this.setupCLI();
+  // --- 2. THREE.JS 3D VISUALIZER ENGINE ---
+  init3D() {
+    const container = document.getElementById('stage-container');
+    this.scene = new THREE.Scene();
+    this.scene.fog = new THREE.FogExp2(0x0a0c0e, 0.035); // Atmospheric haze for beams
 
-                requestAnimationFrame((t) => this.animate(t));
-                this.logCLI("System Started. 54 Professional Effect Engines Loaded.", "info");
-            }
+    this.camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 100);
+    this.camera.position.set(0, 4, 16);
 
-            // --- 1. SETUP 3D VISUALIZER (UNOBSTRUCTED STAGE VIEW) ---
-            setup3DScene() {
-                const container = document.getElementById('stage-panel');
-                const canvas = document.getElementById('canvas-3d');
-                
-                this.scene = new THREE.Scene();
-                this.scene.background = new THREE.Color(0x060709);
-                this.scene.fog = new THREE.FogExp2(0x060709, 0.018);
+    this.renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas3d'), antialias: true });
+    this.renderer.setSize(container.clientWidth, container.clientHeight);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.shadowMap.enabled = true;
 
-                this.camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
-                this.updateCameraTransform();
+    // Controls
+    this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.05;
+    this.controls.target.set(0, 3, 0);
 
-                this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-                this.renderer.setSize(container.clientWidth, container.clientHeight);
+    // Stage Geometry Architecture
+    this.buildStage();
 
-                const gridHelper = new THREE.GridHelper(30, 30, 0x00d2ff, 0x1e222b);
-                this.scene.add(gridHelper);
+    // Build Fixtures in 3D Space
+    this.fixtures.forEach(fix => this.buildFixture3D(fix));
 
-                const floorGeo = new THREE.PlaneGeometry(30, 30);
-                const floorMat = new THREE.MeshStandardMaterial({ color: 0x0a0c0f, roughness: 0.8 });
-                const floor = new THREE.Mesh(floorGeo, floorMat);
-                floor.rotation.x = -Math.PI / 2;
-                this.scene.add(floor);
+    // Handle Resize
+    window.addEventListener('resize', () => {
+      this.camera.aspect = container.clientWidth / container.clientHeight;
+      this.camera.updateProjectionMatrix();
+      this.renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+  }
 
-                const trussGeo = new THREE.CylinderGeometry(0.12, 0.12, 22);
-                const trussMat = new THREE.MeshStandardMaterial({ color: 0x3a4150, metalness: 0.8 });
-                const mainTruss = new THREE.Mesh(trussGeo, trussMat);
-                mainTruss.rotation.z = Math.PI / 2;
-                mainTruss.position.set(0, 9, -4);
-                this.scene.add(mainTruss);
+  buildStage() {
+    // Floor
+    const floorGeo = new THREE.PlaneGeometry(30, 20);
+    const floorMat = new THREE.MeshStandardMaterial({ color: 0x11141a, roughness: 0.4, metalness: 0.6 });
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    this.scene.add(floor);
 
-                window.addEventListener('resize', () => {
-                    const w = container.clientWidth;
-                    const h = container.clientHeight;
-                    this.camera.aspect = w / h;
-                    this.camera.updateProjectionMatrix();
-                    this.renderer.setSize(w, h);
-                });
-            }
+    // Back Truss Structure
+    const trussGeo = new THREE.CylinderGeometry(0.08, 0.08, 28);
+    const trussMat = new THREE.MeshStandardMaterial({ color: 0x3a4454, metalness: 0.8, roughness: 0.2 });
+    
+    const topTruss = new THREE.Mesh(trussGeo, trussMat);
+    topTruss.rotation.z = Math.PI / 2;
+    topTruss.position.set(0, 5.8, 0);
+    this.scene.add(topTruss);
 
-            setupDefaultPatch() {
-                for (let i = 1; i <= 8; i++) {
-                    const posX = (i - 4.5) * 2.5;
-                    this.fixtures.push({
-                        id: i,
-                        name: `MH-${i < 10 ? '0' + i : i}`,
-                        type: "Spot 300W",
-                        x: posX, y: 9, z: -4,
-                        basePan: 0, baseTilt: 0,
-                        pan: 0, tilt: 0,
-                        baseDimmer: 100, dimmer: 100,
-                        baseColor: "#00d2ff", color: "#00d2ff",
-                        zoom: 20
-                    });
-                }
-                this.rebuildFixture3DMeshes();
-            }
+    const botTruss = topTruss.clone();
+    botTruss.position.set(0, 5.5, -0.3);
+    this.scene.add(botTruss);
 
-            rebuildFixture3DMeshes() {
-                this.fixtureMeshes.forEach(m => this.scene.remove(m));
-                this.beamMeshes.forEach(b => this.scene.remove(b));
+    // Ambient Lighting
+    const ambient = new THREE.AmbientLight(0xffffff, 0.15);
+    this.scene.add(ambient);
+  }
 
-                this.fixtures.forEach(fix => {
-                    const headGeo = new THREE.BoxGeometry(0.5, 0.7, 0.5);
-                    const headMat = new THREE.MeshStandardMaterial({ color: 0x1e222b });
-                    const headMesh = new THREE.Mesh(headGeo, headMat);
-                    headMesh.position.set(fix.x, fix.y, fix.z);
-                    this.scene.add(headMesh);
-                    this.fixtureMeshes.set(fix.id, headMesh);
+  buildFixture3D(fix) {
+    const group = new THREE.Group();
+    group.position.set(fix.pos.x, fix.pos.y, fix.pos.z);
 
-                    const beamGeo = new THREE.ConeGeometry(1.2, 11, 32, 1, true);
-                    beamGeo.translate(0, -5.5, 0);
-                    const beamMat = new THREE.MeshBasicMaterial({
-                        color: new THREE.Color(fix.color),
-                        transparent: true,
-                        opacity: 0.4,
-                        blending: THREE.AdditiveBlending,
-                        side: THREE.DoubleSide
-                    });
-                    const beamMesh = new THREE.Mesh(beamGeo, beamMat);
-                    beamMesh.position.set(fix.x, fix.y, fix.z);
-                    this.scene.add(beamMesh);
-                    this.beamMeshes.set(fix.id, beamMesh);
-                });
-            }
+    // Base Frame attached to truss
+    const baseGeo = new THREE.BoxGeometry(0.4, 0.2, 0.4);
+    const baseMat = new THREE.MeshStandardMaterial({ color: 0x222833 });
+    const base = new THREE.Mesh(baseGeo, baseMat);
+    base.position.y = 0.1;
+    group.add(base);
 
-            // --- 2. EFFECT POOL & CONSOLE INTERACTION ---
-            renderEffectPool() {
-                const container = document.getElementById('effect-pool-container');
-                container.innerHTML = '';
-                this.effectLibrary.forEach(fx => {
-                    const card = document.createElement('div');
-                    const isActive = this.activeEffects.has(fx.id);
-                    card.className = `effect-card ${isActive ? 'active' : ''}`;
-                    card.innerHTML = `<span class="cat">${fx.cat}</span><b>${fx.name}</b>`;
-                    card.onclick = () => this.toggleEffect(fx);
-                    container.appendChild(card);
-                });
-                document.getElementById('fx-count-disp').innerText = `${this.activeEffects.size} Active`;
-            }
+    // Moving Head Yoke/Body
+    const headGroup = new THREE.Group();
+    headGroup.position.set(0, -0.1, 0);
 
-            toggleEffect(fx) {
-                if (this.activeEffects.has(fx.id)) {
-                    this.activeEffects.delete(fx.id);
-                    this.logCLI(`Effect Stopped: ${fx.name}`, "info");
-                } else {
-                    this.activeEffects.set(fx.id, fx);
-                    this.logCLI(`Effect Started: ${fx.name}`, "info");
-                }
-                this.renderEffectPool();
-            }
+    const bodyGeo = new THREE.CylinderGeometry(0.2, 0.15, 0.4, 16);
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x151922 });
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    headGroup.add(body);
 
-            clearEffects() {
-                this.activeEffects.clear();
-                this.renderEffectPool();
-                this.logCLI("All active effects stopped.", "info");
-            }
+    // Volumetric Cone Light (Beam Visualizer)
+    const coneGeo = new THREE.ConeGeometry(1.5, 12, 32, 1, true);
+    coneGeo.translate(0, -6, 0); // Origin at tip
+    coneGeo.rotateX(-Math.PI / 2); // Orient forward along local Z
 
-            renderFixtureList() {
-                const container = document.getElementById('fixture-list-container');
-                container.innerHTML = '';
-                this.fixtures.forEach(fix => {
-                    const item = document.createElement('div');
-                    item.className = `fixture-item ${this.selectedFixtureIds.has(fix.id) ? 'selected' : ''}`;
-                    item.onclick = (e) => this.selectFixture(fix.id, e.shiftKey);
-                    item.innerHTML = `
-                        <div><b>FID ${fix.id}: ${fix.name}</b></div>
-                        <div><span style="color:${fix.color};">■</span> ${Math.round(fix.dimmer)}%</div>
-                    `;
-                    container.appendChild(item);
-                });
-                document.getElementById('sel-count-disp').innerText = `${this.selectedFixtureIds.size}`;
-            }
+    const coneMat = new THREE.MeshBasicMaterial({
+      color: fix.color,
+      transparent: true,
+      opacity: 0.35,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
 
-            selectAllFixtures() {
-                this.fixtures.forEach(f => this.selectedFixtureIds.add(f.id));
-                this.renderFixtureList();
-            }
+    const beam = new THREE.Mesh(coneGeo, coneMat);
+    headGroup.add(beam);
 
-            selectFixture(id, multi = false) {
-                if (!multi) this.selectedFixtureIds.clear();
-                if (this.selectedFixtureIds.has(id)) this.selectedFixtureIds.delete(id);
-                else this.selectedFixtureIds.add(id);
-                this.renderFixtureList();
-            }
+    // Real Spotlight for Floor Reflection
+    const spot = new THREE.SpotLight(fix.color.getHex(), 5);
+    spot.angle = THREE.MathUtils.degToRad(fix.zoom);
+    spot.penumbra = 0.5;
+    spot.distance = 20;
+    spot.castShadow = true;
+    
+    const target = new THREE.Object3D();
+    target.position.set(fix.pos.x, 0, fix.pos.z + 5);
+    this.scene.add(target);
+    spot.target = target;
+    
+    headGroup.add(spot);
 
-            handleEncoderWheel(e, attr) {
-                e.preventDefault();
-                const delta = e.deltaY < 0 ? 5 : -5;
-                if (this.selectedFixtureIds.size === 0) return;
-                this.fixtures.forEach(f => {
-                    if (this.selectedFixtureIds.has(f.id)) {
-                        if (attr === 'pan') f.basePan = Math.max(-180, Math.min(180, f.basePan + delta));
-                        if (attr === 'tilt') f.baseTilt = Math.max(-90, Math.min(90, f.baseTilt + delta));
-                        if (attr === 'dimmer') f.baseDimmer = Math.max(0, Math.min(100, f.baseDimmer + delta));
-                        if (attr === 'zoom') f.zoom = Math.max(5, Math.min(60, f.zoom + delta));
-                    }
-                });
-                this.updateEncoderUI();
-            }
+    group.add(headGroup);
+    this.scene.add(group);
 
-            updateEncoderUI() {
-                const sel = this.fixtures.find(f => this.selectedFixtureIds.has(f.id));
-                if (sel) {
-                    document.getElementById('val-pan').innerText = `${sel.basePan}°`;
-                    document.getElementById('val-tilt').innerText = `${sel.baseTilt}°`;
-                    document.getElementById('val-dimmer').innerText = `${sel.baseDimmer}%`;
-                    document.getElementById('val-zoom').innerText = `${sel.zoom}°`;
-                }
-            }
+    // Save Object References
+    fix.meshGroup = group;
+    fix.headMesh = headGroup;
+    fix.beamMesh = coneMat;
+    fix.spotLight = spot;
+    fix.lightTarget = target;
+  }
 
-            renderExecutors() {
-                const container = document.getElementById('fader-bank-container');
-                container.innerHTML = '';
-                this.executors.forEach(exec => {
-                    const strip = document.createElement('div');
-                    strip.className = 'fader-strip';
-                    strip.innerHTML = `
-                        <button class="exec-btn ${exec.active ? 'active' : ''}" onclick="app.toggleExecutor(${exec.id})">EX ${exec.id}</button>
-                        <div class="fader-track" onpointerdown="app.handleFaderDrag(event, ${exec.id})">
-                            <div class="fader-knob" style="bottom: ${exec.level}%;"></div>
-                        </div>
-                        <span style="font-size:8px; font-weight:bold;">${Math.round(exec.level)}%</span>
-                    `;
-                    container.appendChild(strip);
-                });
-            }
+  // --- 3. UI GENERATION & INTERACTION ---
+  initUI() {
+    // Generate Fixture Grid
+    const grid = document.getElementById('fixture-grid');
+    grid.innerHTML = '';
+    this.fixtures.forEach(fix => {
+      const btn = document.createElement('div');
+      btn.className = 'fix-btn';
+      btn.id = `fix-btn-${fix.id}`;
+      btn.innerHTML = `<span class="id">FIX ${fix.id}</span><span class="type">${fix.type}</span>`;
+      btn.onclick = (e) => this.toggleSelectFixture(fix.id, e.shiftKey);
+      grid.appendChild(btn);
+    });
 
-            handleFaderDrag(e, execId) {
-                const track = e.currentTarget;
-                const rect = track.getBoundingClientRect();
-                const updateLevel = (evt) => {
-                    const offsetY = rect.bottom - evt.clientY;
-                    let pct = Math.max(0, Math.min(100, (offsetY / rect.height) * 100));
-                    const exec = this.executors.find(x => x.id === execId);
-                    if (exec) {
-                        exec.level = pct;
-                        this.renderExecutors();
-                    }
-                };
-                updateLevel(e);
-                const onMove = (evt) => updateLevel(evt);
-                const onUp = () => {
-                    window.removeEventListener('pointermove', onMove);
-                    window.removeEventListener('pointerup', onUp);
-                };
-                window.addEventListener('pointermove', onMove);
-                window.addEventListener('pointerup', onUp);
-            }
+    // Generate Executor Strips
+    const execPanel = document.getElementById('executor-panel');
+    execPanel.innerHTML = '';
+    this.executors.forEach(exec => {
+      const strip = document.createElement('div');
+      strip.className = 'exec-strip';
+      strip.innerHTML = `
+        <span style="font-size:9px; font-weight:bold; color:var(--text-muted);">EX ${exec.id}</span>
+        <button class="exec-btn flash" onmousedown="app.flashExec(${exec.id}, true)" onmouseup="app.flashExec(${exec.id}, false)">FL</button>
+        <div class="fader-track" id="ex-tr-${exec.id}">
+          <div class="fader-thumb" id="ex-th-${exec.id}"></div>
+        </div>
+        <button class="exec-btn go" onclick="app.triggerExec(${exec.id})">GO</button>
+      `;
+      execPanel.appendChild(strip);
+      this.attachFaderPointer(document.getElementById(`ex-tr-${exec.id}`), (val) => {
+        exec.val = val;
+        document.getElementById(`ex-th-${exec.id}`).style.bottom = `${val * 80}%`;
+      });
+    });
 
-            toggleExecutor(id) {
-                const exec = this.executors.find(x => x.id === id);
-                if (exec) {
-                    exec.active = !exec.active;
-                    exec.level = exec.active ? 100 : 0;
-                    this.renderExecutors();
-                }
-            }
+    // Attach Main Manual Attribute Faders (Dimmer, Pan, Tilt, Zoom)
+    this.attachFaderPointer(document.getElementById('tr-dimmer'), (val) => this.setManualAttr('dimmer', val));
+    this.attachFaderPointer(document.getElementById('tr-pan'), (val) => this.setManualAttr('pan', (val - 0.5) * 540)); // -270 to +270
+    this.attachFaderPointer(document.getElementById('tr-tilt'), (val) => this.setManualAttr('tilt', (val - 0.5) * 270)); // -135 to +135
+    this.attachFaderPointer(document.getElementById('tr-zoom'), (val) => this.setManualAttr('zoom', 5 + val * 35));
+  }
 
-            // --- 3. ANIMATION TICK & MATHEMATICAL EFFECT COMPUTATION ---
-            animate(currentTime) {
-                requestAnimationFrame((t) => this.animate(t));
+  attachFaderPointer(trackEl, callback) {
+    let active = false;
+    const update = (e) => {
+      const rect = trackEl.getBoundingClientRect();
+      const val = Math.max(0, Math.min(1, (rect.bottom - e.clientY) / rect.height));
+      callback(val);
+    };
 
-                const elapsedTime = this.clock.getElapsedTime();
-                const masterLevel = (this.executors[0]?.level || 100) / 100;
+    trackEl.addEventListener('pointerdown', (e) => {
+      active = true;
+      trackEl.setPointerCapture(e.pointerId);
+      update(e);
+    });
+    trackEl.addEventListener('pointermove', (e) => { if (active) update(e); });
+    trackEl.addEventListener('pointerup', (e) => {
+      active = false;
+      try { trackEl.releasePointerCapture(e.pointerId); } catch(err){}
+    });
+  }
 
-                // Reset base values
-                this.fixtures.forEach(f => {
-                    f.dimmer = f.baseDimmer * masterLevel;
-                    f.color = f.baseColor;
-                    f.pan = f.basePan;
-                    f.tilt = f.baseTilt;
-                });
+  // --- 4. SELECTION & MANUAL CONTROL ---
+  toggleSelectFixture(id, isShift) {
+    if (!isShift) this.selectedFixtureIds.clear();
+    if (this.selectedFixtureIds.has(id)) {
+      this.selectedFixtureIds.delete(id);
+    } else {
+      this.selectedFixtureIds.add(id);
+    }
+    this.updateSelectionUI();
+  }
 
-                // Calculate all active phasers dynamically
-                this.activeEffects.forEach(fx => {
-                    this.fixtures.forEach((f, idx) => {
-                        if (fx.fn) f.dimmer = Math.max(0, Math.min(100, fx.fn(elapsedTime, idx)));
-                        if (fx.fn_col) f.color = fx.fn_col(elapsedTime, idx);
-                        if (fx.fn_pt) {
-                            const pt = fx.fn_pt(elapsedTime, idx);
-                            f.pan += pt.pan;
-                            f.tilt += pt.tilt;
-                        }
-                    });
-                });
+  updateSelectionUI() {
+    this.fixtures.forEach(fix => {
+      const btn = document.getElementById(`fix-btn-${fix.id}`);
+      if (this.selectedFixtureIds.has(fix.id)) {
+        btn.classList.add('selected');
+      } else {
+        btn.classList.remove('selected');
+      }
+    });
+    document.getElementById('fix-count-label').innerText = `${this.selectedFixtureIds.size} Selected`;
+  }
 
-                // Synchronize 3D Scene Fixtures & Lighting Beams
-                this.fixtures.forEach(fix => {
-                    const head = this.fixtureMeshes.get(fix.id);
-                    const beam = this.beamMeshes.get(fix.id);
+  setManualAttr(attr, val) {
+    this.selectedFixtureIds.forEach(id => {
+      const fix = this.fixtures.find(f => f.id === id);
+      if (fix) fix[attr] = val;
+    });
 
-                    if (head && beam) {
-                        head.rotation.y = THREE.MathUtils.degToRad(fix.pan);
-                        head.rotation.x = THREE.MathUtils.degToRad(fix.tilt);
+    // Update Fader Numeric Labels
+    if (attr === 'dimmer') document.getElementById('val-dimmer').innerText = `${Math.round(val * 100)}%`;
+    if (attr === 'pan') document.getElementById('val-pan').innerText = `${Math.round(val)}°`;
+    if (attr === 'tilt') document.getElementById('val-tilt').innerText = `${Math.round(val)}°`;
+    if (attr === 'zoom') document.getElementById('val-zoom').innerText = `${Math.round(val)}°`;
+  }
 
-                        beam.rotation.y = head.rotation.y;
-                        beam.rotation.x = head.rotation.x;
+  setHexColor(hex) {
+    document.getElementById('native-color').value = hex;
+    this.setRGBFromPicker(hex);
+  }
 
-                        const beamMat = beam.material;
-                        beamMat.color.set(fix.color);
-                        beamMat.opacity = (fix.dimmer / 100) * 0.45;
+  setRGBFromPicker(hex) {
+    const col = new THREE.Color(hex);
+    this.selectedFixtureIds.forEach(id => {
+      const fix = this.fixtures.find(f => f.id === id);
+      if (fix) fix.color.copy(col);
+    });
+  }
 
-                        const rad = Math.tan(THREE.MathUtils.degToRad(fix.zoom / 2)) * 11;
-                        beam.scale.set(rad, 1, rad);
-                    }
-                });
+  clearProgrammer() {
+    this.selectedFixtureIds.clear();
+    this.updateSelectionUI();
+    this.fxParams.type = 'none';
+    document.getElementById('fx-type').value = 'none';
+    this.fixtures.forEach(fix => {
+      fix.dimmer = 1.0;
+      fix.pan = 0;
+      fix.tilt = 0;
+      fix.color.setHex(0x00d2ff);
+    });
+  }
 
-                // Frame Counter
-                this.fpsCounter++;
-                if (currentTime - this.lastTime >= 1000) {
-                    document.getElementById('fps-disp').innerText = this.fpsCounter;
-                    this.fpsCounter = 0;
-                    this.lastTime = currentTime;
-                }
+  // --- 5. EFFECT & WING PHASER ENGINE (REALTIME MATH) ---
+  updateFxParams() {
+    this.fxParams.type = document.getElementById('fx-type').value;
+    this.fxParams.wing = document.getElementById('wing-mode').value;
+    this.fxParams.speed = parseFloat(document.getElementById('fx-speed').value);
+    this.fxParams.size = parseFloat(document.getElementById('fx-size').value);
+    this.fxParams.phase = parseFloat(document.getElementById('fx-phase').value);
+    this.fxParams.strobe = parseFloat(document.getElementById('fx-strobe').value);
+  }
 
-                this.renderer.render(this.scene, this.camera);
-            }
+  calculatePhaser(timeSec) {
+    const numFix = this.fixtures.length;
+    const bpmFreq = (this.fxParams.speed / 60) * Math.PI * 2;
+    const radPhase = THREE.MathUtils.degToRad(this.fxParams.phase);
+    const amp = (this.fxParams.size / 100);
 
-            updateCameraTransform() {
-                this.camera.position.set(this.camState.pos.x, this.camState.pos.y, this.camState.pos.z);
-                this.camera.lookAt(0, 3, 0);
-            }
+    this.fixtures.forEach((fix, idx) => {
+      // Calculate Base Phase Indexing (Wing Logic)
+      let phaseOffset = 0;
+      const normIdx = idx / (numFix - 1); // 0 to 1
 
-            setCameraPreset(preset) {
-                if (preset === 'front') this.camState.pos = { x: 0, y: 7, z: 22 };
-                if (preset === 'top') this.camState.pos = { x: 0, y: 26, z: 0.1 };
-                if (preset === 'side') this.camState.pos = { x: 24, y: 7, z: 0 };
-                if (preset === 'audience') this.camState.pos = { x: 0, y: 2, z: 18 };
-                document.getElementById('cam-mode-disp').innerText = `CAM: ${preset.toUpperCase()}`;
-                this.updateCameraTransform();
-            }
+      switch (this.fxParams.wing) {
+        case 'open': // Center out
+          phaseOffset = Math.abs(idx - (numFix - 1) / 2) * radPhase;
+          break;
+        case 'close': // Inward
+          phaseOffset = ((numFix - 1) / 2 - Math.abs(idx - (numFix - 1) / 2)) * radPhase;
+          break;
+        case 'symm': // Mirroring left/right half
+          const half = Math.floor(numFix / 2);
+          const symmIdx = idx < half ? idx : (numFix - 1 - idx);
+          phaseOffset = symmIdx * radPhase;
+          break;
+        case 'alt': // Alternating 180 deg
+          phaseOffset = (idx % 2 === 0 ? 0 : Math.PI);
+          break;
+        default: // Linear phase spread
+          phaseOffset = normIdx * radPhase;
+          break;
+      }
 
-            // --- 4. CLI SYNTAX ---
-            setupCLI() {
-                const input = document.getElementById('cli-input');
-                input.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        const val = input.value.trim();
-                        if (val) {
-                            this.parseCommand(val);
-                            input.value = '';
-                        }
-                    }
-                });
-            }
+      const t = timeSec * bpmFreq + phaseOffset;
 
-            parseCommand(cmd) {
-                this.logCLI(`> ${cmd}`);
-                const parts = cmd.split(/\s+/);
-                const head = parts[0].toLowerCase();
+      // Apply Effect Waveforms
+      let fxPan = 0;
+      let fxTilt = 0;
+      let fxDim = 0;
 
-                if (head === 'fixture' || head === 'fix') {
-                    if (parts[2] && parts[2].toLowerCase() === 'thru') {
-                        this.selectedFixtureIds.clear();
-                        const s = parseInt(parts[1]), e = parseInt(parts[3]);
-                        this.fixtures.forEach(f => { if (f.id >= s && f.id <= e) this.selectedFixtureIds.add(f.id); });
-                        this.renderFixtureList();
-                    }
-                } else if (head === 'at' || head === 'dimmer') {
-                    const v = parseInt(parts[1]);
-                    this.fixtures.forEach(f => { if (this.selectedFixtureIds.has(f.id)) f.baseDimmer = v; });
-                } else if (head === 'clear') {
-                    this.selectedFixtureIds.clear();
-                    this.renderFixtureList();
-                } else if (head === 'effect' || head === 'fx') {
-                    const found = this.effectLibrary.find(x => x.name.toLowerCase().includes(parts[1].toLowerCase()));
-                    if (found) this.toggleEffect(found);
-                }
-            }
+      switch (this.fxParams.type) {
+        case 'pan_sin':
+          fxPan = Math.sin(t) * 90 * amp;
+          break;
+        case 'tilt_sin':
+          fxTilt = Math.sin(t) * 45 * amp;
+          break;
+        case 'pt_circle':
+          fxPan = Math.sin(t) * 60 * amp;
+          fxTilt = Math.cos(t) * 35 * amp;
+          break;
+        case 'pt_wave':
+          fxPan = Math.sin(t) * 45 * amp;
+          fxTilt = Math.sin(t * 2) * 30 * amp;
+          break;
+        case 'dim_sin':
+          fxDim = (Math.sin(t) * 0.5) * amp;
+          break;
+        case 'rgb_rainbow':
+          const hue = (t / (Math.PI * 2)) % 1;
+          fix.color.setHSL(hue, 1.0, 0.5);
+          break;
+      }
 
-            logCLI(msg, type = "") {
-                const out = document.getElementById('cli-output');
-                out.style.display = 'block';
-                const d = document.createElement('div');
-                d.className = type;
-                d.innerText = msg;
-                out.appendChild(d);
-                out.scrollTop = out.scrollHeight;
-            }
+      // Compute Final Combined Fixture Attributes
+      const finalPan = fix.pan + fxPan;
+      const finalTilt = fix.tilt + fxTilt;
+      const finalDimmer = Math.max(0, Math.min(1, fix.dimmer + fxDim));
 
-            saveShow() {
-                localStorage.setItem('ma_show_data', JSON.stringify(this.fixtures));
-                this.logCLI("Show setup saved successfully.", "info");
-            }
+      // Apply Strobe Modulation
+      let strobeMul = 1.0;
+      if (this.fxParams.strobe > 0) {
+        strobeMul = Math.sin(timeSec * this.fxParams.strobe * 15) > 0 ? 1.0 : 0.0;
+      }
+
+      // Update Three.js 3D Fixture Kinematics Realtime
+      this.updateFixture3DKinematics(fix, finalPan, finalTilt, finalDimmer * strobeMul);
+
+      // Write to Virtual DMX Buffer
+      this.writeDmx(fix, finalPan, finalTilt, finalDimmer);
+    });
+  }
+
+  updateFixture3DKinematics(fix, panDeg, tiltDeg, activeDimmer) {
+    if (!fix.headMesh) return;
+
+    // Convert Pan/Tilt Angles to Euler Rotation Matrix
+    const panRad = THREE.MathUtils.degToRad(panDeg);
+    const tiltRad = THREE.MathUtils.degToRad(tiltDeg);
+
+    fix.headMesh.rotation.y = panRad;
+    fix.headMesh.rotation.x = tiltRad;
+
+    // Beam Opacity & Color Update
+    fix.beamMesh.color.copy(fix.color);
+    fix.beamMesh.opacity = activeDimmer * 0.4; // Volumetric intensity
+
+    // Spotlight Hardware Update
+    fix.spotLight.color.copy(fix.color);
+    fix.spotLight.intensity = activeDimmer * 6.0;
+    fix.spotLight.angle = THREE.MathUtils.degToRad(fix.zoom);
+
+    // Dynamic Target Point calculation for Spot Light Focus
+    const dir = new THREE.Vector3(0, -1, 0);
+    dir.applyEuler(new THREE.Euler(tiltRad, panRad, 0, 'YXZ'));
+    fix.lightTarget.position.copy(fix.meshGroup.position).add(dir.multiplyScalar(10));
+  }
+
+  writeDmx(fix, pan, tilt, dimmer) {
+    const base = fix.dmxStart - 1;
+    this.dmxBuffer[base] = Math.round(dimmer * 255);
+    this.dmxBuffer[base + 1] = Math.round(((pan + 270) / 540) * 255);
+    this.dmxBuffer[base + 2] = Math.round(((tilt + 135) / 270) * 255);
+    this.dmxBuffer[base + 3] = Math.round(fix.color.r * 255);
+    this.dmxBuffer[base + 4] = Math.round(fix.color.g * 255);
+    this.dmxBuffer[base + 5] = Math.round(fix.color.b * 255);
+  }
+
+  // --- 6. EXECUTOR & CUE SYSTEM ---
+  storeCue() {
+    const cueState = this.fixtures.map(f => ({
+      id: f.id, dimmer: f.dimmer, pan: f.pan, tilt: f.tilt, color: f.color.getHex()
+    }));
+    this.cues.push(cueState);
+    alert(`Cue ${this.cues.length} stored successfully!`);
+  }
+
+  triggerExec(id) {
+    if (this.cues.length === 0) return;
+    const cue = this.cues[this.currentCueIndex];
+    cue.forEach(saved => {
+      const fix = this.fixtures.find(f => f.id === saved.id);
+      if (fix) {
+        fix.dimmer = saved.dimmer;
+        fix.pan = saved.pan;
+        fix.tilt = saved.tilt;
+        fix.color.setHex(saved.color);
+      }
+    });
+    this.currentCueIndex = (this.currentCueIndex + 1) % this.cues.length;
+  }
+
+  flashExec(id, active) {
+    this.fixtures.forEach(fix => { fix.dimmer = active ? 1.0 : 0.0; });
+  }
+
+  // --- 7. COMMAND LINE INTERPRETER (CLI) ---
+  initEvents() {
+    // Keyboard Camera Steering Controls
+    window.addEventListener('keydown', (e) => {
+      if (document.activeElement === this.cmdInput) return;
+      const speed = 0.4;
+      if (e.key === 'w' || e.key === 'ArrowUp') this.camera.position.z -= speed;
+      if (e.key === 's' || e.key === 'ArrowDown') this.camera.position.z += speed;
+      if (e.key === 'a' || e.key === 'ArrowLeft') this.camera.position.x -= speed;
+      if (e.key === 'd' || e.key === 'ArrowRight') this.camera.position.x += speed;
+      if (e.key === 'q') this.camera.position.y -= speed;
+      if (e.key === 'e') this.camera.position.y += speed;
+      if (e.key === 'F1') { e.preventDefault(); this.toggleHelp(); }
+    });
+
+    // CLI Handler
+    this.cmdInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        this.parseCommand(this.cmdInput.value.trim());
+        this.cmdInput.value = '';
+      }
+    });
+  }
+
+  parseCommand(cmd) {
+    if (!cmd) return;
+    const tokens = cmd.split(' ');
+    const action = tokens[0].toLowerCase();
+
+    if (action === 'fixture' || action === 'fix') {
+      if (tokens[2] === 'thru') {
+        const start = parseInt(tokens[1]);
+        const end = parseInt(tokens[3]);
+        this.selectedFixtureIds.clear();
+        for (let i = start; i <= end; i++) this.selectedFixtureIds.add(i);
+      } else {
+        this.selectedFixtureIds.clear();
+        this.selectedFixtureIds.add(parseInt(tokens[1]));
+      }
+      this.updateSelectionUI();
+    } else if (action === 'dimmer' || action === 'dim') {
+      this.setManualAttr('dimmer', parseFloat(tokens[1]) / 100);
+    } else if (action === 'pan') {
+      this.setManualAttr('pan', parseFloat(tokens[1]));
+    } else if (action === 'tilt') {
+      this.setManualAttr('tilt', parseFloat(tokens[1]));
+    } else if (action === 'color') {
+      const c = tokens[1].toLowerCase();
+      if (c === 'red') this.setHexColor('#ff0000');
+      if (c === 'blue') this.setHexColor('#0055ff');
+      if (c === 'green') this.setHexColor('#00ff00');
+      if (c === 'white') this.setHexColor('#ffffff');
+    } else if (action === 'clear' || action === 'ff') {
+      this.clearProgrammer();
+    } else if (action === 'go') {
+      this.triggerExec(1);
+    } else if (action === 'help') {
+      this.toggleHelp();
+    }
+  }
+
+  // --- 8. CAMERA PRESETS & PERSPECTIVES ---
+  setCam(preset) {
+    if (preset === 'front') { this.camera.position.set(0, 4, 16); this.controls.target.set(0, 3, 0); }
+    if (preset === 'audience') { this.camera.position.set(0, 1.2, 10); this.controls.target.set(0, 4, 0); }
+    if (preset === 'top') { this.camera.position.set(0, 18, 0.1); this.controls.target.set(0, 0, 0); }
+    if (preset === 'side') { this.camera.position.set(-16, 4, 0); this.controls.target.set(0, 3, 0); }
+  }
+
+  toggleHelp() {
+    const modal = document.getElementById('help-modal');
+    modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+  }
+
+  // --- 9. SAVE / LOAD SHOW FILE ---
+  saveShow() {
+    const showData = {
+      cues: this.cues,
+      fxParams: this.fxParams,
+      fixtures: this.fixtures.map(f => ({ id: f.id, dimmer: f.dimmer, pan: f.pan, tilt: f.tilt, color: f.color.getHex() }))
+    };
+    localStorage.setItem('aether_showfile', JSON.stringify(showData));
+    alert('Show saved to LocalStorage successfully!');
+  }
+
+  loadShow() {
+    const raw = localStorage.getItem('aether_showfile');
+    if (!raw) return alert('No saved show found!');
+    const data = JSON.parse(raw);
+    this.cues = data.cues || [];
+    if (data.fixtures) {
+      data.fixtures.forEach(saved => {
+        const fix = this.fixtures.find(f => f.id === saved.id);
+        if (fix) {
+          fix.dimmer = saved.dimmer;
+          fix.pan = saved.pan;
+          fix.tilt = saved.tilt;
+          fix.color.setHex(saved.color);
         }
+      });
+    }
+    alert('Show loaded successfully!');
+  }
 
-        let app;
-        window.addEventListener('DOMContentLoaded', () => { app = new LightingConsoleApp(); });
-    </script>
+  // --- 10. MAIN ANIMATION & ENGINE LOOP ---
+  animate(timeMs) {
+    requestAnimationFrame((t) => this.animate(t));
+
+    const timeSec = timeMs * 0.001;
+
+    // Calculate Dynamic Phaser / Wing Engine
+    this.calculatePhaser(timeSec);
+
+    // Render Three.js Scene & Update Orbit Controls
+    this.controls.update();
+    this.renderer.render(this.scene, this.camera);
+
+    // Update Top Bar Clock
+    const d = new Date();
+    document.getElementById('clock').innerText = d.toTimeString().split(' ')[0];
+
+    // DMX Monitor Stream Display
+    document.getElementById('dmx-mon').innerText = `U1: [001:${this.dmxBuffer[0]}] [002:${this.dmxBuffer[1]}] [003:${this.dmxBuffer[2]}]`;
+  }
+}
+
+// Instantiate Console App
+let app;
+window.addEventListener('DOMContentLoaded', () => { app = new LightingConsole(); });
+</script>
 </body>
 </html>
