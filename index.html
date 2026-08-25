@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MA3 onPC Web Simulation</title>
+    <title>MA3 onPC Web Simulation - Extended Control</title>
     <style>
         * {
             box-sizing: border-box;
@@ -66,7 +66,7 @@
         .workspace {
             flex: 1;
             display: grid;
-            grid-template-columns: 2.5fr 1fr;
+            grid-template-columns: 2fr 1.2fr 1fr;
             grid-template-rows: 1fr 180px;
             gap: 4px;
             padding: 4px;
@@ -134,6 +134,106 @@
             border-left: 3px solid #ff9900;
         }
 
+        /* ATTRIBUTE FADERS PANEL */
+        .attr-faders-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            padding: 10px;
+            height: 100%;
+            align-items: center;
+        }
+
+        .attr-fader-box {
+            background: #202020;
+            border: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 4px;
+            border-radius: 3px;
+            height: 100%;
+            justify-content: space-between;
+        }
+
+        .attr-title {
+            font-size: 10px;
+            color: #ff9900;
+            font-weight: bold;
+        }
+
+        .attr-val {
+            font-size: 12px;
+            color: #00d2ff;
+            font-family: monospace;
+            margin-top: 2px;
+        }
+
+        .vertical-slider-track {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            margin: 8px 0;
+        }
+
+        .vertical-slider-track input[type=range] {
+            writing-mode: vertical-lr;
+            direction: rtl;
+            width: 20px;
+            height: 120px;
+            cursor: pointer;
+        }
+
+        /* RIGHT PANEL: COLOR & EFFECTS */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .color-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 8px;
+            font-size: 11px;
+        }
+
+        .color-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .color-row input[type="range"] {
+            flex: 1;
+        }
+
+        /* FX / PHASER PANEL */
+        .fx-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            padding: 8px;
+        }
+
+        .fx-btn {
+            background: #2b2b2b;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 8px;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 3px;
+            text-align: center;
+        }
+
+        .fx-btn.active {
+            background-color: #0055aa;
+            border-color: #0088ff;
+        }
+
         /* VISUALIZER CANVAS */
         #visualizer-container {
             position: relative;
@@ -151,63 +251,9 @@
             border: 1px solid #222;
         }
 
-        /* ENCODERS / RIGHT SIDE */
-        .right-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .encoders-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 5px;
-            padding: 5px;
-        }
-
-        .encoder-box {
-            background: #202020;
-            border: 1px solid #333;
-            padding: 6px;
-            text-align: center;
-            border-radius: 3px;
-        }
-
-        .encoder-title {
-            font-size: 10px;
-            color: #888;
-            margin-bottom: 2px;
-        }
-
-        .encoder-value {
-            font-size: 14px;
-            color: #00d2ff;
-            font-weight: bold;
-            font-family: monospace;
-        }
-
-        /* COLOR PICKER PANEL */
-        .color-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            padding: 5px;
-            font-size: 11px;
-        }
-
-        .color-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .color-row input[type="range"] {
-            flex: 1;
-        }
-
         /* EXECUTORS (BOTTOM AREA) */
         .executors-area {
-            grid-column: span 2;
+            grid-column: span 3;
             background-color: #151515;
             border: 1px solid #333;
             display: flex;
@@ -219,7 +265,7 @@
         .executor-fader-strip {
             background: #1e1e1e;
             border: 1px solid #333;
-            width: 70px;
+            width: 75px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -245,7 +291,7 @@
             writing-mode: vertical-lr;
             direction: rtl;
             width: 20px;
-            height: 90px;
+            height: 80px;
             cursor: pointer;
         }
 
@@ -270,7 +316,7 @@
         .exec-btn.go { background-color: #004400; border-color: #008800; }
         .exec-btn.flash { background-color: #443300; border-color: #aa8800; }
 
-        /* COMMAND LINE BAR (BOTTOM-MOST) */
+        /* COMMAND LINE BAR */
         .command-bar {
             background-color: #111;
             border-top: 2px solid #ff9900;
@@ -279,6 +325,7 @@
             align-items: center;
             padding: 0 10px;
             gap: 10px;
+            grid-column: span 3;
         }
 
         .command-prompt-label {
@@ -310,7 +357,7 @@
             <button class="ma-btn" onclick="openModal('Fixture')">Fixture Sheet</button>
             <button class="ma-btn" onclick="clearProgrammer()">Clear 2x</button>
         </div>
-        <div style="font-size: 11px; color: #888;">grandMA3 onPC - Web Simulator v1.0</div>
+        <div style="font-size: 11px; color: #888;">grandMA3 onPC - Web Simulator (Extended FX & Faders)</div>
         <div class="menu-group">
             <button class="ma-btn" style="background:#400; color:#fff;" onclick="resetAll()">Reset</button>
         </div>
@@ -319,7 +366,7 @@
     <!-- MAIN GRID WORKSPACE -->
     <div class="workspace">
         
-        <!-- TOP LEFT: FIXTURE SHEET / VIEW -->
+        <!-- TOP LEFT: FIXTURE SHEET -->
         <div class="ma-window">
             <div class="window-header">
                 <span>Fixture Sheet [All Fixtures]</span>
@@ -331,45 +378,60 @@
                         <tr>
                             <th>ID</th>
                             <th>Name</th>
-                            <th>Patch</th>
-                            <th>Dimmer</th>
-                            <th>RGBW Colors</th>
-                            <th>Pan/Tilt</th>
+                            <th>Dim</th>
+                            <th>Pan / Tilt</th>
+                            <th>Zoom</th>
+                            <th>Color</th>
                         </tr>
                     </thead>
-                    <tbody id="fixture-table-body">
-                        <!-- Rendered by JS -->
-                    </tbody>
+                    <tbody id="fixture-table-body"></tbody>
                 </table>
             </div>
         </div>
 
-        <!-- TOP RIGHT: ENCODERS & COLOR PICKER -->
-        <div class="right-panel">
-            <div class="ma-window" style="flex: 1;">
-                <div class="window-header">Virtual Encoders</div>
-                <div class="encoders-grid">
-                    <div class="encoder-box">
-                        <div class="encoder-title">DIMMER</div>
-                        <div class="encoder-value" id="enc-dim">100%</div>
+        <!-- MIDDLE: DEDICATED ATTRIBUTE FADERS (DIMMER, PAN, TILT, ZOOM) -->
+        <div class="ma-window">
+            <div class="window-header">Programmer Attribute Faders</div>
+            <div class="attr-faders-grid">
+                <!-- Dimmer Fader -->
+                <div class="attr-fader-box">
+                    <span class="attr-title">DIM</span>
+                    <div class="vertical-slider-track">
+                        <input type="range" id="fader-dim" min="0" max="100" value="100" oninput="updateAttributeFromFader('dimmer', this.value)">
                     </div>
-                    <div class="encoder-box">
-                        <div class="encoder-title">PAN</div>
-                        <div class="encoder-value" id="enc-pan">50°</div>
+                    <span class="attr-val" id="val-dim">100%</span>
+                </div>
+                <!-- Pan Fader -->
+                <div class="attr-fader-box">
+                    <span class="attr-title">PAN</span>
+                    <div class="vertical-slider-track">
+                        <input type="range" id="fader-pan" min="0" max="100" value="50" oninput="updateAttributeFromFader('pan', this.value)">
                     </div>
-                    <div class="encoder-box">
-                        <div class="encoder-title">TILT</div>
-                        <div class="encoder-value" id="enc-tilt">50°</div>
+                    <span class="attr-val" id="val-pan">50°</span>
+                </div>
+                <!-- Tilt Fader -->
+                <div class="attr-fader-box">
+                    <span class="attr-title">TILT</span>
+                    <div class="vertical-slider-track">
+                        <input type="range" id="fader-tilt" min="0" max="100" value="50" oninput="updateAttributeFromFader('tilt', this.value)">
                     </div>
-                    <div class="encoder-box">
-                        <div class="encoder-title">ZOOM</div>
-                        <div class="encoder-value" id="enc-zoom">25°</div>
+                    <span class="attr-val" id="val-tilt">50°</span>
+                </div>
+                <!-- Zoom Fader -->
+                <div class="attr-fader-box">
+                    <span class="attr-title">ZOOM</span>
+                    <div class="vertical-slider-track">
+                        <input type="range" id="fader-zoom" min="0" max="100" value="25" oninput="updateAttributeFromFader('zoom', this.value)">
                     </div>
+                    <span class="attr-val" id="val-zoom">25°</span>
                 </div>
             </div>
+        </div>
 
-            <div class="ma-window" style="flex: 1;">
-                <div class="window-header">Color Picker & Mix</div>
+        <!-- TOP RIGHT: COLOR & PHASER FX ENGINE -->
+        <div class="right-panel">
+            <div class="ma-window" style="flex: 1.2;">
+                <div class="window-header">Color Picker (RGB)</div>
                 <div class="color-controls">
                     <div class="color-row">
                         <span>R:</span> <input type="range" id="range-r" min="0" max="255" value="255" oninput="updateColorFromSliders()">
@@ -382,51 +444,66 @@
                     </div>
                 </div>
             </div>
+
+            <div class="ma-window" style="flex: 1;">
+                <div class="window-header">Phaser & Effects Engine</div>
+                <div class="fx-grid">
+                    <button class="fx-btn" id="fx-dimmer-chase" onclick="toggleEffect('dimmerChase')">Dimmer Chase</button>
+                    <button class="fx-btn" id="fx-pan-wave" onclick="toggleEffect('panWave')">Pan Circle FX</button>
+                    <button class="fx-btn" id="fx-rainbow" onclick="toggleEffect('rainbow')">Color Rainbow</button>
+                    <button class="fx-btn" style="background:#400;" onclick="stopAllEffects()">Stop All FX</button>
+                </div>
+            </div>
         </div>
 
         <!-- BOTTOM: STAGE VISUALIZER -->
-        <div class="ma-window" style="grid-column: span 2; height: 170px;">
-            <div class="window-header">Visualizer Stage (2D Beam Simulation)</div>
+        <div class="ma-window" style="grid-column: span 3; height: 160px;">
+            <div class="window-header">Visualizer Stage (Real-time Beam & FX Simulation)</div>
             <div id="visualizer-container">
-                <canvas id="simCanvas" width="600" height="130"></canvas>
+                <canvas id="simCanvas" width="800" height="120"></canvas>
             </div>
         </div>
 
         <!-- EXECUTORS STRIP -->
-        <div class="executors-area" id="executors-container">
-            <!-- Dynamic Executors generated via JS -->
+        <div class="executors-area" id="executors-container"></div>
+
+        <!-- COMMAND LINE BAR -->
+        <div class="command-bar">
+            <span class="command-prompt-label">MA3 &gt;</span>
+            <input type="text" id="commandInput" class="command-input" placeholder="Type command e.g., 'Fixture 1 At 50' or 'Store Cue 1'..." onkeypress="handleCommand(event)">
+            <button class="ma-btn" style="height: 28px; background:#ff9900; color:#000;" onclick="executeCommandBtn()">Please</button>
         </div>
 
     </div>
 
-    <!-- COMMAND LINE BAR -->
-    <div class="command-bar">
-        <span class="command-prompt-label">MA3 &gt;</span>
-        <input type="text" id="commandInput" class="command-input" placeholder="Type command e.g., 'Fixture 1 At 50' or 'Store Cue 1'..." onkeypress="handleCommand(event)">
-        <button class="ma-btn" style="height: 28px; background:#ff9900; color:#000;" onclick="executeCommandBtn()">Please</button>
-    </div>
-
-    <!-- JAVASCRIPT CORE LOGIC -->
+    <!-- JAVASCRIPT LOGIC -->
     <script>
-        // --- FIXTURE DATABASE (LIBRARY) ---
+        // --- FIXTURE DATABASE ---
         let fixtures = [
-            { id: 1, name: 'Spot 01', patch: '1.001', dimmer: 100, r: 255, g: 0, b: 0, pan: 40, tilt: 50, selected: true },
-            { id: 2, name: 'Spot 02', patch: '1.017', dimmer: 100, r: 0, g: 255, b: 0, pan: 48, tilt: 50, selected: false },
-            { id: 3, name: 'Wash 01', patch: '1.033', dimmer: 100, r: 0, g: 0, b: 255, pan: 52, tilt: 50, selected: false },
-            { id: 4, name: 'Wash 02', patch: '1.049', dimmer: 100, r: 255, g: 255, b: 0, pan: 60, tilt: 50, selected: false }
+            { id: 1, name: 'Spot 01', patch: '1.001', dimmer: 100, r: 255, g: 0, b: 0, pan: 30, tilt: 50, zoom: 20, selected: true },
+            { id: 2, name: 'Spot 02', patch: '1.017', dimmer: 100, r: 0, g: 255, b: 0, pan: 42, tilt: 50, zoom: 20, selected: false },
+            { id: 3, name: 'Wash 01', patch: '1.033', dimmer: 100, r: 0, g: 0, b: 255, pan: 58, tilt: 50, zoom: 35, selected: false },
+            { id: 4, name: 'Wash 02', patch: '1.049', dimmer: 100, r: 255, g: 255, b: 0, pan: 70, tilt: 50, zoom: 35, selected: false }
         ];
 
         let executors = [
-            { id: 1, name: "Main Cue", level: 100, active: true },
-            { id: 2, name: "Strobe FX", level: 0, active: false },
-            { id: 3, name: "Blinder", level: 0, active: false },
-            { id: 4, name: "House", level: 80, active: false },
-            { id: 5, name: "Special", level: 0, active: false }
+            { id: 1, name: "Main Cue", level: 100 },
+            { id: 2, name: "Strobe FX", level: 0 },
+            { id: 3, name: "Blinder", level: 0 },
+            { id: 4, name: "House", level: 80 },
+            { id: 5, name: "Special", level: 0 }
         ];
+
+        // Active Effects state
+        let activeEffects = {
+            dimmerChase: false,
+            panWave: false,
+            rainbow: false
+        };
+        let fxTick = 0;
 
         // --- RENDER UI ---
         function renderUI() {
-            // Render Fixture Table
             const tbody = document.getElementById('fixture-table-body');
             tbody.innerHTML = '';
             fixtures.forEach(f => {
@@ -436,10 +513,10 @@
                 tr.innerHTML = `
                     <td>${f.id}</td>
                     <td>${f.name}</td>
-                    <td>${f.patch}</td>
                     <td>${f.dimmer}%</td>
-                    <td><span style="display:inline-block;width:12px;height:12px;background:rgb(${f.r},${f.g},${f.b});border-radius:2px;vertical-align:middle;"></span> RGB(${f.r},${f.g},${f.b})</td>
                     <td>P:${f.pan}° T:${f.tilt}°</td>
+                    <td>${f.zoom}°</td>
+                    <td><span style="display:inline-block;width:10px;height:10px;background:rgb(${f.r},${f.g},${f.b});border-radius:2px;vertical-align:middle;"></span> RGB(${f.r},${f.g},${f.b})</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -464,15 +541,24 @@
                 execContainer.appendChild(strip);
             });
 
-            updateEncodersDisplay();
+            syncFadersWithSelection();
         }
 
-        function updateEncodersDisplay() {
+        function syncFadersWithSelection() {
             let sel = fixtures.find(f => f.selected);
             if (sel) {
-                document.getElementById('enc-dim').innerText = sel.dimmer + '%';
-                document.getElementById('enc-pan').innerText = sel.pan + '°';
-                document.getElementById('enc-tilt').innerText = sel.tilt + '°';
+                document.getElementById('fader-dim').value = sel.dimmer;
+                document.getElementById('val-dim').innerText = sel.dimmer + '%';
+
+                document.getElementById('fader-pan').value = sel.pan;
+                document.getElementById('val-pan').innerText = sel.pan + '°';
+
+                document.getElementById('fader-tilt').value = sel.tilt;
+                document.getElementById('val-tilt').innerText = sel.tilt + '°';
+
+                document.getElementById('fader-zoom').value = sel.zoom;
+                document.getElementById('val-zoom').innerText = sel.zoom + '°';
+
                 document.getElementById('range-r').value = sel.r;
                 document.getElementById('range-g').value = sel.g;
                 document.getElementById('range-b').value = sel.b;
@@ -486,15 +572,14 @@
             renderUI();
         }
 
-        function clearProgrammer() {
-            fixtures.forEach(f => f.selected = false);
-            if(fixtures.length > 0) fixtures[0].selected = true;
-            renderUI();
-        }
-
-        function resetAll() {
-            fixtures.forEach(f => { f.dimmer = 100; f.r = 255; f.g = 255; f.b = 255; });
-            renderUI();
+        function updateAttributeFromFader(attr, val) {
+            let numVal = parseInt(val);
+            fixtures.forEach(f => {
+                if (f.selected) {
+                    f[attr] = numVal;
+                }
+            });
+            document.getElementById(`val-${attr === 'dimmer' ? 'dim' : attr}`).innerText = numVal + (attr === 'dimmer' ? '%' : '°');
         }
 
         function updateColorFromSliders() {
@@ -507,7 +592,6 @@
                     f.r = r; f.g = g; f.b = b;
                 }
             });
-            renderUI();
         }
 
         function updateExecutor(id, val) {
@@ -516,10 +600,35 @@
         }
 
         function trigExec(id, action) {
-            console.log(`Executor ${id} triggered action: ${action}`);
+            console.log(`Executor ${id} action: ${action}`);
         }
 
-        // --- COMMAND LINE PROCESSOR (MA Syntax Parser) ---
+        function clearProgrammer() {
+            fixtures.forEach(f => f.selected = false);
+            if(fixtures.length > 0) fixtures[0].selected = true;
+            renderUI();
+        }
+
+        function resetAll() {
+            fixtures.forEach(f => { f.dimmer = 100; f.r = 255; f.g = 255; f.b = 255; f.pan = 50; f.tilt = 50; f.zoom = 25; });
+            stopAllEffects();
+            renderUI();
+        }
+
+        // --- EFFECT / PHASER ENGINE ---
+        function toggleEffect(fxName) {
+            activeEffects[fxName] = !activeEffects[fxName];
+            document.getElementById(`fx-${fxName === 'dimmerChase' ? 'dimmer-chase' : (fxName === 'panWave' ? 'pan-wave' : 'rainbow')}`).className = `fx-btn ${activeEffects[fxName] ? 'active' : ''}`;
+        }
+
+        function stopAllEffects() {
+            activeEffects.dimmerChase = false;
+            activeEffects.panWave = false;
+            activeEffects.rainbow = false;
+            document.querySelectorAll('.fx-btn').forEach(btn => btn.classList.remove('active'));
+        }
+
+        // --- COMMAND LINE PROCESSOR ---
         function handleCommand(e) {
             if (e.key === 'Enter') {
                 executeCommandBtn();
@@ -535,28 +644,20 @@
 
         function parseMACommand(cmd) {
             let parts = cmd.toLowerCase().split(' ');
-            
-            // Contoh parsing dasar ala MA: "fixture 1 at 50" atau "at 0"
             if (parts[0] === 'fixture' || parts[0] === 'fix') {
                 let targetId = parseInt(parts[1]);
                 fixtures.forEach(f => {
-                    f.selected = (f.id === targetId || parts[1] === 'thru');
+                    f.selected = (f.id === targetId);
                 });
-                
-                // Cek apakah ada perintah "at" di belakangnya
                 let atIndex = parts.indexOf('at');
                 if (atIndex !== -1 && parts[atIndex + 1]) {
                     let val = parseInt(parts[atIndex + 1]);
-                    fixtures.forEach(f => {
-                        if (f.selected) f.dimmer = val;
-                    });
+                    fixtures.forEach(f => { if (f.selected) f.dimmer = val; });
                 }
             } else if (parts[0] === 'at') {
                 let val = parseInt(parts[1]);
                 if (!isNaN(val)) {
-                    fixtures.forEach(f => {
-                        if (f.selected) f.dimmer = val;
-                    });
+                    fixtures.forEach(f => { if (f.selected) f.dimmer = val; });
                 }
             } else if (parts[0] === 'clear') {
                 clearProgrammer();
@@ -567,14 +668,15 @@
         }
 
         function openModal(type) {
-            alert("Opening " + type + " modal window (MA3 style setup view).");
+            alert("Opening " + type + " setup view.");
         }
 
-        // --- 2D CANVAS VISUALIZER ENGINE ---
+        // --- 2D CANVAS VISUALIZER ENGINE (WITH EFFECT SIMULATION) ---
         const canvas = document.getElementById('simCanvas');
         const ctx = canvas.getContext('2d');
 
         function drawVisualizer() {
+            fxTick += 0.05;
             ctx.fillStyle = '#050505';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -582,47 +684,89 @@
 
             fixtures.forEach((f, idx) => {
                 let x = spacing * (idx + 1);
-                let y = 20;
+                let y = 15;
 
-                // Gambar fixture head di atas
-                ctx.fillStyle = f.selected ? '#ff9900' : '#555';
-                ctx.fillRect(x - 12, y - 5, 24, 10);
+                // Kalkulasi Efek / Phaser secara Realtime
+                let currentDim = f.dimmer;
+                let currentPan = f.pan;
+                let currentR = f.r, currentG = f.g, currentB = f.b;
 
-                // Hitung sudut beam berdasarkan Pan/Tilt simulasi
-                let beamSpread = (f.dimmer / 100) * 40;
-                let targetX = x + (f.pan - 50) * 1.5;
+                if (activeEffects.dimmerChase) {
+                    let wave = Math.sin(fxTick * 3 + idx);
+                    currentDim = Math.floor(((wave + 1) / 2) * f.dimmer);
+                }
+                if (activeEffects.panWave) {
+                    let wave = Math.sin(fxTick * 2 + idx * 0.8);
+                    currentPan = Math.min(100, Math.max(0, f.pan + wave * 25));
+                }
+                if (activeEffects.rainbow) {
+                    let hue = (fxTick * 50 + idx * 60) % 360;
+                    // konversi sederhana HUE ke RGB
+                    let rgb = hslToRgb(hue / 360, 1, 0.5);
+                    currentR = rgb[0]; currentG = rgb[1]; currentB = rgb[2];
+                }
 
-                // Gambar kerucut cahaya (Beam Projection)
-                if (f.dimmer > 0) {
+                // Gambar Fixture Head
+                ctx.fillStyle = f.selected ? '#ff9900' : '#444';
+                ctx.fillRect(x - 14, y - 5, 28, 10);
+
+                let beamWidth = f.zoom * 0.8;
+                let targetX = x + (currentPan - 50) * 2.2;
+
+                // Render Beam
+                if (currentDim > 0) {
                     ctx.save();
                     let grad = ctx.createLinearGradient(x, y, targetX, canvas.height);
-                    grad.addColorStop(0, `rgba(${f.r}, ${f.g}, ${f.b}, ${f.dimmer / 100 * 0.7})`);
-                    grad.addColorStop(1, `rgba(${f.r}, ${f.g}, ${f.b}, 0)`);
+                    grad.addColorStop(0, `rgba(${currentR}, ${currentG}, ${currentB}, ${currentDim / 100 * 0.8})`);
+                    grad.addColorStop(1, `rgba(${currentR}, ${currentG}, ${currentB}, 0)`);
 
                     ctx.fillStyle = grad;
                     ctx.beginPath();
                     ctx.moveTo(x, y);
-                    ctx.lineTo(targetX - beamSpread, canvas.height);
-                    ctx.lineTo(targetX + beamSpread, canvas.height);
+                    ctx.lineTo(targetX - beamWidth, canvas.height);
+                    ctx.lineTo(targetX + beamWidth, canvas.height);
                     ctx.closePath();
                     ctx.fill();
                     ctx.restore();
 
-                    // Titik lampu di lantai stage
+                    // Lantai Stage Spot
                     ctx.beginPath();
-                    ctx.arc(targetX, canvas.height - 5, 8 + (f.dimmer/10), 0, Math.PI * 2);
-                    ctx.fillStyle = `rgb(${f.r}, ${f.g}, ${f.b})`;
-                    ctx.shadowBlur = 15;
-                    ctx.shadowColor = `rgb(${f.r}, ${f.g}, ${f.b})`;
+                    ctx.arc(targetX, canvas.height - 5, 6 + (f.zoom / 3), 0, Math.PI * 2);
+                    ctx.fillStyle = `rgb(${currentR}, ${currentG}, ${currentB})`;
+                    ctx.shadowBlur = 12;
+                    ctx.shadowColor = `rgb(${currentR}, ${currentG}, ${currentB})`;
                     ctx.fill();
-                    ctx.shadowBlur = 0; // reset
+                    ctx.shadowBlur = 0;
                 }
             });
 
             requestAnimationFrame(drawVisualizer);
         }
 
-        // Inisialisasi awal
+        // Helper HSL to RGB untuk Rainbow FX
+        function hslToRgb(h, s, l) {
+            let r, g, b;
+            if (s === 0) {
+                r = g = b = l; // achromatic
+            } else {
+                let hue2rgb = function(p, q, t) {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1/6) return p + (q - p) * 6 * t;
+                    if (t < 1/2) return q;
+                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                    return p;
+                };
+                let q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                let p = 2 * l - q;
+                r = hue2rgb(p, q, h + 1/3);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1/3);
+            }
+            return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+        }
+
+        // Jalankan
         renderUI();
         drawVisualizer();
     </script>
