@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MA3 onPC Web Simulation - Ultimate Edition</title>
+    <title>MA3 onPC Web Simulation - 8 Vertical Executors</title>
     <style>
         * {
             box-sizing: border-box;
@@ -67,7 +67,7 @@
             flex: 1;
             display: grid;
             grid-template-columns: 2fr 1.2fr 1.2fr;
-            grid-template-rows: 1fr 190px;
+            grid-template-rows: 1fr 200px;
             gap: 4px;
             padding: 4px;
             background-color: #0b0b0b;
@@ -191,7 +191,6 @@
             gap: 4px;
         }
 
-        /* COLOR PRESET BUTTONS (MA3 Style Pool) */
         .color-presets-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -218,7 +217,6 @@
             border-color: #fff;
         }
 
-        /* FX / PHASER PANEL */
         .fx-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -260,13 +258,13 @@
             border: 1px solid #222;
         }
 
-        /* EXECUTORS (BOTTOM AREA) - FADER ATAS BAWAH */
+        /* 8 EXECUTORS STRIP (VERTICAL FADER ATAS-BAWAH) */
         .executors-area {
             grid-column: span 3;
             background-color: #151515;
             border: 1px solid #333;
             display: flex;
-            gap: 6px;
+            gap: 5px;
             padding: 6px;
             overflow-x: auto;
         }
@@ -274,13 +272,14 @@
         .executor-fader-strip {
             background: #1e1e1e;
             border: 1px solid #333;
-            width: 75px;
+            width: 72px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: space-between;
             padding: 6px 2px;
             border-radius: 2px;
+            flex-shrink: 0;
         }
 
         .exec-num {
@@ -291,18 +290,17 @@
 
         .fader-track-vertical {
             flex: 1;
-            margin: 6px 0;
+            margin: 4px 0;
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
-        /* FADER UTAMA ATAS BAWAH */
         .fader-track-vertical input[type=range] {
             writing-mode: vertical-lr;
             direction: rtl;
             width: 24px;
-            height: 95px;
+            height: 90px;
             cursor: pointer;
         }
 
@@ -368,7 +366,7 @@
             <button class="ma-btn" onclick="openModal('Fixture')">Fixture Sheet</button>
             <button class="ma-btn" onclick="clearProgrammer()">Clear 2x</button>
         </div>
-        <div style="font-size: 11px; color: #888;">grandMA3 onPC - Web Simulator (Vertical Executors & Color Pool)</div>
+        <div style="font-size: 11px; color: #888;">grandMA3 onPC - 8 Vertical Executors Edition</div>
         <div class="menu-group">
             <button class="ma-btn" style="background:#400; color:#fff;" onclick="resetAll()">Reset</button>
         </div>
@@ -465,14 +463,14 @@
         </div>
 
         <!-- BOTTOM: STAGE VISUALIZER -->
-        <div class="ma-window" style="grid-column: span 3; height: 160px;">
+        <div class="ma-window" style="grid-column: span 3; height: 150px;">
             <div class="window-header">Visualizer Stage (Real-time Beam & FX Simulation)</div>
             <div id="visualizer-container">
-                <canvas id="simCanvas" width="800" height="120"></canvas>
+                <canvas id="simCanvas" width="800" height="110"></canvas>
             </div>
         </div>
 
-        <!-- EXECUTORS STRIP (FADER ATAS-BAWAH) -->
+        <!-- 8 EXECUTORS STRIP (VERTICAL FADER) -->
         <div class="executors-area" id="executors-container"></div>
 
         <!-- COMMAND LINE BAR -->
@@ -493,12 +491,16 @@
             { id: 4, name: 'Wash 02', patch: '1.049', dimmer: 100, r: 255, g: 255, b: 0, pan: 70, tilt: 50, zoom: 35, selected: false }
         ];
 
+        // 8 Executors Setup
         let executors = [
             { id: 1, name: "Main Cue", level: 100 },
             { id: 2, name: "Strobe FX", level: 0 },
             { id: 3, name: "Blinder", level: 0 },
             { id: 4, name: "House", level: 80 },
-            { id: 5, name: "Special", level: 0 }
+            { id: 5, name: "Special 1", level: 0 },
+            { id: 6, name: "Special 2", level: 0 },
+            { id: 7, name: "Backlight", level: 0 },
+            { id: 8, name: "Blackout", level: 0 }
         ];
 
         let activeEffects = {
@@ -528,7 +530,7 @@
                 tbody.appendChild(tr);
             });
 
-            // Render Executors (Fader Atas-Bawah)
+            // Render 8 Executors with Vertical Faders
             const execContainer = document.getElementById('executors-container');
             execContainer.innerHTML = '';
             executors.forEach(ex => {
@@ -536,7 +538,7 @@
                 strip.className = 'executor-fader-strip';
                 strip.innerHTML = `
                     <span class="exec-num">Ex ${ex.id}</span>
-                    <span style="font-size:9px; color:#aaa; text-align:center;">${ex.name}</span>
+                    <span style="font-size:8px; color:#aaa; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%;">${ex.name}</span>
                     <div class="fader-track-vertical">
                         <input type="range" min="0" max="100" value="${ex.level}" oninput="updateExecutor(${ex.id}, this.value)">
                     </div>
