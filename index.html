@@ -1,770 +1,473 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MA3 onPC Web Simulation - 8 Vertical Executors</title>
+    <title>Mini Lighting Console Simulator</title>
     <style>
+        :root {
+            --bg-color: #121212;
+            --panel-bg: #1e1e1e;
+            --accent-color: #00bcd4;
+            --accent-hover: #00acc1;
+            --text-color: #e0e0e0;
+            --border-color: #333;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            user-select: none;
         }
 
         body {
-            background-color: #121212;
-            color: #dcdcdc;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
             height: 100vh;
-            display: flex;
-            flex-direction: column;
             overflow: hidden;
         }
 
-        /* TOP MENU BAR */
-        .top-bar {
-            background-color: #1a1a1a;
-            border-bottom: 2px solid #2d2d2d;
-            height: 35px;
-            display: flex;
-            align-items: center;
-            padding: 0 10px;
-            font-size: 12px;
-            justify-content: space-between;
-        }
-
-        .menu-group {
-            display: flex;
-            gap: 5px;
-        }
-
-        .ma-btn {
-            background-color: #2b2b2b;
-            color: #ccc;
-            border: 1px solid #444;
-            padding: 4px 10px;
-            cursor: pointer;
-            font-weight: bold;
-            border-radius: 2px;
-            transition: all 0.1s;
-        }
-
-        .ma-btn:hover {
-            background-color: #383838;
-            color: #fff;
-            border-color: #ff9900;
-        }
-
-        .ma-btn:active, .ma-btn.active {
-            background-color: #ff9900;
-            color: #000;
-            border-color: #ffaa22;
-        }
-
-        /* MAIN WORKSPACE LAYOUT */
-        .workspace {
-            flex: 1;
-            display: grid;
-            grid-template-columns: 2fr 1.2fr 1.2fr;
-            grid-template-rows: 1fr 200px;
-            gap: 4px;
-            padding: 4px;
-            background-color: #0b0b0b;
-        }
-
-        /* WINDOW PANELS */
-        .ma-window {
+        header {
             background-color: #181818;
-            border: 1px solid #333;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            border-radius: 3px;
-        }
-
-        .window-header {
-            background-color: #222;
-            padding: 4px 8px;
-            font-size: 11px;
-            font-weight: bold;
-            color: #ff9900;
-            border-bottom: 1px solid #333;
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
-        }
-
-        .window-content {
-            flex: 1;
-            overflow: auto;
-            padding: 5px;
-        }
-
-        /* FIXTURE SHEET TABLE */
-        .fixture-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 11px;
-            text-align: left;
-            font-family: monospace;
-        }
-
-        .fixture-table th, .fixture-table td {
-            border: 1px solid #2a2a2a;
-            padding: 4px 6px;
-        }
-
-        .fixture-table th {
-            background-color: #222;
-            color: #aaa;
-            position: sticky;
-            top: 0;
-        }
-
-        .fixture-row {
-            cursor: pointer;
-        }
-
-        .fixture-row:hover {
-            background-color: #222;
-        }
-
-        .fixture-row.selected {
-            background-color: #3d2b00;
-            border-left: 3px solid #ff9900;
-        }
-
-        /* ATTRIBUTE FADERS PANEL */
-        .attr-faders-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 6px;
-            padding: 8px;
-            height: 100%;
             align-items: center;
         }
 
-        .attr-fader-box {
-            background: #202020;
-            border: 1px solid #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 6px 2px;
-            border-radius: 3px;
-            height: 100%;
-            justify-content: space-between;
-        }
-
-        .attr-title {
-            font-size: 9px;
-            color: #ff9900;
-            font-weight: bold;
-        }
-
-        .attr-val {
-            font-size: 11px;
-            color: #00d2ff;
-            font-family: monospace;
-            margin-top: 2px;
-        }
-
-        .vertical-slider-track {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            margin: 6px 0;
-        }
-
-        .vertical-slider-track input[type=range] {
-            writing-mode: vertical-lr;
-            direction: rtl;
-            width: 20px;
-            height: 110px;
-            cursor: pointer;
-        }
-
-        /* RIGHT PANEL: COLOR PRESETS & EFFECTS */
-        .right-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .color-presets-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 4px;
-            padding: 6px;
-        }
-
-        .color-pool-btn {
-            border: 1px solid #444;
-            height: 35px;
-            font-size: 10px;
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 2px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-shadow: 0px 1px 2px rgba(0,0,0,0.8);
-            transition: transform 0.05s;
-        }
-
-        .color-pool-btn:active {
-            transform: scale(0.95);
-            border-color: #fff;
-        }
-
-        .fx-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 5px;
-            padding: 6px;
-        }
-
-        .fx-btn {
-            background: #2b2b2b;
+        header h1 {
+            font-size: 1.2rem;
             color: #fff;
-            border: 1px solid #444;
-            padding: 6px;
-            font-size: 9px;
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 3px;
-            text-align: center;
+            letter-spacing: 1px;
         }
 
-        .fx-btn.active {
-            background-color: #0055aa;
-            border-color: #0088ff;
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
         }
 
-        /* VISUALIZER CANVAS */
-        #visualizer-container {
+        /* Stage Visualizer Area */
+        .stage-area {
+            flex: 1;
+            background-color: #0a0a0a;
             position: relative;
-            background-color: #050505;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .stage-grid {
             width: 100%;
             height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
+            position: relative;
+            background-image: linear-gradient(var(--border-color) 1px, transparent 1px),
+                              linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
+            background-size: 50px 50px;
+            background-position: center center;
         }
 
-        canvas {
-            background: #000;
-            border: 1px solid #222;
-        }
-
-        /* 8 EXECUTORS STRIP (VERTICAL FADER ATAS-BAWAH) */
-        .executors-area {
-            grid-column: span 3;
-            background-color: #151515;
-            border: 1px solid #333;
-            display: flex;
-            gap: 5px;
-            padding: 6px;
-            overflow-x: auto;
-        }
-
-        .executor-fader-strip {
-            background: #1e1e1e;
-            border: 1px solid #333;
-            width: 72px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-            padding: 6px 2px;
-            border-radius: 2px;
-            flex-shrink: 0;
-        }
-
-        .exec-num {
-            font-size: 10px;
-            color: #ff9900;
-            font-weight: bold;
-        }
-
-        .fader-track-vertical {
-            flex: 1;
-            margin: 4px 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .fader-track-vertical input[type=range] {
-            writing-mode: vertical-lr;
-            direction: rtl;
-            width: 24px;
-            height: 90px;
-            cursor: pointer;
-        }
-
-        .exec-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            width: 100%;
-        }
-
-        .exec-btn {
-            background: #2a2a2a;
-            color: #fff;
-            border: 1px solid #444;
-            font-size: 9px;
-            padding: 3px 0;
-            text-align: center;
-            cursor: pointer;
-            border-radius: 2px;
-        }
-
-        .exec-btn.go { background-color: #004400; border-color: #008800; }
-        .exec-btn.flash { background-color: #443300; border-color: #aa8800; }
-
-        /* COMMAND LINE BAR */
-        .command-bar {
-            background-color: #111;
-            border-top: 2px solid #ff9900;
+        .fixture-beam {
+            position: absolute;
+            bottom: 20px;
+            width: 40px;
             height: 40px;
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(0,188,212,0.4) 40%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: transform 0.05s linear, width 0.1s, height 0.1s, opacity 0.1s;
+            box-shadow: 0 0 15px rgba(0, 188, 212, 0.5);
+            pointer-events: none;
+        }
+
+        .fixture-base-icon {
+            position: absolute;
+            bottom: 10px;
+            width: 40px;
+            height: 15px;
+            background: #444;
+            border-radius: 3px;
+            transform: translateX(-50%);
+            text-align: center;
+            font-size: 9px;
+            line-height: 15px;
+            color: #aaa;
+        }
+
+        /* Control Panel Area */
+        .control-panel {
+            width: 450px;
+            background-color: var(--panel-bg);
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            gap: 15px;
+            overflow-y: auto;
+        }
+
+        .section-box {
+            background-color: #252525;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Fixture Selector Buttons */
+        .fixture-selectors {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+        }
+
+        .btn {
+            background-color: #333;
+            color: var(--text-color);
+            border: 1px solid #444;
+            padding: 8px 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background-color: #444;
+        }
+
+        .btn.active {
+            background-color: var(--accent-color);
+            color: #000;
+            font-weight: bold;
+            border-color: var(--accent-hover);
+        }
+
+        /* Faders Container */
+        .faders-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            text-align: center;
+        }
+
+        .fader-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 180px;
+        }
+
+        .fader-group input[type=range] {
+            writing-mode: bt-lr; /* IE/Edge */
+            -webkit-appearance: slider-vertical; /* Webkit */
+            width: 25px;
+            height: 120px;
+            background: #333;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .fader-label {
+            font-size: 0.75rem;
+            margin-top: 6px;
+            color: #ccc;
+        }
+
+        .fader-value {
+            font-size: 0.75rem;
+            color: var(--accent-color);
+            font-family: monospace;
+        }
+
+        /* Effects & Master Area */
+        .action-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-row .btn {
+            flex: 1;
+        }
+
+        .btn-danger {
+            background-color: #d32f2f;
+            border-color: #c62828;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #c62828;
+        }
+
+        .master-container {
             display: flex;
             align-items: center;
-            padding: 0 10px;
-            gap: 10px;
-            grid-column: span 3;
+            gap: 15px;
         }
 
-        .command-prompt-label {
-            color: #ff9900;
-            font-weight: bold;
-            font-size: 13px;
-            font-family: monospace;
-        }
-
-        .command-input {
+        .master-container input[type=range] {
             flex: 1;
-            background-color: #000;
-            border: 1px solid #444;
-            color: #00ffcc;
-            font-family: monospace;
-            font-size: 14px;
-            padding: 5px 8px;
-            outline: none;
-            border-radius: 2px;
+            accent-color: #ff9800;
         }
     </style>
 </head>
 <body>
 
-    <!-- TOP CONTROL STRIP -->
-    <div class="top-bar">
-        <div class="menu-group">
-            <button class="ma-btn" onclick="openModal('Patch')">Patch</button>
-            <button class="ma-btn" onclick="openModal('Fixture')">Fixture Sheet</button>
-            <button class="ma-btn" onclick="clearProgrammer()">Clear 2x</button>
+    <header>
+        <h1>grandMA3 Mini Simulator</h1>
+        <div style="font-size: 0.8rem; color: #888;">Vanilla HTML/JS Single File</div>
+    </header>
+
+    <div class="main-container">
+        <!-- Visualizer Panggung -->
+        <div class="stage-area">
+            <div class="stage-grid" id="stageGrid">
+                <!-- Fixture 1 -->
+                <div class="fixture-base-icon" style="left: 20%;">F1</div>
+                <div class="fixture-beam" id="beam1" style="left: 20%;"></div>
+                
+                <!-- Fixture 2 -->
+                <div class="fixture-base-icon" style="left: 40%;">F2</div>
+                <div class="fixture-beam" id="beam2" style="left: 40%;"></div>
+                
+                <!-- Fixture 3 -->
+                <div class="fixture-base-icon" style="left: 60%;">F3</div>
+                <div class="fixture-beam" id="beam3" style="left: 60%;"></div>
+                
+                <!-- Fixture 4 -->
+                <div class="fixture-base-icon" style="left: 80%;">F4</div>
+                <div class="fixture-beam" id="beam4" style="left: 80%;"></div>
+            </div>
         </div>
-        <div style="font-size: 11px; color: #888;">grandMA3 onPC - 8 Vertical Executors Edition</div>
-        <div class="menu-group">
-            <button class="ma-btn" style="background:#400; color:#fff;" onclick="resetAll()">Reset</button>
+
+        <!-- Panel Kontrol -->
+        <div class="control-panel">
+            
+            <!-- Pemilihan Fixture -->
+            <div class="section-box">
+                <div class="section-title">Fixture Selection</div>
+                <div class="fixture-selectors">
+                    <button class="btn fx-sel active" onclick="toggleFixture(1)">F 1</button>
+                    <button class="btn fx-sel active" onclick="toggleFixture(2)">F 2</button>
+                    <button class="btn fx-sel active" onclick="toggleFixture(3)">F 3</button>
+                    <button class="btn fx-sel active" onclick="toggleFixture(4)">F 4</button>
+                    <button class="btn" onclick="toggleAllFixtures()" id="btnAll">All</button>
+                </div>
+            </div>
+
+            <!-- Fader Parameter -->
+            <div class="section-box">
+                <div class="section-title">Attribute Faders</div>
+                <div class="faders-grid">
+                    <!-- Dimmer -->
+                    <div class="fader-group">
+                        <input type="range" id="faderDim" min="0" max="100" value="100" oninput="updateValues()">
+                        <span class="fader-label">Dim</span>
+                        <span class="fader-value" id="valDim">100</span>
+                    </div>
+                    <!-- Pan -->
+                    <div class="fader-group">
+                        <input type="range" id="faderPan" min="0" max="100" value="50" oninput="updateValues()">
+                        <span class="fader-label">Pan</span>
+                        <span class="fader-value" id="valPan">50</span>
+                    </div>
+                    <!-- Tilt -->
+                    <div class="fader-group">
+                        <input type="range" id="faderTilt" min="0" max="100" value="50" oninput="updateValues()">
+                        <span class="fader-label">Tilt</span>
+                        <span class="fader-value" id="valTilt">50</span>
+                    </div>
+                    <!-- Zoom -->
+                    <div class="fader-group">
+                        <input type="range" id="faderZoom" min="0" max="100" value="30" oninput="updateValues()">
+                        <span class="fader-label">Zoom</span>
+                        <span class="fader-value" id="valZoom">30</span>
+                    </div>
+                    <!-- Effect Speed -->
+                    <div class="fader-group">
+                        <input type="range" id="faderSpeed" min="0" max="100" value="50" oninput="updateValues()">
+                        <span class="fader-label">Speed</span>
+                        <span class="fader-value" id="valSpeed">50</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Efek Otomatis -->
+            <div class="section-box">
+                <div class="section-title">Effects Generator</div>
+                <div class="action-row">
+                    <button class="btn" onclick="startEffect('circle')">Circle Effect</button>
+                    <button class="btn" onclick="startEffect('tilt')">Tilt Sweep</button>
+                    <button class="btn btn-danger" onclick="stopEffect()">Stop Effect</button>
+                </div>
+            </div>
+
+            <!-- Grand Master -->
+            <div class="section-box">
+                <div class="section-title">Grand Master</div>
+                <div class="master-container">
+                    <input type="range" id="faderMaster" min="0" max="100" value="100" oninput="updateValues()">
+                    <span class="fader-value" id="valMaster" style="font-size: 0.9rem; min-width: 35px;">100%</span>
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <!-- MAIN GRID WORKSPACE -->
-    <div class="workspace">
-        
-        <!-- TOP LEFT: FIXTURE SHEET -->
-        <div class="ma-window">
-            <div class="window-header">
-                <span>Fixture Sheet [All Fixtures]</span>
-                <span>Programmer Active</span>
-            </div>
-            <div class="window-content">
-                <table class="fixture-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Dim</th>
-                            <th>Pan / Tilt</th>
-                            <th>Zoom</th>
-                            <th>Color</th>
-                        </tr>
-                    </thead>
-                    <tbody id="fixture-table-body"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- MIDDLE: ATTRIBUTE FADERS (DIM, PAN, TILT, ZOOM) -->
-        <div class="ma-window">
-            <div class="window-header">Programmer Attribute Faders</div>
-            <div class="attr-faders-grid">
-                <div class="attr-fader-box">
-                    <span class="attr-title">DIM</span>
-                    <div class="vertical-slider-track">
-                        <input type="range" id="fader-dim" min="0" max="100" value="100" oninput="updateAttributeFromFader('dimmer', this.value)">
-                    </div>
-                    <span class="attr-val" id="val-dim">100%</span>
-                </div>
-                <div class="attr-fader-box">
-                    <span class="attr-title">PAN</span>
-                    <div class="vertical-slider-track">
-                        <input type="range" id="fader-pan" min="0" max="100" value="50" oninput="updateAttributeFromFader('pan', this.value)">
-                    </div>
-                    <span class="attr-val" id="val-pan">50°</span>
-                </div>
-                <div class="attr-fader-box">
-                    <span class="attr-title">TILT</span>
-                    <div class="vertical-slider-track">
-                        <input type="range" id="fader-tilt" min="0" max="100" value="50" oninput="updateAttributeFromFader('tilt', this.value)">
-                    </div>
-                    <span class="attr-val" id="val-tilt">50°</span>
-                </div>
-                <div class="attr-fader-box">
-                    <span class="attr-title">ZOOM</span>
-                    <div class="vertical-slider-track">
-                        <input type="range" id="fader-zoom" min="0" max="100" value="25" oninput="updateAttributeFromFader('zoom', this.value)">
-                    </div>
-                    <span class="attr-val" id="val-zoom">25°</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- TOP RIGHT: COLOR PRESET BUTTONS & EFFECTS -->
-        <div class="right-panel">
-            <div class="ma-window" style="flex: 1.2;">
-                <div class="window-header">Color Presets (Color Pool)</div>
-                <div class="color-presets-grid">
-                    <button class="color-pool-btn" style="background:#ff3333; color:#fff;" onclick="setColor(255, 0, 0)">Red</button>
-                    <button class="color-pool-btn" style="background:#00ff00; color:#000;" onclick="setColor(0, 255, 0)">Green</button>
-                    <button class="color-pool-btn" style="background:#0066ff; color:#fff;" onclick="setColor(0, 0, 255)">Blue</button>
-                    <button class="color-pool-btn" style="background:#ffff00; color:#000;" onclick="setColor(255, 255, 0)">Yellow</button>
-                    <button class="color-pool-btn" style="background:#00ffff; color:#000;" onclick="setColor(0, 255, 255)">Cyan</button>
-                    <button class="color-pool-btn" style="background:#ff00ff; color:#fff;" onclick="setColor(255, 0, 255)">Magenta</button>
-                    <button class="color-pool-btn" style="background:#ffffff; color:#000;" onclick="setColor(255, 255, 255)">White</button>
-                    <button class="color-pool-btn" style="background:#ffaa00; color:#000;" onclick="setColor(255, 170, 0)">Warm</button>
-                </div>
-            </div>
-
-            <div class="ma-window" style="flex: 1;">
-                <div class="window-header">Extended Effects Engine</div>
-                <div class="fx-grid">
-                    <button class="fx-btn" id="fx-dimmer-chase" onclick="toggleEffect('dimmerChase')">Dimmer Chase</button>
-                    <button class="fx-btn" id="fx-pan-wave" onclick="toggleEffect('panWave')">Pan Circle FX</button>
-                    <button class="fx-btn" id="fx-rainbow" onclick="toggleEffect('rainbow')">Color Rainbow</button>
-                    <button class="fx-btn" id="fx-strobe" onclick="toggleEffect('strobe')">Strobe FX</button>
-                    <button class="fx-btn" id="fx-shutter-wave" onclick="toggleEffect('shutterWave')">Shutter Wave</button>
-                    <button class="fx-btn" style="background:#400;" onclick="stopAllEffects()">Stop All FX</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- BOTTOM: STAGE VISUALIZER -->
-        <div class="ma-window" style="grid-column: span 3; height: 150px;">
-            <div class="window-header">Visualizer Stage (Real-time Beam & FX Simulation)</div>
-            <div id="visualizer-container">
-                <canvas id="simCanvas" width="800" height="110"></canvas>
-            </div>
-        </div>
-
-        <!-- 8 EXECUTORS STRIP (VERTICAL FADER) -->
-        <div class="executors-area" id="executors-container"></div>
-
-        <!-- COMMAND LINE BAR -->
-        <div class="command-bar">
-            <span class="command-prompt-label">MA3 &gt;</span>
-            <input type="text" id="commandInput" class="command-input" placeholder="Type command e.g., 'Fixture 1 At 50' or 'Store Cue 1'..." onkeypress="handleCommand(event)">
-            <button class="ma-btn" style="height: 28px; background:#ff9900; color:#000;" onclick="executeCommandBtn()">Please</button>
-        </div>
-
-    </div>
-
-    <!-- JAVASCRIPT LOGIC -->
     <script>
-        let fixtures = [
-            { id: 1, name: 'Spot 01', patch: '1.001', dimmer: 100, r: 255, g: 0, b: 0, pan: 30, tilt: 50, zoom: 20, selected: true },
-            { id: 2, name: 'Spot 02', patch: '1.017', dimmer: 100, r: 0, g: 255, b: 0, pan: 42, tilt: 50, zoom: 20, selected: false },
-            { id: 3, name: 'Wash 01', patch: '1.033', dimmer: 100, r: 0, g: 0, b: 255, pan: 58, tilt: 50, zoom: 35, selected: false },
-            { id: 4, name: 'Wash 02', patch: '1.049', dimmer: 100, r: 255, g: 255, b: 0, pan: 70, tilt: 50, zoom: 35, selected: false }
-        ];
-
-        // 8 Executors Setup
-        let executors = [
-            { id: 1, name: "Main Cue", level: 100 },
-            { id: 2, name: "Strobe FX", level: 0 },
-            { id: 3, name: "Blinder", level: 0 },
-            { id: 4, name: "House", level: 80 },
-            { id: 5, name: "Special 1", level: 0 },
-            { id: 6, name: "Special 2", level: 0 },
-            { id: 7, name: "Backlight", level: 0 },
-            { id: 8, name: "Blackout", level: 0 }
-        ];
-
-        let activeEffects = {
-            dimmerChase: false,
-            panWave: false,
-            rainbow: false,
-            strobe: false,
-            shutterWave: false
+        // State data untuk 4 Fixture
+        const fixtures = {
+            1: { selected: true, dim: 100, pan: 50, tilt: 50, zoom: 30 },
+            2: { selected: true, dim: 100, pan: 50, tilt: 50, zoom: 30 },
+            3: { selected: true, dim: 100, pan: 50, tilt: 50, zoom: 30 },
+            4: { selected: true, dim: 100, pan: 50, tilt: 50, zoom: 30 }
         };
-        let fxTick = 0;
 
-        function renderUI() {
-            const tbody = document.getElementById('fixture-table-body');
-            tbody.innerHTML = '';
-            fixtures.forEach(f => {
-                let tr = document.createElement('tr');
-                tr.className = `fixture-row ${f.selected ? 'selected' : ''}`;
-                tr.onclick = () => toggleSelectFixture(f.id);
-                tr.innerHTML = `
-                    <td>${f.id}</td>
-                    <td>${f.name}</td>
-                    <td>${f.dimmer}%</td>
-                    <td>P:${f.pan}° T:${f.tilt}°</td>
-                    <td>${f.zoom}°</td>
-                    <td><span style="display:inline-block;width:10px;height:10px;background:rgb(${f.r},${f.g},${f.b});border-radius:2px;vertical-align:middle;"></span> RGB(${f.r},${f.g},${f.b})</td>
-                `;
-                tbody.appendChild(tr);
-            });
+        let currentEffect = null;
+        let effectInterval = null;
+        let animStep = 0;
 
-            // Render 8 Executors with Vertical Faders
-            const execContainer = document.getElementById('executors-container');
-            execContainer.innerHTML = '';
-            executors.forEach(ex => {
-                let strip = document.createElement('div');
-                strip.className = 'executor-fader-strip';
-                strip.innerHTML = `
-                    <span class="exec-num">Ex ${ex.id}</span>
-                    <span style="font-size:8px; color:#aaa; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%;">${ex.name}</span>
-                    <div class="fader-track-vertical">
-                        <input type="range" min="0" max="100" value="${ex.level}" oninput="updateExecutor(${ex.id}, this.value)">
-                    </div>
-                    <div class="exec-buttons">
-                        <button class="exec-btn go" onclick="trigExec(${ex.id}, 'GO')">GO</button>
-                        <button class="exec-btn flash" onclick="trigExec(${ex.id}, 'FLASH')">FLH</button>
-                    </div>
-                `;
-                execContainer.appendChild(strip);
-            });
-
-            syncFadersWithSelection();
+        // Toggle pemilihan fixture individual
+        function toggleFixture(id) {
+            fixtures[id].selected = !fixtures[id].selected;
+            const buttons = document.querySelectorAll('.fx-sel');
+            buttons[id-1].classList.toggle('active', fixtures[id].selected);
+            syncUIFromState();
         }
 
-        function syncFadersWithSelection() {
-            let sel = fixtures.find(f => f.selected);
-            if (sel) {
-                document.getElementById('fader-dim').value = sel.dimmer;
-                document.getElementById('val-dim').innerText = sel.dimmer + '%';
+        // Toggle semua fixture sekaligus
+        function toggleAllFixtures() {
+            const allSelected = Object.values(fixtures).every(f => f.selected);
+            const newState = !allSelected;
+            for (let id in fixtures) {
+                fixtures[id].selected = newState;
+            }
+            document.querySelectorAll('.fx-sel').forEach(btn => {
+                btn.classList.toggle('active', newState);
+            });
+            document.getElementById('btnAll').classList.toggle('active', newState);
+        }
 
-                document.getElementById('fader-pan').value = sel.pan;
-                document.getElementById('val-pan').innerText = sel.pan + '°';
+        // Sinkronisasi nilai fader UI ke objek state fixture yang aktif
+        function updateValues() {
+            const dim = parseInt(document.getElementById('faderDim').value);
+            const pan = parseInt(document.getElementById('faderPan').value);
+            const tilt = parseInt(document.getElementById('faderTilt').value);
+            const zoom = parseInt(document.getElementById('faderZoom').value);
+            
+            // Update teks label
+            document.getElementById('valDim').innerText = dim;
+            document.getElementById('valPan').innerText = pan;
+            document.getElementById('valTilt').innerText = tilt;
+            document.getElementById('valZoom').innerText = zoom;
+            document.getElementById('valSpeed').innerText = document.getElementById('faderSpeed').value;
+            document.getElementById('valMaster').innerText = document.getElementById('faderMaster').value + '%';
 
-                document.getElementById('fader-tilt').value = sel.tilt;
-                document.getElementById('val-tilt').innerText = sel.tilt + '°';
+            // Terapkan ke fixture yang sedang dipilih
+            for (let id in fixtures) {
+                if (fixtures[id].selected) {
+                    fixtures[id].dim = dim;
+                    fixtures[id].pan = pan;
+                    fixtures[id].tilt = tilt;
+                    fixtures[id].zoom = zoom;
+                }
+            }
+            renderStage();
+        }
 
-                document.getElementById('fader-zoom').value = sel.zoom;
-                document.getElementById('val-zoom').innerText = sel.zoom + '°';
+        // Ambil nilai rata-rata untuk menggerakkan fader UI saat efek berjalan
+        function syncUIFromState() {
+            // Ambil dari fixture pertama yang aktif sebagai sampel visual fader
+            let sample = fixtures[1].selected ? fixtures[1] : fixtures[2];
+            document.getElementById('faderDim').value = sample.dim;
+            document.getElementById('faderPan').value = sample.pan;
+            document.getElementById('faderTilt').value = sample.tilt;
+            document.getElementById('faderZoom').value = sample.zoom;
+            
+            document.getElementById('valDim').innerText = sample.dim;
+            document.getElementById('valPan').innerText = sample.pan;
+            document.getElementById('valTilt').innerText = sample.tilt;
+            document.getElementById('valZoom').innerText = sample.zoom;
+        }
+
+        // Render posisi, ukuran, dan intensitas cahaya ke layar simulasi 3D sederhana
+        function renderStage() {
+            const master = parseInt(document.getElementById('faderMaster').value) / 100;
+
+            for (let id = 1; id <= 4; id++) {
+                let f = fixtures[id];
+                let beam = document.getElementById('beam' + id);
+
+                // Hitung koordinat X berdasarkan Pan (0-100% -> -80px sampai +80px offset)
+                let offsetX = (f.pan - 50) * 1.6;
+                // Hitung koordinat Y berdasarkan Tilt (0-100% -> -100px sampai +20px offset)
+                let offsetY = (50 - f.tilt) * 2.0;
+
+                // Hitung ukuran beam berdasarkan Zoom dan Dimmer
+                let size = f.zoom * 1.5 + 20;
+                let finalDim = (f.dim / 100) * master;
+
+                beam.style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`;
+                beam.style.width = `${size}px`;
+                beam.style.height = `${size}px`;
+                beam.style.opacity = finalDim;
             }
         }
 
-        function toggleSelectFixture(id) {
-            fixtures.forEach(f => {
-                if (f.id === id) f.selected = !f.selected;
-            });
-            renderUI();
-        }
+        // Sistem Efek Otomatis (Phaser Simulation)
+        function startEffect(type) {
+            stopEffect();
+            currentEffect = type;
+            
+            let speedControl = document.getElementById('faderSpeed');
 
-        function updateAttributeFromFader(attr, val) {
-            let numVal = parseInt(val);
-            fixtures.forEach(f => {
-                if (f.selected) {
-                    f[attr] = numVal;
+            effectInterval = setInterval(() => {
+                let speed = parseInt(speedControl.value);
+                // Interval delay berbanding terbalik dengan speed
+                animStep += (speed * 0.002);
+
+                for (let id = 1; id <= 4; id++) {
+                    if (!fixtures[id].selected) continue;
+
+                    // Offset fase berbeda tiap lampu agar membentuk pola dinamis
+                    let phaseOffset = id * 1.5;
+
+                    if (currentEffect === 'circle') {
+                        fixtures[id].pan = 50 + Math.sin(animStep + phaseOffset) * 30;
+                        fixtures[id].tilt = 50 + Math.cos(animStep + phaseOffset) * 25;
+                    } else if (currentEffect === 'tilt') {
+                        fixtures[id].tilt = 50 + Math.sin(animStep * 2 + phaseOffset) * 40;
+                    }
                 }
-            });
-            document.getElementById(`val-${attr === 'dimmer' ? 'dim' : attr}`).innerText = numVal + (attr === 'dimmer' ? '%' : '°');
+
+                syncUIFromState();
+                renderStage();
+            }, 30);
         }
 
-        function setColor(r, g, b) {
-            fixtures.forEach(f => {
-                if (f.selected) {
-                    f.r = r; f.g = g; f.b = b;
-                }
-            });
-            renderUI();
-        }
-
-        function updateExecutor(id, val) {
-            let ex = executors.find(e => e.id === id);
-            if (ex) ex.level = parseInt(val);
-        }
-
-        function trigExec(id, action) {
-            console.log(`Executor ${id} action: ${action}`);
-        }
-
-        function clearProgrammer() {
-            fixtures.forEach(f => f.selected = false);
-            if(fixtures.length > 0) fixtures[0].selected = true;
-            renderUI();
-        }
-
-        function resetAll() {
-            fixtures.forEach(f => { f.dimmer = 100; f.r = 255; f.g = 255; f.b = 255; f.pan = 50; f.tilt = 50; f.zoom = 25; });
-            stopAllEffects();
-            renderUI();
-        }
-
-        function toggleEffect(fxName) {
-            activeEffects[fxName] = !activeEffects[fxName];
-            let btnId = fxName === 'dimmerChase' ? 'fx-dimmer-chase' : (fxName === 'panWave' ? 'fx-pan-wave' : (fxName === 'rainbow' ? 'fx-rainbow' : (fxName === 'strobe' ? 'fx-strobe' : 'fx-shutter-wave')));
-            document.getElementById(btnId).className = `fx-btn ${activeEffects[fxName] ? 'active' : ''}`;
-        }
-
-        function stopAllEffects() {
-            for (let k in activeEffects) activeEffects[k] = false;
-            document.querySelectorAll('.fx-btn').forEach(btn => btn.classList.remove('active'));
-        }
-
-        function handleCommand(e) {
-            if (e.key === 'Enter') executeCommandBtn();
-        }
-
-        function executeCommandBtn() {
-            let input = document.getElementById('commandInput');
-            let cmd = input.value.trim();
-            parseMACommand(cmd);
-            input.value = '';
-        }
-
-        function parseMACommand(cmd) {
-            let parts = cmd.toLowerCase().split(' ');
-            if (parts[0] === 'fixture' || parts[0] === 'fix') {
-                let targetId = parseInt(parts[1]);
-                fixtures.forEach(f => { f.selected = (f.id === targetId); });
-                let atIndex = parts.indexOf('at');
-                if (atIndex !== -1 && parts[atIndex + 1]) {
-                    let val = parseInt(parts[atIndex + 1]);
-                    fixtures.forEach(f => { if (f.selected) f.dimmer = val; });
-                }
-            } else if (parts[0] === 'at') {
-                let val = parseInt(parts[1]);
-                if (!isNaN(val)) {
-                    fixtures.forEach(f => { if (f.selected) f.dimmer = val; });
-                }
-            } else if (parts[0] === 'clear') {
-                clearProgrammer();
-            } else {
-                alert("Command syntax not recognized: " + cmd);
+        function stopEffect() {
+            if (effectInterval) {
+                clearInterval(effectInterval);
+                effectInterval = null;
             }
-            renderUI();
+            currentEffect = null;
         }
 
-        function openModal(type) {
-            alert("Opening " + type + " setup view.");
-        }
-
-        // --- 2D CANVAS VISUALIZER ENGINE ---
-        const canvas = document.getElementById('simCanvas');
-        const ctx = canvas.getContext('2d');
-
-        function drawVisualizer() {
-            fxTick += 0.05;
-            ctx.fillStyle = '#050505';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            let spacing = canvas.width / (fixtures.length + 1);
-
-            fixtures.forEach((f, idx) => {
-                let x = spacing * (idx + 1);
-                let y = 15;
-
-                let currentDim = f.dimmer;
-                let currentPan = f.pan;
-                let currentR = f.r, currentG = f.g, currentB = f.b;
-
-                // Proses Efek / Phaser
-                if (activeEffects.dimmerChase) {
-                    let wave = Math.sin(fxTick * 3 + idx);
-                    currentDim = Math.floor(((wave + 1) / 2) * f.dimmer);
-                }
-                if (activeEffects.panWave) {
-                    let wave = Math.sin(fxTick * 2 + idx * 0.8);
-                    currentPan = Math.min(100, Math.max(0, f.pan + wave * 25));
-                }
-                if (activeEffects.rainbow) {
-                    let hue = (fxTick * 50 + idx * 60) % 360;
-                    let rgb = hslToRgb(hue / 360, 1, 0.5);
-                    currentR = rgb[0]; currentG = rgb[1]; currentB = rgb[2];
-                }
-                if (activeEffects.strobe) {
-                    if (Math.sin(fxTick * 15) > 0) currentDim = 0;
-                }
-                if (activeEffects.shutterWave) {
-                    if (Math.sin(fxTick * 5 + idx) > 0.5) currentDim = 0;
-                }
-
-                // Gambar Fixture Head
-                ctx.fillStyle = f.selected ? '#ff9900' : '#444';
-                ctx.fillRect(x - 14, y - 5, 28, 10);
-
-                let beamWidth = f.zoom * 0.8;
-                let targetX = x + (currentPan - 50) * 2.2;
-
-                if (currentDim > 0) {
-                    ctx.save();
-                    let grad = ctx.createLinearGradient(x, y, targetX, canvas.height);
-                    grad.addColorStop(0, `rgba(${currentR}, ${currentG}, ${currentB}, ${currentDim / 100 * 0.8})`);
-                    grad.addColorStop(1, `rgba(${currentR}, ${currentG}, ${currentB}, 0)`);
-
-                    ctx.fillStyle = grad;
-                    ctx.beginPath();
-                    ctx.moveTo(x, y);
-                    ctx.lineTo(targetX - beamWidth, canvas.height);
-                    ctx.lineTo(targetX + beamWidth, canvas.height);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.restore();
-
-                    ctx.beginPath();
-                    ctx.arc(targetX, canvas.height - 5, 6 + (f.zoom / 3), 0, Math.PI * 2);
-                    ctx.fillStyle = `rgb(${currentR}, ${currentG}, ${currentB})`;
-                    ctx.shadowBlur = 12;
-                    ctx.shadowColor = `rgb(${currentR}, ${currentG}, ${currentB})`;
-                    ctx.fill();
-                    ctx.shadowBlur = 0;
-                }
-            });
-
-            requestAnimationFrame(drawVisualizer);
-        }
-
-        function hslToRgb(h, s, l) {
-            let r, g, b;
-            if (s === 0) {
-                r = g = b = l;
-            } else {
-                let hue2rgb = function(p, q, t) {
-                    if (t < 0) t += 1;
-                    if (t > 1) t -= 1;
-                    if (t < 1/6) return p + (q - p) * 6 * t;
-                    if (t < 1/2) return q;
-                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-                    return p;
-                };
-                let q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-                let p = 2 * l - q;
-                r = hue2rgb(p, q, h + 1/3);
-                g = hue2rgb(p, q, h);
-                b = hue2rgb(p, q, h - 1/3);
-            }
-            return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
-        }
-
-        renderUI();
-        drawVisualizer();
+        // Jalankan render awal saat halaman dimuat
+        renderStage();
     </script>
 </body>
 </html>
